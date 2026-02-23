@@ -23,14 +23,17 @@ def play_sound(sound_file: str | None):
     if sound_file is None or not os.path.exists(sound_file):
         return
 
-    system = platform.system()
-    if system == "Darwin":
-        subprocess.run(["afplay", sound_file], capture_output=True)
-    elif system == "Linux":
-        subprocess.run(["paplay", sound_file], capture_output=True)
-    elif system == "Windows":
-        cmd = f"(New-Object Media.SoundPlayer '{sound_file}').PlaySync()"
-        subprocess.run(["powershell", "-c", cmd], capture_output=True)
+    try:
+        system = platform.system()
+        if system == "Darwin":
+            subprocess.run(["afplay", sound_file], capture_output=True)
+        elif system == "Linux":
+            subprocess.run(["paplay", sound_file], capture_output=True)
+        elif system == "Windows":
+            cmd = f"(New-Object Media.SoundPlayer '{sound_file}').PlaySync()"
+            subprocess.run(["powershell", "-c", cmd], capture_output=True)
+    except FileNotFoundError:
+        pass
 
 
 def sanitize_branch_name(branch: str) -> str:
