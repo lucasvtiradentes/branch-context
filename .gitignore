@@ -5,5 +5,4 @@ dist/
 build/
 .venv/
 .ignore
-.omnicontext/
 .branch-context

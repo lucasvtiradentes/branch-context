@@ -26,10 +26,7 @@ GITIGNORE_BRANCHES = """# Ignore all branch contexts (local only)
 !.gitignore
 """
 
-GITIGNORE_ROOT = """# Ignore branch data and secrets
-branches/
-*.json
-!config.json
+GITIGNORE_ROOT = """branches/
 """
 
 HOOK_TEMPLATE = """#!/bin/bash
