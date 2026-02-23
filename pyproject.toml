@@ -18,6 +18,15 @@ omnicontext = "omnicontext.cli:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/omnicontext"]
 
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""
+
+[tool.hatch.build]
+include = [
+  "src/omnicontext/**/*.py",
+  "src/omnicontext/assets/*",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 

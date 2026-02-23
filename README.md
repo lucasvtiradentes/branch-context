@@ -27,6 +27,7 @@ git checkout feature/login
 - auto-sync         - hook syncs on checkout/switch
 - templates         - new branches start from template
 - symlink           - `.branch-context/` always points to current branch
+- sound             - plays sound on branch switch
 - gitignored        - branch data stays local
 
 ## Commands
@@ -78,14 +79,18 @@ cat .branch-context/context.md
 ```json
 {
   "symlink": ".branch-context",
-  "on_switch": "echo 'switched to {branch}'"
+  "on_switch": "echo 'switched to {branch}'",
+  "sound": true,
+  "sound_file": "/path/to/custom.wav"
 }
 ```
 
-| Key | Description |
-|-----|-------------|
-| `symlink` | symlink name (default: `.branch-context`) |
-| `on_switch` | command to run on branch switch |
+| Key          | Description                                      |
+|--------------|--------------------------------------------------|
+| `symlink`    | symlink name (default: `.branch-context`)        |
+| `on_switch`  | command to run on branch switch                  |
+| `sound`      | play sound on sync (default: `true`)             |
+| `sound_file` | custom sound file (default: bundled sound)       |
 
 ## Install
 

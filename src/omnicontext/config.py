@@ -24,6 +24,8 @@ class SyncConfig:
 class Config:
     symlink: str = ".branch-context"
     on_switch: str | None = None
+    sound: bool = True
+    sound_file: str | None = None
     sync: SyncConfig = field(default_factory=SyncConfig)
 
     @classmethod
@@ -46,6 +48,8 @@ class Config:
         return cls(
             symlink=data.get("symlink", ".branch-context"),
             on_switch=data.get("on_switch"),
+            sound=data.get("sound", True),
+            sound_file=data.get("sound_file"),
             sync=sync_config,
         )
 
@@ -55,10 +59,14 @@ class Config:
         data = {
             "symlink": self.symlink,
             "on_switch": self.on_switch,
+            "sound": self.sound,
             "sync": {
                 "provider": self.sync.provider,
             },
         }
+
+        if self.sound_file:
+            data["sound_file"] = self.sound_file
 
         if self.sync.gcp_bucket:
             data["sync"]["gcp"] = {

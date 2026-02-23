@@ -1,8 +1,34 @@
 import os
+import platform
 import shutil
 import subprocess
+from importlib import resources
 
 from omnicontext.config import Config, get_branches_dir, get_template_dir
+
+
+def get_default_sound_file() -> str | None:
+    try:
+        return str(resources.files("omnicontext.assets").joinpath("complete.oga"))
+    except Exception:
+        return None
+
+
+def play_sound(sound_file: str | None):
+    if sound_file is None:
+        sound_file = get_default_sound_file()
+
+    if sound_file is None or not os.path.exists(sound_file):
+        return
+
+    system = platform.system()
+    if system == "Darwin":
+        subprocess.run(["afplay", sound_file], capture_output=True)
+    elif system == "Linux":
+        subprocess.run(["paplay", sound_file], capture_output=True)
+    elif system == "Windows":
+        cmd = f"(New-Object Media.SoundPlayer '{sound_file}').PlaySync()"
+        subprocess.run(["powershell", "-c", cmd], capture_output=True)
 
 
 def sanitize_branch_name(branch: str) -> str:
@@ -82,6 +108,9 @@ def sync_branch(workspace: str, branch: str) -> dict:
     symlink_result = update_symlink(workspace, branch, config)
 
     run_on_switch(workspace, branch, config)
+
+    if config.sound:
+        play_sound(config.sound_file)
 
     return {
         "branch": branch,
