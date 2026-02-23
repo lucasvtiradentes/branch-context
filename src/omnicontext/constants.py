@@ -1,8 +1,6 @@
 HOOK_NAME = "post-checkout"
 HOOK_MARKER = "# omnicontext-managed"
 
-DEFAULT_CALLBACK = "omnicontext on-checkout"
-
 HOOK_TEMPLATE = """#!/bin/bash
 {marker}
 

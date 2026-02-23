@@ -2,7 +2,14 @@ import os
 import sys
 from importlib.metadata import version as pkg_version
 
-from omnicontext.hooks import get_current_branch, get_git_root, install_hook, is_hook_installed, uninstall_hook
+from omnicontext.hooks import (
+    get_current_branch,
+    get_default_callback,
+    get_git_root,
+    install_hook,
+    is_hook_installed,
+    uninstall_hook,
+)
 
 
 def print_help():
@@ -47,9 +54,9 @@ def cmd_install(args):
         os.makedirs(global_hooks, exist_ok=True)
 
         hook_path = os.path.join(global_hooks, "post-checkout")
-        from omnicontext.constants import DEFAULT_CALLBACK, HOOK_MARKER, HOOK_TEMPLATE
+        from omnicontext.constants import HOOK_MARKER, HOOK_TEMPLATE
 
-        callback_cmd = callback or DEFAULT_CALLBACK
+        callback_cmd = callback or get_default_callback()
         content = HOOK_TEMPLATE.format(marker=HOOK_MARKER, callback=callback_cmd)
 
         with open(hook_path, "w") as f:

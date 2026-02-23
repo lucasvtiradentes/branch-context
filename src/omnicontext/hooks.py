@@ -1,8 +1,33 @@
 import os
+import shutil
 import stat
 import subprocess
+import sys
 
-from omnicontext.constants import DEFAULT_CALLBACK, HOOK_MARKER, HOOK_NAME, HOOK_TEMPLATE
+from omnicontext.constants import HOOK_MARKER, HOOK_NAME, HOOK_TEMPLATE
+
+
+def get_omnicontext_path():
+    script_name = "omnicontext"
+
+    if getattr(sys, "frozen", False):
+        return sys.executable
+
+    bin_dir = os.path.dirname(sys.executable)
+    candidate = os.path.join(bin_dir, script_name)
+    if os.path.exists(candidate):
+        return candidate
+
+    found = shutil.which(script_name)
+    if found:
+        return found
+
+    return script_name
+
+
+def get_default_callback():
+    omnicontext_path = get_omnicontext_path()
+    return f'"{omnicontext_path}" on-checkout'
 
 
 def get_git_root(path=None):
@@ -46,7 +71,7 @@ def install_hook(git_root, callback=None):
             return "already_installed"
         return "hook_exists"
 
-    callback_cmd = callback or DEFAULT_CALLBACK
+    callback_cmd = callback or get_default_callback()
     content = HOOK_TEMPLATE.format(marker=HOOK_MARKER, callback=callback_cmd)
 
     with open(hook_path, "w") as f:
