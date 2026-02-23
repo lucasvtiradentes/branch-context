@@ -1,83 +1,97 @@
 # omnicontext
 
-Git branch context manager - install post-checkout hooks to sync context across branches.
+Git branch context manager - sync context folders across branches automatically.
 
 ```
-┌─────────────┐    post-checkout    ┌─────────────┐
-│  branch A   │ ──────────────────> │  branch B   │
-│  context    │                     │  context    │
-└─────────────┘                     └─────────────┘
+git checkout feature/login
+        │
+        ▼
+   post-checkout hook
+        │
+        ▼
+   .omnicontext/branches/feature-login/ exists?
+        │
+   ┌────┴────┐
+   │ NO      │ YES
+   ▼         ▼
+ copy       use
+ template/  existing
+        │
+        ▼
+   symlink .branch-context -> .omnicontext/branches/feature-login/
 ```
 
 ## Features
 
-- post-checkout hook - runs on `git checkout` / `git switch`
-- global install    - configure once, works on all repos
-- custom callbacks  - run your own scripts on branch change
+- branch contexts   - separate folder for each branch
+- auto-sync         - hook syncs on checkout/switch
+- templates         - new branches start from template
+- symlink           - `.branch-context/` always points to current branch
+- gitignored        - branch data stays local
 
 ## Commands
 
 ```bash
-omnicontext install                          # install hook in current repo
-omnicontext install --global                 # configure global hooks path
-omnicontext install --callback "my-script"   # custom callback command
-omnicontext uninstall                        # remove hook from current repo
-omnicontext uninstall --global               # remove global hooks config
-omnicontext status                           # show hook status
-omnicontext --help                           # show help
-omnicontext --version                        # show version
+omnicontext init                             # initialize .omnicontext/
+omnicontext install                          # install post-checkout hook
+omnicontext install --global                 # global hooks path
+omnicontext sync                             # sync current branch manually
+omnicontext branches                         # list all branch contexts
+omnicontext status                           # show status
+omnicontext uninstall                        # remove hook
 ```
+
+## Quick Start
+
+```bash
+pip install omnicontext
+
+cd your-repo
+omnicontext init      # creates .omnicontext/
+omnicontext install   # installs hook
+
+git checkout -b feature/new   # auto-creates context from template
+cat .branch-context/context.md
+```
+
+## Structure
+
+```
+.omnicontext/
+├── config.json              # settings
+├── template/                # copied to new branches
+│   └── context.md
+├── branches/                # one folder per branch (gitignored)
+│   ├── main/
+│   │   └── context.md
+│   └── feature-login/
+│       └── context.md
+└── .gitignore
+
+.branch-context -> .omnicontext/branches/main/   # symlink to current
+```
+
+## Config
+
+`.omnicontext/config.json`:
+
+```json
+{
+  "symlink": ".branch-context",
+  "on_switch": "echo 'switched to {branch}'"
+}
+```
+
+| Key | Description |
+|-----|-------------|
+| `symlink` | symlink name (default: `.branch-context`) |
+| `on_switch` | command to run on branch switch |
 
 ## Install
 
 ```bash
 pipx install omnicontext
 # pip install omnicontext
-```
-
-## Update
-
-```bash
-pipx upgrade omnicontext
-# pip install --upgrade omnicontext
-```
-
-## Uninstall
-
-```bash
-pipx uninstall omnicontext
-# pip uninstall omnicontext
-```
-
-## How it works
-
-### Hook mode (default)
-
-Installs a `post-checkout` git hook that runs after every `git checkout` or `git switch`:
-
-```bash
-omnicontext install
-git checkout feature-branch  # hook triggers automatically
-```
-
-The hook calls `omnicontext on-checkout <old_branch> <new_branch>`.
-
-### Global mode
-
-Configure once, works on all repos:
-
-```bash
-omnicontext install --global
-```
-
-Sets `git config --global core.hooksPath ~/.git-hooks`.
-
-### Custom callbacks
-
-Run your own script on branch change:
-
-```bash
-omnicontext install --callback "python my-sync-script.py"
 ```
 
 ## Development
@@ -87,10 +101,4 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 pytest -v
-```
-
-```bash
-# dev alias
-ln -s $(pwd)/.venv/bin/omnicontext ~/.local/bin/omnicontextd   # install
-rm ~/.local/bin/omnicontextd                                    # remove
 ```

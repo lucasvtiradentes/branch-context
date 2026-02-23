@@ -1,6 +1,37 @@
 HOOK_NAME = "post-checkout"
 HOOK_MARKER = "# omnicontext-managed"
 
+CONFIG_DIR = ".omnicontext"
+CONFIG_FILE = "config.json"
+TEMPLATE_DIR = "template"
+BRANCHES_DIR = "branches"
+
+DEFAULT_TEMPLATE_CONTEXT = """# Branch Context
+
+## Objective
+
+N/A
+
+## Notes
+
+N/A
+
+## Tasks
+
+- [ ] TODO
+"""
+
+GITIGNORE_BRANCHES = """# Ignore all branch contexts (local only)
+*
+!.gitignore
+"""
+
+GITIGNORE_ROOT = """# Ignore branch data and secrets
+branches/
+*.json
+!config.json
+"""
+
 HOOK_TEMPLATE = """#!/bin/bash
 {marker}
 
