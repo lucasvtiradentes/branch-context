@@ -95,13 +95,17 @@ def _get_fish_completion() -> str:
     commands = get_public_commands()
 
     cmd_lines = "\n".join(
-        "\n".join(f'complete -c {alias} -n "__fish_use_subcommand" -a {name} -d "{info["desc"]}"' for alias in CLI_ALIASES)
+        "\n".join(f'complete -c {a} -n "__fish_use_subcommand" -a {name} -d "{info["desc"]}"' for a in CLI_ALIASES)
         for name, info in commands.items()
     )
 
-    init_lines = "\n".join(f"complete -c {alias} -f" for alias in CLI_ALIASES)
-    completion_lines = "\n".join(f'complete -c {alias} -n "__fish_seen_subcommand_from completion" -a "zsh bash fish"' for alias in CLI_ALIASES)
-    reset_lines = "\n".join(f'complete -c {alias} -n "__fish_seen_subcommand_from reset" -a "(__branchctx_templates)"' for alias in CLI_ALIASES)
+    init_lines = "\n".join(f"complete -c {a} -f" for a in CLI_ALIASES)
+    completion_lines = "\n".join(
+        f'complete -c {a} -n "__fish_seen_subcommand_from completion" -a "zsh bash fish"' for a in CLI_ALIASES
+    )
+    reset_lines = "\n".join(
+        f'complete -c {a} -n "__fish_seen_subcommand_from reset" -a "(__branchctx_templates)"' for a in CLI_ALIASES
+    )
 
     return f"""{init_lines}
 

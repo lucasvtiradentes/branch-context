@@ -1,6 +1,7 @@
 install:
 	python3 -m venv .venv
 	.venv/bin/pip install -e ".[dev]"
+	.venv/bin/pre-commit install
 
 check:
 	.venv/bin/ruff check .
