@@ -26,7 +26,7 @@ def get_omnicontext_path():
     return script_name
 
 
-def get_default_callback():
+def get_callback():
     omnicontext_path = get_omnicontext_path()
     return f'"{omnicontext_path}" on-checkout'
 
@@ -47,7 +47,7 @@ def is_hook_installed(git_root):
         return HOOK_MARKER in f.read()
 
 
-def install_hook(git_root, callback=None):
+def install_hook(git_root):
     hook_path = get_hook_path(git_root)
     hooks_dir = os.path.dirname(hook_path)
 
@@ -61,8 +61,7 @@ def install_hook(git_root, callback=None):
             return "already_installed"
         return "hook_exists"
 
-    callback_cmd = callback or get_default_callback()
-    content = get_hook_template().format(marker=HOOK_MARKER, callback=callback_cmd)
+    content = get_hook_template().format(marker=HOOK_MARKER, callback=get_callback())
 
     with open(hook_path, "w") as f:
         f.write(content)

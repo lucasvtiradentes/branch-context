@@ -2,19 +2,13 @@ from omnicontext.constants import CLI_NAME
 from omnicontext.hooks import get_git_root, install_hook
 
 
-def cmd_install(args):
+def cmd_install(_args):
     git_root = get_git_root()
     if not git_root:
         print("error: not a git repository")
         return 1
 
-    callback = None
-    if "--callback" in args:
-        idx = args.index("--callback")
-        if idx + 1 < len(args):
-            callback = args[idx + 1]
-
-    result = install_hook(git_root, callback)
+    result = install_hook(git_root)
 
     if result == "installed":
         print(f"Hook installed: {git_root}")

@@ -26,7 +26,6 @@ Commands:
   on-checkout          Called by hook on branch switch
 
 Options:
-  --callback <cmd>     Custom command for hook (install only)
   --help, -h           Show this help
   --version, -v        Show version
 
