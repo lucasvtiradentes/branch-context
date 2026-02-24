@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import shutil
 import stat
@@ -8,7 +10,7 @@ from omnicontext.constants import CLI_NAME, GIT_DIR, HOOK_MARKER, HOOK_NAME
 from omnicontext.git import git_current_branch, git_root
 
 
-def get_omnicontext_path():
+def get_omnicontext_path() -> str:
     script_name = CLI_NAME
 
     if getattr(sys, "frozen", False):
@@ -26,20 +28,20 @@ def get_omnicontext_path():
     return script_name
 
 
-def get_callback():
+def get_callback() -> str:
     omnicontext_path = get_omnicontext_path()
     return f'"{omnicontext_path}" on-checkout'
 
 
-def get_git_root(path=None):
+def get_git_root(path: str | None = None) -> str | None:
     return git_root(path or os.getcwd())
 
 
-def get_hook_path(git_root):
+def get_hook_path(git_root: str) -> str:
     return os.path.join(git_root, GIT_DIR, "hooks", HOOK_NAME)
 
 
-def is_hook_installed(git_root):
+def is_hook_installed(git_root: str) -> bool:
     hook_path = get_hook_path(git_root)
     if not os.path.exists(hook_path):
         return False
@@ -47,7 +49,7 @@ def is_hook_installed(git_root):
         return HOOK_MARKER in f.read()
 
 
-def install_hook(git_root):
+def install_hook(git_root: str) -> str:
     hook_path = get_hook_path(git_root)
     hooks_dir = os.path.dirname(hook_path)
 
@@ -72,7 +74,7 @@ def install_hook(git_root):
     return "installed"
 
 
-def uninstall_hook(git_root):
+def uninstall_hook(git_root: str) -> str:
     hook_path = get_hook_path(git_root)
 
     if not os.path.exists(hook_path):
@@ -88,5 +90,5 @@ def uninstall_hook(git_root):
     return "uninstalled"
 
 
-def get_current_branch(path=None):
+def get_current_branch(path: str | None = None) -> str | None:
     return git_current_branch(path or os.getcwd())
