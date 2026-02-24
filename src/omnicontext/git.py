@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+from typing import Literal
 
 
 def git_init(path: str, branch: str | None = None) -> subprocess.CompletedProcess:
@@ -58,7 +59,7 @@ def git_root(path: str) -> str | None:
         return None
 
 
-def git_config_get(key: str, scope: str | None = None) -> str | None:
+def git_config_get(key: str, scope: Literal["global"] | None = None) -> str | None:
     cmd = ["git", "config"]
     if scope == "global":
         cmd.append("--global")
@@ -70,7 +71,7 @@ def git_config_get(key: str, scope: str | None = None) -> str | None:
         return None
 
 
-def git_config_unset(key: str, scope: str | None = None) -> bool:
+def git_config_unset(key: str, scope: Literal["global"] | None = None) -> bool:
     cmd = ["git", "config", "--unset"]
     if scope == "global":
         cmd.insert(2, "--global")
