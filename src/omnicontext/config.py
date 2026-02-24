@@ -7,21 +7,28 @@ from dataclasses import dataclass, field
 from omnicontext.assets import get_default_config
 from omnicontext.constants import BRANCHES_DIR, CONFIG_DIR, CONFIG_FILE, TEMPLATE_DIR
 
-_DEFAULTS = get_default_config()
+_DEFAULTS: dict | None = None
+
+
+def _get_defaults() -> dict:
+    global _DEFAULTS
+    if _DEFAULTS is None:
+        _DEFAULTS = get_default_config()
+    return _DEFAULTS
 
 
 @dataclass
 class SyncConfig:
-    provider: str = field(default_factory=lambda: _DEFAULTS["sync"]["provider"])
+    provider: str = field(default_factory=lambda: _get_defaults()["sync"]["provider"])
     gcp_bucket: str | None = None
     gcp_credentials_file: str | None = None
 
 
 @dataclass
 class Config:
-    symlink: str = field(default_factory=lambda: _DEFAULTS["symlink"])
-    on_switch: str | None = field(default_factory=lambda: _DEFAULTS["on_switch"])
-    sound: bool = field(default_factory=lambda: _DEFAULTS["sound"])
+    symlink: str = field(default_factory=lambda: _get_defaults()["symlink"])
+    on_switch: str | None = field(default_factory=lambda: _get_defaults()["on_switch"])
+    sound: bool = field(default_factory=lambda: _get_defaults()["sound"])
     sound_file: str | None = None
     sync: SyncConfig = field(default_factory=SyncConfig)
 
@@ -38,17 +45,18 @@ class Config:
         except (json.JSONDecodeError, OSError):
             return cls()
 
+        defaults = _get_defaults()
         sync_data = data.get("sync", {})
         sync_config = SyncConfig(
-            provider=sync_data.get("provider", _DEFAULTS["sync"]["provider"]),
+            provider=sync_data.get("provider", defaults["sync"]["provider"]),
             gcp_bucket=sync_data.get("gcp", {}).get("bucket"),
             gcp_credentials_file=sync_data.get("gcp", {}).get("credentials_file"),
         )
 
         return cls(
-            symlink=data.get("symlink", _DEFAULTS["symlink"]),
+            symlink=data.get("symlink", defaults["symlink"]),
             on_switch=data.get("on_switch"),
-            sound=data.get("sound", _DEFAULTS["sound"]),
+            sound=data.get("sound", defaults["sound"]),
             sound_file=data.get("sound_file"),
             sync=sync_config,
         )
