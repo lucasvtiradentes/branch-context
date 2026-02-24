@@ -1,5 +1,6 @@
-CLI_NAME = "branch-ctx"
 PACKAGE_NAME = "branch-ctx"
+CLI_NAME = "bctx"
+CLI_ALIASES = ["branch-ctx", "bctx"]
 ENV_BRANCH = "BRANCH_CTX_BRANCH"
 
 GIT_DIR = ".git"

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from branchctx.constants import CLI_NAME
+from branchctx.constants import CLI_ALIASES, CLI_NAME
 from branchctx.registry import get_public_commands
 
 
 def _get_zsh_completion() -> str:
     commands = get_public_commands()
     cmd_lines = "\n        ".join(f"'{name}:{info['desc']}'" for name, info in commands.items())
+    aliases_str = " ".join(CLI_ALIASES)
 
     return f"""#compdef {CLI_NAME}
 
@@ -47,13 +48,15 @@ _{CLI_NAME}() {{
     esac
 }}
 
-_{CLI_NAME}
+compdef _{CLI_NAME} {aliases_str}
 """
 
 
 def _get_bash_completion() -> str:
     commands = get_public_commands()
     cmd_names = " ".join(commands.keys())
+    complete_lines = "\n".join(f"complete -F _{CLI_NAME} {alias}" for alias in CLI_ALIASES)
+    case_aliases = "|".join(CLI_ALIASES)
 
     return f'''_{CLI_NAME}() {{
     local cur prev commands git_root templates_dir
@@ -77,29 +80,34 @@ def _get_bash_completion() -> str:
             COMPREPLY=( $(compgen -W "zsh bash fish" -- "$cur") )
             return 0
             ;;
-        {CLI_NAME})
+        {case_aliases})
             COMPREPLY=( $(compgen -W "$commands" -- "$cur") )
             return 0
             ;;
     esac
 }}
 
-complete -F _{CLI_NAME} {CLI_NAME}
+{complete_lines}
 '''
 
 
 def _get_fish_completion() -> str:
     commands = get_public_commands()
+
     cmd_lines = "\n".join(
-        f'complete -c {CLI_NAME} -n "__fish_use_subcommand" -a {name} -d "{info["desc"]}"'
+        "\n".join(f'complete -c {alias} -n "__fish_use_subcommand" -a {name} -d "{info["desc"]}"' for alias in CLI_ALIASES)
         for name, info in commands.items()
     )
 
-    return f"""complete -c {CLI_NAME} -f
+    init_lines = "\n".join(f"complete -c {alias} -f" for alias in CLI_ALIASES)
+    completion_lines = "\n".join(f'complete -c {alias} -n "__fish_seen_subcommand_from completion" -a "zsh bash fish"' for alias in CLI_ALIASES)
+    reset_lines = "\n".join(f'complete -c {alias} -n "__fish_seen_subcommand_from reset" -a "(__branchctx_templates)"' for alias in CLI_ALIASES)
+
+    return f"""{init_lines}
 
 {cmd_lines}
 
-complete -c {CLI_NAME} -n "__fish_seen_subcommand_from completion" -a "zsh bash fish"
+{completion_lines}
 
 function __branchctx_templates
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
@@ -111,7 +119,7 @@ function __branchctx_templates
     end
 end
 
-complete -c {CLI_NAME} -n "__fish_seen_subcommand_from reset" -a "(__branchctx_templates)"
+{reset_lines}
 """
 
 
