@@ -106,3 +106,39 @@ def git_list_branches(path: str) -> list[str]:
         return [b.strip() for b in result.stdout.strip().split("\n") if b.strip()]
     except subprocess.CalledProcessError:
         return []
+
+
+def git_hooks_path(path: str) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "config", "--get", "core.hooksPath"],
+            cwd=path,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return None
+
+
+def git_info_exclude_add(path: str, pattern: str) -> bool:
+    exclude_file = f"{path}/.git/info/exclude"
+    try:
+        existing = ""
+        try:
+            with open(exclude_file) as f:
+                existing = f.read()
+        except FileNotFoundError:
+            pass
+
+        if pattern in existing.splitlines():
+            return True
+
+        with open(exclude_file, "a") as f:
+            if existing and not existing.endswith("\n"):
+                f.write("\n")
+            f.write(f"{pattern}\n")
+        return True
+    except (OSError, IOError):
+        return False
