@@ -8,10 +8,7 @@ from omnicontext.constants import DEFAULT_SYMLINK
 from omnicontext.git import git_add, git_checkout, git_commit, git_config, git_init
 from omnicontext.hooks import install_hook
 from omnicontext.sync import get_branch_rel_path, sync_branch
-
-
-def normalize_path(path: str) -> str:
-    return path.replace("\\", "/")
+from tests.utils import normalize_path
 
 
 @pytest.fixture

@@ -4,6 +4,7 @@ import tempfile
 import pytest
 
 from omnicontext.config import Config, get_branches_dir, get_config_dir, get_template_dir
+from tests.utils import normalize_path
 from omnicontext.constants import DEFAULT_SYMLINK, DEFAULT_TEMPLATE_CONTEXT
 from omnicontext.sync import (
     branch_context_exists,
@@ -153,13 +154,13 @@ def test_symlink_switches_between_branches(workspace):
     create_branch_context(workspace, "feature")
 
     update_symlink(workspace, "main", config)
-    assert os.readlink(symlink_path) == get_branch_rel_path("main")
+    assert normalize_path(os.readlink(symlink_path)) == get_branch_rel_path("main")
 
     update_symlink(workspace, "feature", config)
-    assert os.readlink(symlink_path) == get_branch_rel_path("feature")
+    assert normalize_path(os.readlink(symlink_path)) == get_branch_rel_path("feature")
 
     update_symlink(workspace, "main", config)
-    assert os.readlink(symlink_path) == get_branch_rel_path("main")
+    assert normalize_path(os.readlink(symlink_path)) == get_branch_rel_path("main")
 
 
 def test_branch_content_isolation(workspace):
@@ -196,7 +197,7 @@ def test_multiple_branch_switches(workspace):
     for _ in range(3):
         for branch in branches:
             sync_branch(workspace, branch)
-            assert os.readlink(symlink_path) == get_branch_rel_path(branch)
+            assert normalize_path(os.readlink(symlink_path)) == get_branch_rel_path(branch)
 
 
 def test_play_sound_no_file():
