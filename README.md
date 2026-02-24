@@ -33,9 +33,7 @@ git checkout feature/login
 ## Commands
 
 ```bash
-omnicontext init                             # initialize .omnicontext/
-omnicontext install                          # install post-checkout hook
-omnicontext install --global                 # global hooks path
+omnicontext init                             # initialize + install hook
 omnicontext sync                             # sync current branch manually
 omnicontext branches                         # list all branch contexts
 omnicontext status                           # show status
@@ -48,8 +46,7 @@ omnicontext uninstall                        # remove hook
 pip install omnicontext
 
 cd your-repo
-omnicontext init      # creates .omnicontext/
-omnicontext install   # installs hook
+omnicontext init      # creates .omnicontext/ + installs hook
 
 git checkout -b feature/new   # auto-creates context from template
 cat .branch-context/context.md
