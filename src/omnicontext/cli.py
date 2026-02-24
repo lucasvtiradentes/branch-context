@@ -23,7 +23,6 @@ Commands:
   sync                 Sync context for current branch
   branches             List all branch contexts
   status               Show status
-  on-checkout          Called by hook on branch switch
 
 Options:
   --help, -h           Show this help
