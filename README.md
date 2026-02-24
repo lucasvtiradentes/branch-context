@@ -86,7 +86,7 @@ cat .branch-context/context.md
 |--------------|--------------------------------------------------|
 | `symlink`    | symlink name (default: `.branch-context`)        |
 | `on_switch`  | command to run on branch switch                  |
-| `sound`      | play sound on sync (default: `true`)             |
+| `sound`      | play sound on sync (default: `false`)            |
 | `sound_file` | custom sound file (default: bundled sound)       |
 
 ## Install
