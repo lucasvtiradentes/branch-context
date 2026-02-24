@@ -3,22 +3,33 @@
 Git branch context manager - sync context folders across branches automatically.
 
 ```
-git checkout feature/login
-        │
-        ▼
-   post-checkout hook
-        │
-        ▼
-   .bctx/branches/feature-login/ exists?
-        │
-   ┌────┴────┐
-   │ NO      │ YES
-   ▼         ▼
- copy       use
- template   existing
-        │
-        ▼
-   symlink _context -> .bctx/branches/feature-login/
+           git checkout feature/login
+                       │
+                       ▼
+               ┌───────────────┐
+               │ post-checkout │
+               │    git hook   │
+               └───────┬───────┘
+                       │
+                       ▼
+      .bctx/branches/feature-login/ exists?
+                       │
+                 ┌─────┴─────┐
+                 │           │
+                NO          YES
+                 │           │
+                 ▼           │
+            ┌─────────┐      │
+            │  copy   │      │
+            │template │      │
+            └────┬────┘      │
+                 │           │
+                 └─────┬─────┘
+                       │
+                       ▼
+┌───────────────────────────────────────────┐
+│ _context -> .bctx/branches/feature-login/ │
+└───────────────────────────────────────────┘
 ```
 
 ## Features
@@ -40,26 +51,26 @@ pip install branch-ctx
 ## Commands
 
 ```bash
-branch-ctx init                          # initialize + install hook
-branch-ctx sync                          # sync current branch manually
-branch-ctx branches                      # list all branch contexts
-branch-ctx status                        # show status
-branch-ctx reset                         # reset context to template
-branch-ctx reset feature                 # reset to specific template
-branch-ctx doctor                        # run diagnostics
-branch-ctx completion zsh                # generate shell completion
-branch-ctx uninstall                     # remove hook
+bctx init                          # initialize + install hook
+bctx sync                          # sync current branch manually
+bctx branches                      # list all branch contexts
+bctx status                        # show status
+bctx reset                         # reset context to template
+bctx reset feature                 # reset to specific template
+bctx doctor                        # run diagnostics
+bctx completion zsh                # generate shell completion
+bctx uninstall                     # remove hook
 ```
 
-Alias: `bctx` works too.
+Alias: `branch-ctx` works too.
 
 ## Quick Start
 
 ```bash
-pip install branch-ctx
+pip install bctx
 
 cd your-repo
-branch-ctx init      # creates .bctx/ + installs hook
+bctx init      # creates .bctx/ + installs hook
 
 git checkout -b feature/new   # auto-creates context from template
 cat _context/context.md
@@ -69,13 +80,13 @@ cat _context/context.md
 
 ```bash
 # zsh - add to ~/.zshrc
-eval "$(branch-ctx completion zsh)"
+eval "$(bctx completion zsh)"
 
 # bash - add to ~/.bashrc
-eval "$(branch-ctx completion bash)"
+eval "$(bctx completion bash)"
 
 # fish
-branch-ctx completion fish | source
+bctx completion fish | source
 ```
 
 ## Structure
@@ -115,12 +126,12 @@ _context -> .bctx/branches/main/   # symlink to current
 }
 ```
 
-| Key              | Description                                      |
-|------------------|--------------------------------------------------|
-| `symlink`        | symlink name (default: `_context`)        |
-| `on_switch`      | command to run on branch switch                  |
-| `sound`          | play sound on sync (default: `false`)            |
-| `sound_file`     | custom sound file (default: bundled sound)       |
+| Key              | Description                                     |
+|------------------|-------------------------------------------------|
+| `symlink`        | symlink name (default: `_context`)              |
+| `on_switch`      | command to run on branch switch                 |
+| `sound`          | play sound on sync (default: `false`)           |
+| `sound_file`      | custom sound file (default: bundled sound)       |
 | `template_rules` | per-prefix template mapping (fallback: _default) |
 
 ## Development
