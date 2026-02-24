@@ -15,7 +15,7 @@ git checkout feature/login
    │ NO      │ YES
    ▼         ▼
  copy       use
- template/  existing
+ template   existing
         │
         ▼
    symlink .branch-context -> .omnicontext/branches/feature-login/
@@ -25,10 +25,11 @@ git checkout feature/login
 
 - branch contexts   - separate folder for each branch
 - auto-sync         - hook syncs on checkout/switch
-- templates         - new branches start from template
+- templates         - new branches start from template (per-prefix support)
 - symlink           - `.branch-context/` always points to current branch
 - sound             - plays sound on branch switch
 - gitignored        - branch data stays local
+- shell completion  - zsh, bash, fish
 
 ## Commands
 
@@ -37,6 +38,10 @@ omnicontext init                             # initialize + install hook
 omnicontext sync                             # sync current branch manually
 omnicontext branches                         # list all branch contexts
 omnicontext status                           # show status
+omnicontext reset                            # reset context to template
+omnicontext reset feature                    # reset to specific template
+omnicontext doctor                           # run diagnostics
+omnicontext completion zsh                   # generate shell completion
 omnicontext uninstall                        # remove hook
 ```
 
@@ -52,13 +57,29 @@ git checkout -b feature/new   # auto-creates context from template
 cat .branch-context/context.md
 ```
 
+## Shell Completion
+
+```bash
+# zsh - add to ~/.zshrc
+eval "$(omnicontext completion zsh)"
+
+# bash - add to ~/.bashrc
+eval "$(omnicontext completion bash)"
+
+# fish
+omnicontext completion fish | source
+```
+
 ## Structure
 
 ```
 .omnicontext/
-├── config.json              # settings
-├── template/                # copied to new branches
-│   └── context.md
+├── config.json
+├── templates/
+│   ├── _default/            # fallback template
+│   │   └── context.md
+│   └── feature/             # template for feature/* branches
+│       └── context.md
 ├── branches/                # one folder per branch (gitignored)
 │   ├── main/
 │   │   └── context.md
@@ -78,16 +99,21 @@ cat .branch-context/context.md
   "symlink": ".branch-context",
   "on_switch": "echo 'switched to {branch}'",
   "sound": true,
-  "sound_file": "/path/to/custom.wav"
+  "sound_file": "/path/to/custom.wav",
+  "template_rules": [
+    {"prefix": "feature/", "template": "feature"},
+    {"prefix": "bugfix/", "template": "bugfix"}
+  ]
 }
 ```
 
-| Key          | Description                                      |
-|--------------|--------------------------------------------------|
-| `symlink`    | symlink name (default: `.branch-context`)        |
-| `on_switch`  | command to run on branch switch                  |
-| `sound`      | play sound on sync (default: `false`)            |
-| `sound_file` | custom sound file (default: bundled sound)       |
+| Key              | Description                                      |
+|------------------|--------------------------------------------------|
+| `symlink`        | symlink name (default: `.branch-context`)        |
+| `on_switch`      | command to run on branch switch                  |
+| `sound`          | play sound on sync (default: `false`)            |
+| `sound_file`     | custom sound file (default: bundled sound)       |
+| `template_rules` | per-prefix template mapping (fallback: _default) |
 
 ## Install
 
