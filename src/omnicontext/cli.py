@@ -19,7 +19,6 @@ def print_help():
 Commands:
   init                 Initialize .omnicontext/ in current repo
   install              Install post-checkout hook
-  install --global     Configure global hooks path (~/.git-hooks)
   uninstall            Remove hook from current repo
   sync                 Sync context for current branch
   branches             List all branch contexts
