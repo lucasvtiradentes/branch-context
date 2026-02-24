@@ -1,7 +1,7 @@
 import sys
 from importlib.metadata import version as pkg_version
 
-from branchctx.constants import CLI_NAME, PACKAGE_NAME
+from branchctx.constants import CLI_NAME, DIST_NAME
 from branchctx.registry import COMMANDS, get_all_command_names, get_command_handler
 
 
@@ -45,7 +45,7 @@ def main():
         sys.exit(0)
 
     if "--version" in args or "-v" in args:
-        print(pkg_version(PACKAGE_NAME))
+        print(pkg_version(DIST_NAME))
         sys.exit(0)
 
     cmd = args[0]

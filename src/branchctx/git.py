@@ -42,7 +42,18 @@ def git_current_branch(path: str) -> str | None:
         )
         return result.stdout.strip()
     except subprocess.CalledProcessError:
-        return None
+        pass
+
+    head_file = f"{path}/.git/HEAD"
+    try:
+        with open(head_file) as f:
+            content = f.read().strip()
+        if content.startswith("ref: refs/heads/"):
+            return content[16:]
+    except FileNotFoundError:
+        pass
+
+    return None
 
 
 def git_root(path: str) -> str | None:

@@ -1,4 +1,5 @@
-PACKAGE_NAME = "branch-ctx"
+DIST_NAME = "branch-ctx"
+PACKAGE_NAME = "branchctx"
 CLI_NAME = "bctx"
 CLI_ALIASES = ["branch-ctx", "bctx"]
 ENV_BRANCH = "BRANCH_CTX_BRANCH"
