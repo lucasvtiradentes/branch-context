@@ -58,12 +58,14 @@ class Config:
 
         data = {
             "symlink": self.symlink,
-            "on_switch": self.on_switch,
             "sound": self.sound,
             "sync": {
                 "provider": self.sync.provider,
             },
         }
+
+        if self.on_switch:
+            data["on_switch"] = self.on_switch
 
         if self.sound_file:
             data["sound_file"] = self.sound_file
