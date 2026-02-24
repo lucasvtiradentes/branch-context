@@ -70,18 +70,6 @@ def git_config_get(key: str, scope: str | None = None) -> str | None:
         return None
 
 
-def git_config_set(key: str, value: str, scope: str | None = None) -> bool:
-    cmd = ["git", "config"]
-    if scope == "global":
-        cmd.append("--global")
-    cmd.extend([key, value])
-    try:
-        subprocess.run(cmd, capture_output=True, text=True, check=True)
-        return True
-    except subprocess.CalledProcessError:
-        return False
-
-
 def git_config_unset(key: str, scope: str | None = None) -> bool:
     cmd = ["git", "config", "--unset"]
     if scope == "global":
