@@ -41,11 +41,11 @@ def main():
 
     if not args or "--help" in args or "-h" in args:
         print_help()
-        return 0
+        sys.exit(0)
 
     if "--version" in args or "-v" in args:
         print(pkg_version(PACKAGE_NAME))
-        return 0
+        sys.exit(0)
 
     cmd = args[0]
     cmd_args = args[1:]
