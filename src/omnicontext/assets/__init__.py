@@ -18,12 +18,8 @@ def get_template_context() -> str:
     return get_asset("template_context.md")
 
 
-def get_gitignore_branches() -> str:
-    return get_asset("gitignore_branches")
-
-
-def get_gitignore_root() -> str:
-    return get_asset("gitignore_root")
+def get_gitignore() -> str:
+    return get_asset("gitignore")
 
 
 def get_hook_template() -> str:
