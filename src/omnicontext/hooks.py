@@ -4,6 +4,7 @@ import os
 import shutil
 import stat
 import sys
+from typing import Literal
 
 from omnicontext.assets import get_hook_template
 from omnicontext.constants import CLI_NAME, GIT_DIR, HOOK_MARKER, HOOK_NAME
@@ -49,7 +50,7 @@ def is_hook_installed(git_root: str) -> bool:
         return HOOK_MARKER in f.read()
 
 
-def install_hook(git_root: str) -> str:
+def install_hook(git_root: str) -> Literal["installed", "already_installed", "hook_exists"]:
     hook_path = get_hook_path(git_root)
     hooks_dir = os.path.dirname(hook_path)
 
@@ -74,7 +75,7 @@ def install_hook(git_root: str) -> str:
     return "installed"
 
 
-def uninstall_hook(git_root: str) -> str:
+def uninstall_hook(git_root: str) -> Literal["uninstalled", "not_installed", "not_managed"]:
     hook_path = get_hook_path(git_root)
 
     if not os.path.exists(hook_path):
