@@ -3,14 +3,14 @@ import tempfile
 
 import pytest
 
-from omnicontext.constants import HOOK_MARKER
+from omnicontext.constants import GIT_DIR, HOOK_MARKER
 from omnicontext.hooks import get_hook_path, install_hook, is_hook_installed, uninstall_hook
 
 
 @pytest.fixture
 def git_repo():
     with tempfile.TemporaryDirectory() as tmpdir:
-        git_dir = os.path.join(tmpdir, ".git")
+        git_dir = os.path.join(tmpdir, GIT_DIR)
         hooks_dir = os.path.join(git_dir, "hooks")
         os.makedirs(hooks_dir)
         yield tmpdir

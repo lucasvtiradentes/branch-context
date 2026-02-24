@@ -5,7 +5,7 @@ import pytest
 
 from omnicontext.config import Config, get_branches_dir, get_config_dir, get_template_dir
 from tests.utils import normalize_path
-from omnicontext.constants import DEFAULT_SYMLINK, DEFAULT_TEMPLATE_CONTEXT
+from omnicontext.constants import DEFAULT_SYMLINK, DEFAULT_TEMPLATE_CONTEXT, GIT_DIR
 from omnicontext.sync import (
     branch_context_exists,
     create_branch_context,
@@ -21,7 +21,7 @@ from omnicontext.sync import (
 @pytest.fixture
 def workspace():
     with tempfile.TemporaryDirectory() as tmpdir:
-        git_dir = os.path.join(tmpdir, ".git")
+        git_dir = os.path.join(tmpdir, GIT_DIR)
         os.makedirs(git_dir)
 
         config_dir = get_config_dir(tmpdir)
@@ -97,7 +97,7 @@ def test_list_branches(workspace):
 @pytest.fixture
 def workspace_no_template():
     with tempfile.TemporaryDirectory() as tmpdir:
-        git_dir = os.path.join(tmpdir, ".git")
+        git_dir = os.path.join(tmpdir, GIT_DIR)
         os.makedirs(git_dir)
 
         config_dir = get_config_dir(tmpdir)
