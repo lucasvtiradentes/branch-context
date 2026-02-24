@@ -1,6 +1,7 @@
 import os
 
-from omnicontext.constants import CLI_NAME, GLOBAL_HOOKS_DIR, HOOK_MARKER, HOOK_NAME, HOOK_TEMPLATE
+from omnicontext.assets import get_hook_template
+from omnicontext.constants import CLI_NAME, GLOBAL_HOOKS_DIR, HOOK_MARKER, HOOK_NAME
 from omnicontext.git import git_config_set
 from omnicontext.hooks import get_default_callback, get_git_root, install_hook
 
@@ -24,7 +25,7 @@ def cmd_install(args):
         hook_path = os.path.join(global_hooks, HOOK_NAME)
 
         callback_cmd = callback or get_default_callback()
-        content = HOOK_TEMPLATE.format(marker=HOOK_MARKER, callback=callback_cmd)
+        content = get_hook_template().format(marker=HOOK_MARKER, callback=callback_cmd)
 
         with open(hook_path, "w") as f:
             f.write(content)

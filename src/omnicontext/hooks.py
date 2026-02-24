@@ -3,7 +3,8 @@ import shutil
 import stat
 import sys
 
-from omnicontext.constants import CLI_NAME, GIT_DIR, HOOK_MARKER, HOOK_NAME, HOOK_TEMPLATE
+from omnicontext.assets import get_hook_template
+from omnicontext.constants import CLI_NAME, GIT_DIR, HOOK_MARKER, HOOK_NAME
 from omnicontext.git import git_current_branch, git_root
 
 
@@ -61,7 +62,7 @@ def install_hook(git_root, callback=None):
         return "hook_exists"
 
     callback_cmd = callback or get_default_callback()
-    content = HOOK_TEMPLATE.format(marker=HOOK_MARKER, callback=callback_cmd)
+    content = get_hook_template().format(marker=HOOK_MARKER, callback=callback_cmd)
 
     with open(hook_path, "w") as f:
         f.write(content)

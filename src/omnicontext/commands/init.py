@@ -1,7 +1,8 @@
 import os
 
+from omnicontext.assets import get_gitignore_branches, get_gitignore_root, get_template_context
 from omnicontext.config import Config, config_exists, get_branches_dir, get_config_dir, get_template_dir
-from omnicontext.constants import CLI_NAME, CONFIG_FILE, DEFAULT_TEMPLATE_CONTEXT, GITIGNORE_BRANCHES, GITIGNORE_ROOT
+from omnicontext.constants import CLI_NAME, CONFIG_FILE
 from omnicontext.hooks import get_git_root
 
 
@@ -27,13 +28,13 @@ def cmd_init(_args):
     config.save(git_root)
 
     with open(os.path.join(template_dir, "context.md"), "w") as f:
-        f.write(DEFAULT_TEMPLATE_CONTEXT)
+        f.write(get_template_context())
 
     with open(os.path.join(branches_dir, ".gitignore"), "w") as f:
-        f.write(GITIGNORE_BRANCHES)
+        f.write(get_gitignore_branches())
 
     with open(os.path.join(config_dir, ".gitignore"), "w") as f:
-        f.write(GITIGNORE_ROOT)
+        f.write(get_gitignore_root())
 
     print(f"Initialized: {config_dir}")
     print(f"  config:   {config_dir}/{CONFIG_FILE}")

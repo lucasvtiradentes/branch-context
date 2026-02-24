@@ -5,7 +5,8 @@ import pytest
 
 from omnicontext.config import Config, get_branches_dir, get_config_dir, get_template_dir
 from tests.utils import normalize_path
-from omnicontext.constants import DEFAULT_SYMLINK, DEFAULT_TEMPLATE_CONTEXT, GIT_DIR
+from omnicontext.assets import get_template_context
+from omnicontext.constants import DEFAULT_SYMLINK, GIT_DIR
 from omnicontext.sync import (
     branch_context_exists,
     create_branch_context,
@@ -36,7 +37,7 @@ def workspace():
         config.save(tmpdir)
 
         with open(os.path.join(template_dir, "context.md"), "w") as f:
-            f.write(DEFAULT_TEMPLATE_CONTEXT)
+            f.write(get_template_context())
 
         yield tmpdir
 
