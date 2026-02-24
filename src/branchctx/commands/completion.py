@@ -8,7 +8,7 @@ def _get_zsh_completion() -> str:
     commands = get_public_commands()
     cmd_lines = "\n        ".join(f"'{name}:{info['desc']}'" for name, info in commands.items())
 
-    return f'''#compdef {CLI_NAME}
+    return f"""#compdef {CLI_NAME}
 
 _{CLI_NAME}() {{
     local -a commands
@@ -48,7 +48,7 @@ _{CLI_NAME}() {{
 }}
 
 _{CLI_NAME}
-'''
+"""
 
 
 def _get_bash_completion() -> str:
@@ -95,7 +95,7 @@ def _get_fish_completion() -> str:
         for name, info in commands.items()
     )
 
-    return f'''complete -c {CLI_NAME} -f
+    return f"""complete -c {CLI_NAME} -f
 
 {cmd_lines}
 
@@ -112,7 +112,7 @@ function __branchctx_templates
 end
 
 complete -c {CLI_NAME} -n "__fish_seen_subcommand_from reset" -a "(__branchctx_templates)"
-'''
+"""
 
 
 def cmd_completion(args: list[str]) -> int:

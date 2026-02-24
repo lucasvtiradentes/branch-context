@@ -1,5 +1,6 @@
 import os
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -16,7 +17,6 @@ from branchctx.sync import (
     sync_branch,
     update_symlink,
 )
-from pathlib import Path
 from tests.utils import normalize_path
 
 
@@ -201,9 +201,7 @@ def test_multiple_branch_switches(workspace):
 
 
 def test_create_branch_context_with_template_rules(workspace):
-    config = Config(
-        template_rules=[TemplateRule(prefix="feature/", template="feature")]
-    )
+    config = Config(template_rules=[TemplateRule(prefix="feature/", template="feature")])
     config.save(workspace)
 
     result = create_branch_context(workspace, "feature/login")
