@@ -4,7 +4,6 @@ from importlib.metadata import version as pkg_version
 from omnicontext.commands import (
     cmd_branches,
     cmd_init,
-    cmd_install,
     cmd_on_checkout,
     cmd_status,
     cmd_sync,
@@ -17,8 +16,7 @@ def print_help():
     print(f"""{CLI_NAME} - Git branch context manager
 
 Commands:
-  init                 Initialize .omnicontext/ in current repo
-  install              Install post-checkout hook
+  init                 Initialize and install hook
   uninstall            Remove hook from current repo
   sync                 Sync context for current branch
   branches             List all branch contexts
@@ -29,8 +27,7 @@ Options:
   --version, -v        Show version
 
 Examples:
-  {CLI_NAME} init                             # initialize project
-  {CLI_NAME} install                          # install hook
+  {CLI_NAME} init                             # initialize + install hook
   {CLI_NAME} sync                             # sync current branch
   {CLI_NAME} branches                         # list contexts
 
@@ -55,7 +52,6 @@ def main():
 
     commands = {
         "init": cmd_init,
-        "install": cmd_install,
         "uninstall": cmd_uninstall,
         "sync": cmd_sync,
         "branches": cmd_branches,
