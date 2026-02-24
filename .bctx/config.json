@@ -2,6 +2,9 @@
   "symlink": "_context",
   "on_switch": null,
   "sound": true,
+  "template_rules": [
+    {"prefix": "feature/", "template": "feature"}
+  ],
   "sync": {
     "provider": "local"
   }
