@@ -28,7 +28,7 @@ _ALL_COMMANDS: set[str] = set(COMMANDS.keys()) | INTERNAL_COMMANDS
 
 
 def get_command_handler(name: str) -> Callable[[list[str]], int]:
-    from omnicontext.commands import (
+    from branchctx.commands import (
         cmd_branches,
         cmd_completion,
         cmd_doctor,

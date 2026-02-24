@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import os
 
-from omnicontext.config import Config, config_exists, list_templates
-from omnicontext.git import git_config_get
-from omnicontext.hooks import get_current_branch, get_git_root, is_hook_installed
-from omnicontext.sync import list_branches
+from branchctx.config import Config, config_exists, list_templates
+from branchctx.git import git_config_get
+from branchctx.hooks import get_current_branch, get_git_root, is_hook_installed
+from branchctx.sync import list_branches
 
 
 def cmd_status(_args: list[str]) -> int:

@@ -3,10 +3,10 @@ import tempfile
 
 import pytest
 
-from omnicontext.assets import copy_init_templates
-from omnicontext.config import Config, TemplateRule, get_branches_dir, get_config_dir, get_templates_dir
-from omnicontext.constants import DEFAULT_SYMLINK, GIT_DIR
-from omnicontext.sync import (
+from branchctx.assets import copy_init_templates
+from branchctx.config import Config, TemplateRule, get_branches_dir, get_config_dir, get_templates_dir
+from branchctx.constants import DEFAULT_SYMLINK, GIT_DIR
+from branchctx.sync import (
     branch_context_exists,
     create_branch_context,
     get_branch_dir,

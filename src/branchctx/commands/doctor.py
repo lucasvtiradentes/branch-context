@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import os
 
-from omnicontext.config import Config, config_exists, get_templates_dir, list_templates
-from omnicontext.constants import CLI_NAME, DEFAULT_TEMPLATE
-from omnicontext.git import git_list_branches
-from omnicontext.hooks import get_git_root, is_hook_installed
-from omnicontext.sync import list_branches, sanitize_branch_name
+from branchctx.config import Config, config_exists, get_templates_dir, list_templates
+from branchctx.constants import CLI_NAME, DEFAULT_TEMPLATE
+from branchctx.git import git_list_branches
+from branchctx.hooks import get_git_root, is_hook_installed
+from branchctx.sync import list_branches, sanitize_branch_name
 
 STATUS_OK = "[ok]"
 STATUS_ERROR = "[!!]"
@@ -62,7 +62,7 @@ def cmd_doctor(_args: list[str]) -> int:
         issues.append("symlink path exists but is not a symlink")
         print(f"{STATUS_ERROR} {config.symlink} is not a symlink")
     else:
-        warnings.append("symlink not set (run 'omnicontext sync')")
+        warnings.append("symlink not set (run 'branchctx sync')")
         print(f"{STATUS_WARN} symlink not set")
 
     git_branches = git_list_branches(git_root)

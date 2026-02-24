@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 
-from omnicontext.config import (
+from branchctx.config import (
     Config,
     SyncConfig,
     TemplateRule,
@@ -12,7 +12,7 @@ from omnicontext.config import (
     get_config_dir,
     get_template_dir,
 )
-from omnicontext.constants import BRANCHES_DIR, CONFIG_DIR, DEFAULT_SYMLINK, DEFAULT_TEMPLATE, TEMPLATES_DIR
+from branchctx.constants import BRANCHES_DIR, CONFIG_DIR, DEFAULT_SYMLINK, DEFAULT_TEMPLATE, TEMPLATES_DIR
 
 
 @pytest.fixture

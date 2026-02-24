@@ -3,10 +3,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from omnicontext.assets import copy_init_templates, get_gitignore
-from omnicontext.config import Config, config_exists, get_branches_dir, get_config_dir, get_templates_dir
-from omnicontext.constants import CONFIG_FILE
-from omnicontext.hooks import get_git_root, install_hook
+from branchctx.assets import copy_init_templates, get_gitignore
+from branchctx.config import Config, config_exists, get_branches_dir, get_config_dir, get_templates_dir
+from branchctx.constants import CONFIG_FILE
+from branchctx.hooks import get_git_root, install_hook
 
 
 def cmd_init(_args: list[str]) -> int:
@@ -46,6 +46,6 @@ def cmd_init(_args: list[str]) -> int:
         if already_initialized:
             print("Already initialized")
     elif hook_result == "hook_exists":
-        print("warning: post-checkout hook exists but not managed by omnicontext")
+        print("warning: post-checkout hook exists but not managed by branchctx")
 
     return 0

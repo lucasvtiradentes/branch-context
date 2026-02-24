@@ -1,8 +1,8 @@
 import sys
 from importlib.metadata import version as pkg_version
 
-from omnicontext.constants import CLI_NAME, PACKAGE_NAME
-from omnicontext.registry import COMMANDS, get_all_command_names, get_command_handler
+from branchctx.constants import CLI_NAME, PACKAGE_NAME
+from branchctx.registry import COMMANDS, get_all_command_names, get_command_handler
 
 
 def print_help():

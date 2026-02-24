@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from omnicontext.config import config_exists, list_templates
-from omnicontext.constants import CLI_NAME
-from omnicontext.hooks import get_current_branch, get_git_root
-from omnicontext.sync import reset_branch_context
+from branchctx.config import config_exists, list_templates
+from branchctx.constants import CLI_NAME
+from branchctx.hooks import get_current_branch, get_git_root
+from branchctx.sync import reset_branch_context
 
 
 def cmd_reset(args: list[str]) -> int:

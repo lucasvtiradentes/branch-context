@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import os
 
-from omnicontext.config import config_exists
-from omnicontext.constants import CLI_NAME
-from omnicontext.hooks import get_current_branch, get_git_root
-from omnicontext.sync import get_branch_dir, list_branches, sanitize_branch_name
+from branchctx.config import config_exists
+from branchctx.constants import CLI_NAME
+from branchctx.hooks import get_current_branch, get_git_root
+from branchctx.sync import get_branch_dir, list_branches, sanitize_branch_name
 
 
 def cmd_branches(_args: list[str]) -> int:

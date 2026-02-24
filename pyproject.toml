@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "omnicontext"
+name = "branch-ctx"
 version = "0.1.0"
-description = "Git branch context manager - install post-checkout hooks to sync context across branches"
+description = "Git branch context manager - sync context folders across branches automatically"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
@@ -26,27 +26,28 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/lucasvtiradentes/omni-context"
-Repository = "https://github.com/lucasvtiradentes/omni-context"
-Issues = "https://github.com/lucasvtiradentes/omni-context/issues"
+Homepage = "https://github.com/lucasvtiradentes/branch-context"
+Repository = "https://github.com/lucasvtiradentes/branch-context"
+Issues = "https://github.com/lucasvtiradentes/branch-context/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=7", "ruff>=0.9", "towncrier>=23", "bump2version>=1"]
 
 [project.scripts]
-omnicontext = "omnicontext.cli:main"
-oc = "omnicontext.cli:main"
+branch-ctx = "branchctx.cli:main"
+bctx = "branchctx.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/omnicontext"]
+packages = ["src/branchctx"]
 
 [tool.hatch.build.targets.wheel.sources]
 "src" = ""
 
 [tool.hatch.build]
 include = [
-  "src/omnicontext/**/*.py",
-  "src/omnicontext/assets/*",
+  "src/branchctx/**/*.py",
+  "src/branchctx/assets/*",
+  "src/branchctx/assets/**/*",
 ]
 
 [tool.pytest.ini_options]

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from omnicontext.constants import CLI_NAME
-from omnicontext.git import git_config_unset
-from omnicontext.hooks import get_git_root, uninstall_hook
+from branchctx.constants import CLI_NAME
+from branchctx.git import git_config_unset
+from branchctx.hooks import get_git_root, uninstall_hook
 
 
 def cmd_uninstall(args: list[str]) -> int:

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from omnicontext.config import config_exists
-from omnicontext.constants import CLI_NAME
-from omnicontext.hooks import get_git_root
-from omnicontext.sync import sync_branch
+from branchctx.config import config_exists
+from branchctx.constants import CLI_NAME
+from branchctx.hooks import get_git_root
+from branchctx.sync import sync_branch
 
 
 def cmd_on_checkout(args: list[str]) -> int:

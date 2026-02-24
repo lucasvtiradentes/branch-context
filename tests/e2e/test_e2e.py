@@ -3,11 +3,11 @@ import tempfile
 
 import pytest
 
-from omnicontext.config import Config, get_branches_dir, get_template_dir
-from omnicontext.constants import DEFAULT_SYMLINK
-from omnicontext.git import git_add, git_checkout, git_commit, git_config, git_init
-from omnicontext.hooks import install_hook
-from omnicontext.sync import get_branch_rel_path, sync_branch
+from branchctx.config import Config, get_branches_dir, get_template_dir
+from branchctx.constants import DEFAULT_SYMLINK
+from branchctx.git import git_add, git_checkout, git_commit, git_config, git_init
+from branchctx.hooks import install_hook
+from branchctx.sync import get_branch_rel_path, sync_branch
 from tests.utils import normalize_path
 
 

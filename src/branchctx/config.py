@@ -4,8 +4,8 @@ import json
 import os
 from dataclasses import dataclass, field
 
-from omnicontext.assets import get_default_config
-from omnicontext.constants import BRANCHES_DIR, CONFIG_DIR, CONFIG_FILE, DEFAULT_TEMPLATE, TEMPLATES_DIR
+from branchctx.assets import get_default_config
+from branchctx.constants import BRANCHES_DIR, CONFIG_DIR, CONFIG_FILE, DEFAULT_TEMPLATE, TEMPLATES_DIR
 
 _DEFAULTS: dict | None = None
 

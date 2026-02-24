@@ -1,4 +1,4 @@
-# omnicontext
+# branch-context
 
 Git branch context manager - sync context folders across branches automatically.
 
@@ -9,7 +9,7 @@ git checkout feature/login
    post-checkout hook
         │
         ▼
-   .omnicontext/branches/feature-login/ exists?
+   .bctx/branches/feature-login/ exists?
         │
    ┌────┴────┐
    │ NO      │ YES
@@ -18,7 +18,7 @@ git checkout feature/login
  template   existing
         │
         ▼
-   symlink .branch-context -> .omnicontext/branches/feature-login/
+   symlink .branch-context -> .bctx/branches/feature-login/
 ```
 
 ## Features
@@ -31,27 +31,35 @@ git checkout feature/login
 - gitignored        - branch data stays local
 - shell completion  - zsh, bash, fish
 
+## Install
+
+```bash
+pip install branch-ctx
+```
+
 ## Commands
 
 ```bash
-omnicontext init                             # initialize + install hook
-omnicontext sync                             # sync current branch manually
-omnicontext branches                         # list all branch contexts
-omnicontext status                           # show status
-omnicontext reset                            # reset context to template
-omnicontext reset feature                    # reset to specific template
-omnicontext doctor                           # run diagnostics
-omnicontext completion zsh                   # generate shell completion
-omnicontext uninstall                        # remove hook
+branch-ctx init                          # initialize + install hook
+branch-ctx sync                          # sync current branch manually
+branch-ctx branches                      # list all branch contexts
+branch-ctx status                        # show status
+branch-ctx reset                         # reset context to template
+branch-ctx reset feature                 # reset to specific template
+branch-ctx doctor                        # run diagnostics
+branch-ctx completion zsh                # generate shell completion
+branch-ctx uninstall                     # remove hook
 ```
+
+Alias: `bctx` works too.
 
 ## Quick Start
 
 ```bash
-pip install omnicontext
+pip install branch-ctx
 
 cd your-repo
-omnicontext init      # creates .omnicontext/ + installs hook
+branch-ctx init      # creates .bctx/ + installs hook
 
 git checkout -b feature/new   # auto-creates context from template
 cat .branch-context/context.md
@@ -61,19 +69,19 @@ cat .branch-context/context.md
 
 ```bash
 # zsh - add to ~/.zshrc
-eval "$(omnicontext completion zsh)"
+eval "$(branch-ctx completion zsh)"
 
 # bash - add to ~/.bashrc
-eval "$(omnicontext completion bash)"
+eval "$(branch-ctx completion bash)"
 
 # fish
-omnicontext completion fish | source
+branch-ctx completion fish | source
 ```
 
 ## Structure
 
 ```
-.omnicontext/
+.bctx/
 ├── config.json
 ├── templates/
 │   ├── _default/            # fallback template
@@ -87,12 +95,12 @@ omnicontext completion fish | source
 │       └── context.md
 └── .gitignore
 
-.branch-context -> .omnicontext/branches/main/   # symlink to current
+.branch-context -> .bctx/branches/main/   # symlink to current
 ```
 
 ## Config
 
-`.omnicontext/config.json`:
+`.bctx/config.json`:
 
 ```json
 {
@@ -114,13 +122,6 @@ omnicontext completion fish | source
 | `sound`          | play sound on sync (default: `false`)            |
 | `sound_file`     | custom sound file (default: bundled sound)       |
 | `template_rules` | per-prefix template mapping (fallback: _default) |
-
-## Install
-
-```bash
-pipx install omnicontext
-# pip install omnicontext
-```
 
 ## Development
 

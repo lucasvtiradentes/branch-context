@@ -14,13 +14,13 @@ test:
 	.venv/bin/pytest -v
 
 test-install:
-	.venv/bin/omnicontext install
+	.venv/bin/branch-ctx install
 
 test-uninstall:
-	.venv/bin/omnicontext uninstall
+	.venv/bin/branch-ctx uninstall
 
 test-status:
-	.venv/bin/omnicontext status
+	.venv/bin/branch-ctx status
 
 changelog:
 	.venv/bin/towncrier build --yes --version $(shell python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")

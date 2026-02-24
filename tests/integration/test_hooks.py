@@ -3,8 +3,8 @@ import tempfile
 
 import pytest
 
-from omnicontext.constants import GIT_DIR, HOOK_MARKER
-from omnicontext.hooks import get_hook_path, install_hook, is_hook_installed, uninstall_hook
+from branchctx.constants import GIT_DIR, HOOK_MARKER
+from branchctx.hooks import get_hook_path, install_hook, is_hook_installed, uninstall_hook
 
 
 @pytest.fixture

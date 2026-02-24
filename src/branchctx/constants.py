@@ -1,13 +1,13 @@
-CLI_NAME = "omnicontext"
-PACKAGE_NAME = "omnicontext"
-ENV_BRANCH = "OMNICONTEXT_BRANCH"
+CLI_NAME = "branch-ctx"
+PACKAGE_NAME = "branch-ctx"
+ENV_BRANCH = "BRANCH_CTX_BRANCH"
 
 GIT_DIR = ".git"
 HOOK_NAME = "post-checkout"
-HOOK_MARKER = "# omnicontext-managed"
+HOOK_MARKER = "# branch-ctx-managed"
 DEFAULT_SOUND_FILE = "notification.oga"
 
-CONFIG_DIR = ".omnicontext"
+CONFIG_DIR = ".bctx"
 CONFIG_FILE = "config.json"
 TEMPLATES_DIR = "templates"
 DEFAULT_TEMPLATE = "_default"

@@ -9,8 +9,8 @@ import subprocess
 from importlib import resources
 from typing import Literal
 
-from omnicontext.config import Config, get_branches_dir, get_template_dir
-from omnicontext.constants import BRANCHES_DIR, CONFIG_DIR, DEFAULT_SOUND_FILE, DEFAULT_TEMPLATE, ENV_BRANCH, PACKAGE_NAME
+from branchctx.config import Config, get_branches_dir, get_template_dir
+from branchctx.constants import BRANCHES_DIR, CONFIG_DIR, DEFAULT_SOUND_FILE, DEFAULT_TEMPLATE, ENV_BRANCH, PACKAGE_NAME
 
 
 def get_default_sound_file() -> str | None:

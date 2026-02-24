@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from omnicontext.constants import CLI_NAME
-from omnicontext.registry import get_public_commands
+from branchctx.constants import CLI_NAME
+from branchctx.registry import get_public_commands
 
 
 def _get_zsh_completion() -> str:
@@ -21,7 +21,7 @@ _{CLI_NAME}() {{
     _get_templates() {{
         git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
         if [[ -n "$git_root" ]]; then
-            templates_dir="$git_root/.omnicontext/templates"
+            templates_dir="$git_root/.branchctx/templates"
             if [[ -d "$templates_dir" ]]; then
                 _values 'template' $(ls "$templates_dir" 2>/dev/null)
             fi
@@ -66,7 +66,7 @@ def _get_bash_completion() -> str:
         reset)
             git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
             if [[ -n "$git_root" ]]; then
-                templates_dir="$git_root/.omnicontext/templates"
+                templates_dir="$git_root/.branchctx/templates"
                 if [[ -d "$templates_dir" ]]; then
                     COMPREPLY=( $(compgen -W "$(ls "$templates_dir" 2>/dev/null)" -- "$cur") )
                 fi
@@ -101,17 +101,17 @@ def _get_fish_completion() -> str:
 
 complete -c {CLI_NAME} -n "__fish_seen_subcommand_from completion" -a "zsh bash fish"
 
-function __omnicontext_templates
+function __branchctx_templates
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
     if test -n "$git_root"
-        set -l templates_dir "$git_root/.omnicontext/templates"
+        set -l templates_dir "$git_root/.branchctx/templates"
         if test -d "$templates_dir"
             ls "$templates_dir" 2>/dev/null
         end
     end
 end
 
-complete -c {CLI_NAME} -n "__fish_seen_subcommand_from reset" -a "(__omnicontext_templates)"
+complete -c {CLI_NAME} -n "__fish_seen_subcommand_from reset" -a "(__branchctx_templates)"
 '''
 
 

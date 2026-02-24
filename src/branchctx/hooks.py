@@ -6,12 +6,12 @@ import stat
 import sys
 from typing import Literal
 
-from omnicontext.assets import get_hook_template
-from omnicontext.constants import CLI_NAME, GIT_DIR, HOOK_MARKER, HOOK_NAME
-from omnicontext.git import git_current_branch, git_root
+from branchctx.assets import get_hook_template
+from branchctx.constants import CLI_NAME, GIT_DIR, HOOK_MARKER, HOOK_NAME
+from branchctx.git import git_current_branch, git_root
 
 
-def get_omnicontext_path() -> str:
+def get_branchctx_path() -> str:
     script_name = CLI_NAME
 
     if getattr(sys, "frozen", False):
@@ -30,8 +30,8 @@ def get_omnicontext_path() -> str:
 
 
 def get_callback() -> str:
-    omnicontext_path = get_omnicontext_path()
-    return f'"{omnicontext_path}" on-checkout'
+    branchctx_path = get_branchctx_path()
+    return f'"{branchctx_path}" on-checkout'
 
 
 def get_git_root(path: str | None = None) -> str | None:
