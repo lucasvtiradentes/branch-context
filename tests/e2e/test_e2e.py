@@ -10,6 +10,10 @@ from omnicontext.hooks import install_hook
 from omnicontext.sync import get_branch_rel_path, sync_branch
 
 
+def normalize_path(path: str) -> str:
+    return path.replace("\\", "/")
+
+
 @pytest.fixture
 def git_repo():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -54,7 +58,7 @@ def test_e2e_branch_switch_preserves_content(git_repo):
     git_checkout(git_repo, "feature", create=True)
     sync_branch(git_repo, "feature")
 
-    assert os.readlink(symlink_path) == get_branch_rel_path("feature")
+    assert normalize_path(os.readlink(symlink_path)) == get_branch_rel_path("feature")
 
     feature_context = os.path.join(symlink_path, "context.md")
     with open(feature_context, "w") as f:
@@ -63,14 +67,14 @@ def test_e2e_branch_switch_preserves_content(git_repo):
     git_checkout(git_repo, "main")
     sync_branch(git_repo, "main")
 
-    assert os.readlink(symlink_path) == get_branch_rel_path("main")
+    assert normalize_path(os.readlink(symlink_path)) == get_branch_rel_path("main")
     with open(main_context) as f:
         assert f.read() == "MAIN CONTENT"
 
     git_checkout(git_repo, "feature")
     sync_branch(git_repo, "feature")
 
-    assert os.readlink(symlink_path) == get_branch_rel_path("feature")
+    assert normalize_path(os.readlink(symlink_path)) == get_branch_rel_path("feature")
     with open(feature_context) as f:
         assert f.read() == "FEATURE CONTENT"
 
@@ -110,7 +114,7 @@ def test_e2e_slash_branch_names(git_repo):
     git_checkout(git_repo, "feature/auth/login", create=True)
     sync_branch(git_repo, "feature/auth/login")
 
-    assert os.readlink(symlink_path) == get_branch_rel_path("feature/auth/login")
+    assert normalize_path(os.readlink(symlink_path)) == get_branch_rel_path("feature/auth/login")
 
     with open(os.path.join(symlink_path, "context.md"), "w") as f:
         f.write("FEATURE AUTH LOGIN")
