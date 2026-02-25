@@ -22,7 +22,7 @@ _{CLI_NAME}() {{
     _get_templates() {{
         git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
         if [[ -n "$git_root" ]]; then
-            templates_dir="$git_root/.branchctx/templates"
+            templates_dir="$git_root/.bctx/templates"
             if [[ -d "$templates_dir" ]]; then
                 _values 'template' $(ls "$templates_dir" 2>/dev/null)
             fi
@@ -69,7 +69,7 @@ def _get_bash_completion() -> str:
         template)
             git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
             if [[ -n "$git_root" ]]; then
-                templates_dir="$git_root/.branchctx/templates"
+                templates_dir="$git_root/.bctx/templates"
                 if [[ -d "$templates_dir" ]]; then
                     COMPREPLY=( $(compgen -W "$(ls "$templates_dir" 2>/dev/null)" -- "$cur") )
                 fi
@@ -116,7 +116,7 @@ def _get_fish_completion() -> str:
 function __branchctx_templates
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
     if test -n "$git_root"
-        set -l templates_dir "$git_root/.branchctx/templates"
+        set -l templates_dir "$git_root/.bctx/templates"
         if test -d "$templates_dir"
             ls "$templates_dir" 2>/dev/null
         end
