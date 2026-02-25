@@ -15,6 +15,7 @@ from branchctx.constants import (
     BRANCHES_DIR,
     CONFIG_DIR,
     DEFAULT_SOUND_FILE,
+    DEFAULT_TEMPLATE,
     ENV_BRANCH,
     PACKAGE_NAME,
     TEMPLATE_FILE_EXTENSIONS,
@@ -68,11 +69,18 @@ def branch_context_exists(workspace: str, branch: str) -> bool:
 
 
 def _resolve_template_dir(workspace: str, branch: str, template: str | None) -> str | None:
+    explicit = template is not None
+
     if template is None:
         config = Config.load(workspace)
         template = config.get_template_for_branch(branch)
 
     template_dir = get_template_dir(workspace, template)
+
+    if not os.path.exists(template_dir):
+        if explicit:
+            return None
+        template_dir = get_template_dir(workspace, DEFAULT_TEMPLATE)
 
     if not os.path.exists(template_dir):
         return None
