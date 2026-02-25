@@ -68,14 +68,14 @@ def _get_commits_since_base(workspace: str, base_branch: str) -> str:
 def _get_changed_files(workspace: str, base_branch: str) -> str:
     try:
         status_result = subprocess.run(
-            ["git", "diff", "--name-status", "-M", f"{base_branch}...HEAD"],
+            ["git", "diff", "--name-status", "-M100", f"{base_branch}...HEAD"],
             cwd=workspace,
             capture_output=True,
             text=True,
             check=True,
         )
         numstat_result = subprocess.run(
-            ["git", "diff", "--numstat", "-M", f"{base_branch}...HEAD"],
+            ["git", "diff", "--numstat", "-M100", f"{base_branch}...HEAD"],
             cwd=workspace,
             capture_output=True,
             text=True,
