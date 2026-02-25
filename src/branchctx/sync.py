@@ -9,13 +9,12 @@ import subprocess
 from importlib import resources
 from typing import Literal
 
-from branchctx.config import Config, get_branches_dir, get_template_dir
+from branchctx.config import Config, get_branches_dir, get_default_template, get_template_dir
 from branchctx.constants import (
     ARCHIVED_DIR,
     BRANCHES_DIR,
     CONFIG_DIR,
     DEFAULT_SOUND_FILE,
-    DEFAULT_TEMPLATE,
     ENV_BRANCH,
     PACKAGE_NAME,
     TEMPLATE_FILE_EXTENSIONS,
@@ -80,7 +79,7 @@ def _resolve_template_dir(workspace: str, branch: str, template: str | None) -> 
     if not os.path.exists(template_dir):
         if explicit:
             return None
-        template_dir = get_template_dir(workspace, DEFAULT_TEMPLATE)
+        template_dir = get_template_dir(workspace, get_default_template())
 
     if not os.path.exists(template_dir):
         return None

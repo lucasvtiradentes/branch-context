@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass, field
 
 from branchctx.assets import get_default_config
-from branchctx.constants import BRANCHES_DIR, CONFIG_DIR, CONFIG_FILE, DEFAULT_TEMPLATE, TEMPLATES_DIR
+from branchctx.constants import BRANCHES_DIR, CONFIG_DIR, CONFIG_FILE, TEMPLATES_DIR
 
 _DEFAULTS: dict | None = None
 
@@ -33,13 +33,22 @@ class ChangedFilesConfig:
     base_branch: str = field(default_factory=lambda: _get_changed_files_defaults()["base_branch"])
 
 
+def _get_default_template_rules() -> list[TemplateRule]:
+    return [TemplateRule(prefix=r["prefix"], template=r["template"]) for r in _get_defaults().get("template_rules", [])]
+
+
+def get_default_template() -> str:
+    return _get_defaults()["default_template"]
+
+
 @dataclass
 class Config:
     symlink: str = field(default_factory=lambda: _get_defaults()["symlink"])
+    default_template: str = field(default_factory=get_default_template)
     on_switch: str | None = field(default_factory=lambda: _get_defaults()["on_switch"])
     sound: bool = field(default_factory=lambda: _get_defaults()["sound"])
     sound_file: str | None = None
-    template_rules: list[TemplateRule] = field(default_factory=list)
+    template_rules: list[TemplateRule] = field(default_factory=_get_default_template_rules)
     changed_files: ChangedFilesConfig = field(default_factory=ChangedFilesConfig)
 
     @classmethod
@@ -70,6 +79,7 @@ class Config:
 
         return cls(
             symlink=data.get("symlink", defaults["symlink"]),
+            default_template=data.get("default_template", defaults["default_template"]),
             on_switch=data.get("on_switch"),
             sound=data.get("sound", defaults["sound"]),
             sound_file=data.get("sound_file"),
@@ -82,6 +92,7 @@ class Config:
 
         data = {
             "symlink": self.symlink,
+            "default_template": self.default_template,
             "sound": self.sound,
             "template_rules": [{"prefix": r.prefix, "template": r.template} for r in self.template_rules],
             "changed_files": {
@@ -103,7 +114,7 @@ class Config:
         for rule in self.template_rules:
             if branch.startswith(rule.prefix):
                 return rule.template
-        return DEFAULT_TEMPLATE
+        return self.default_template
 
 
 def get_config_dir(workspace: str) -> str:
@@ -114,7 +125,9 @@ def get_templates_dir(workspace: str) -> str:
     return os.path.join(workspace, CONFIG_DIR, TEMPLATES_DIR)
 
 
-def get_template_dir(workspace: str, template: str = DEFAULT_TEMPLATE) -> str:
+def get_template_dir(workspace: str, template: str | None = None) -> str:
+    if template is None:
+        template = get_default_template()
     return os.path.join(workspace, CONFIG_DIR, TEMPLATES_DIR, template)
 
 

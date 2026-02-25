@@ -1,5 +1,6 @@
 {
   "symlink": "_context",
+  "default_template": "_default",
   "on_switch": null,
   "sound": false,
   "template_rules": [

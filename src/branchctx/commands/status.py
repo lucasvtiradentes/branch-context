@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 from branchctx.config import Config, config_exists, get_templates_dir, list_templates
-from branchctx.constants import CLI_NAME, DEFAULT_TEMPLATE, HOOK_POST_CHECKOUT, HOOK_POST_COMMIT
+from branchctx.constants import CLI_NAME, HOOK_POST_CHECKOUT, HOOK_POST_COMMIT
 from branchctx.git import git_config_get, git_list_branches
 from branchctx.hooks import get_current_branch, get_git_root, is_hook_installed
 from branchctx.sync import list_branches, sanitize_branch_name
@@ -83,11 +83,11 @@ def cmd_status(_args: list[str]) -> int:
         issues.append("templates/ missing")
         print(f"  {STATUS_ERROR} templates/ missing")
 
-    if DEFAULT_TEMPLATE in templates:
-        print(f"  {STATUS_OK} {DEFAULT_TEMPLATE} template exists")
+    if config.default_template in templates:
+        print(f"  {STATUS_OK} {config.default_template} template exists")
     else:
-        issues.append(f"{DEFAULT_TEMPLATE} template missing")
-        print(f"  {STATUS_ERROR} {DEFAULT_TEMPLATE} template missing")
+        issues.append(f"{config.default_template} template missing")
+        print(f"  {STATUS_ERROR} {config.default_template} template missing")
 
     if os.path.islink(symlink_path):
         if os.path.exists(os.path.join(git_root, symlink_target)):
