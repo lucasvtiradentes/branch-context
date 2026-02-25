@@ -1,4 +1,6 @@
-# Branch Context
+# Branch: {{branch}}
+
+Created: {{date}} by {{author}}
 
 ## Goal
 
