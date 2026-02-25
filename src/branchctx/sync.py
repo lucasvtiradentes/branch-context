@@ -172,12 +172,15 @@ def run_on_switch(workspace: str, branch: str, config: Config):
 
     cmd = config.on_switch.replace("{branch}", shlex.quote(branch))
 
-    subprocess.run(
-        cmd,
-        shell=True,
-        cwd=workspace,
-        env={**os.environ, ENV_BRANCH: branch},
-    )
+    try:
+        subprocess.run(
+            cmd,
+            shell=True,
+            cwd=workspace,
+            env={**os.environ, ENV_BRANCH: branch},
+        )
+    except OSError:
+        pass
 
 
 def sync_branch(workspace: str, branch: str) -> dict:
