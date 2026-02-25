@@ -5,7 +5,6 @@ import pytest
 
 from branchctx.config import (
     Config,
-    SyncConfig,
     TemplateRule,
     config_exists,
     get_branches_dir,
@@ -57,22 +56,18 @@ def test_config_default_values():
     config = Config()
     assert config.symlink == DEFAULT_SYMLINK
     assert config.on_switch is None
-    assert config.sync.provider == "local"
 
 
 def test_config_save_and_load(workspace):
     config = Config(
         symlink=".my-context",
         on_switch="echo {branch}",
-        sync=SyncConfig(provider="gcp", gcp_bucket="my-bucket"),
     )
     config.save(workspace)
 
     loaded = Config.load(workspace)
     assert loaded.symlink == ".my-context"
     assert loaded.on_switch == "echo {branch}"
-    assert loaded.sync.provider == "gcp"
-    assert loaded.sync.gcp_bucket == "my-bucket"
 
 
 def test_config_load_missing_file(workspace):

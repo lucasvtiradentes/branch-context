@@ -8,7 +8,8 @@ from branchctx.constants import HOOK_POST_CHECKOUT, HOOK_POST_COMMIT
 from branchctx.context_tags import update_context_tags
 from branchctx.git import git_add, git_checkout, git_commit, git_config, git_init
 from branchctx.hooks import install_hook
-from branchctx.sync import sync_branch
+from branchctx.meta import create_branch_meta, update_branch_meta
+from branchctx.sync import sanitize_branch_name, sync_branch
 
 
 @pytest.fixture
@@ -49,6 +50,9 @@ def test_update_tags_on_feature_branch(git_repo):
     git_checkout(git_repo, "feature/test", create=True)
     sync_branch(git_repo, "feature/test")
 
+    branch_key = sanitize_branch_name("feature/test")
+    create_branch_meta(git_repo, branch_key, "feature/test")
+
     test_file = os.path.join(git_repo, "new_file.py")
     with open(test_file, "w") as f:
         f.write("print('hello')")
@@ -56,12 +60,15 @@ def test_update_tags_on_feature_branch(git_repo):
     git_add(git_repo)
     git_commit(git_repo, "feat: add new file")
 
+    update_branch_meta(git_repo, branch_key, "main")
+
     config = Config.load(git_repo)
     context_dir = os.path.join(git_repo, config.symlink)
 
     updates = update_context_tags(
         workspace=git_repo,
         context_dir=context_dir,
+        branch_key=branch_key,
         base_branch="main",
     )
 
@@ -78,12 +85,17 @@ def test_update_tags_on_feature_branch(git_repo):
 def test_update_tags_shows_sync_message_on_main(git_repo):
     sync_branch(git_repo, "main")
 
+    branch_key = sanitize_branch_name("main")
+    create_branch_meta(git_repo, branch_key, "main")
+    update_branch_meta(git_repo, branch_key, "main")
+
     config = Config.load(git_repo)
     context_dir = os.path.join(git_repo, config.symlink)
 
     updates = update_context_tags(
         workspace=git_repo,
         context_dir=context_dir,
+        branch_key=branch_key,
         base_branch="main",
     )
 
@@ -102,6 +114,9 @@ def test_update_tags_multiple_commits(git_repo):
     git_checkout(git_repo, "feature/multi", create=True)
     sync_branch(git_repo, "feature/multi")
 
+    branch_key = sanitize_branch_name("feature/multi")
+    create_branch_meta(git_repo, branch_key, "feature/multi")
+
     for i in range(3):
         test_file = os.path.join(git_repo, f"file{i}.py")
         with open(test_file, "w") as f:
@@ -109,12 +124,15 @@ def test_update_tags_multiple_commits(git_repo):
         git_add(git_repo)
         git_commit(git_repo, f"feat: add file {i}")
 
+    update_branch_meta(git_repo, branch_key, "main")
+
     config = Config.load(git_repo)
     context_dir = os.path.join(git_repo, config.symlink)
 
     update_context_tags(
         workspace=git_repo,
         context_dir=context_dir,
+        branch_key=branch_key,
         base_branch="main",
     )
 
@@ -133,6 +151,9 @@ def test_update_tags_shows_stats(git_repo):
     git_checkout(git_repo, "feature/stats", create=True)
     sync_branch(git_repo, "feature/stats")
 
+    branch_key = sanitize_branch_name("feature/stats")
+    create_branch_meta(git_repo, branch_key, "feature/stats")
+
     test_file = os.path.join(git_repo, "test.py")
     with open(test_file, "w") as f:
         f.write("print('test')")
@@ -140,12 +161,15 @@ def test_update_tags_shows_stats(git_repo):
     git_add(git_repo)
     git_commit(git_repo, "feat: test")
 
+    update_branch_meta(git_repo, branch_key, "main")
+
     config = Config.load(git_repo)
     context_dir = os.path.join(git_repo, config.symlink)
 
     update_context_tags(
         workspace=git_repo,
         context_dir=context_dir,
+        branch_key=branch_key,
         base_branch="main",
     )
 
@@ -161,6 +185,9 @@ def test_update_tags_shows_stats(git_repo):
 def test_no_tags_in_file_skips_silently(git_repo):
     sync_branch(git_repo, "main")
 
+    branch_key = sanitize_branch_name("main")
+    create_branch_meta(git_repo, branch_key, "main")
+
     config = Config.load(git_repo)
     context_dir = os.path.join(git_repo, config.symlink)
     context_file = os.path.join(context_dir, "context.md")
@@ -171,6 +198,7 @@ def test_no_tags_in_file_skips_silently(git_repo):
     updates = update_context_tags(
         workspace=git_repo,
         context_dir=context_dir,
+        branch_key=branch_key,
         base_branch="main",
     )
 

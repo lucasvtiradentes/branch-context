@@ -10,7 +10,18 @@ from importlib import resources
 from typing import Literal
 
 from branchctx.config import Config, get_branches_dir, get_template_dir
-from branchctx.constants import BRANCHES_DIR, CONFIG_DIR, DEFAULT_SOUND_FILE, DEFAULT_TEMPLATE, ENV_BRANCH, PACKAGE_NAME
+from branchctx.constants import (
+    ARCHIVED_DIR,
+    BRANCHES_DIR,
+    CONFIG_DIR,
+    DEFAULT_SOUND_FILE,
+    DEFAULT_TEMPLATE,
+    ENV_BRANCH,
+    PACKAGE_NAME,
+    TEMPLATE_FILE_EXTENSIONS,
+)
+from branchctx.meta import archive_branch_meta, create_branch_meta
+from branchctx.template_vars import get_template_variables, render_template_content
 
 
 def get_default_sound_file() -> str | None:
@@ -73,30 +84,44 @@ def _resolve_template_dir(workspace: str, branch: str, template: str | None) -> 
     return template_dir
 
 
-def _copy_template_to_branch(template_dir: str, branch_dir: str):
-    for item in os.listdir(template_dir):
-        src = os.path.join(template_dir, item)
-        dst = os.path.join(branch_dir, item)
-        if os.path.isdir(src):
-            shutil.copytree(src, dst)
-        else:
-            shutil.copy2(src, dst)
+def _copy_template_to_branch(template_dir: str, branch_dir: str, branch: str):
+    variables = get_template_variables(branch)
+
+    def copy_with_render(src_dir: str, dst_dir: str):
+        for item in os.listdir(src_dir):
+            src = os.path.join(src_dir, item)
+            dst = os.path.join(dst_dir, item)
+            if os.path.isdir(src):
+                os.makedirs(dst, exist_ok=True)
+                copy_with_render(src, dst)
+            elif item.endswith(TEMPLATE_FILE_EXTENSIONS):
+                with open(src, "r") as f:
+                    content = f.read()
+                rendered = render_template_content(content, variables)
+                with open(dst, "w") as f:
+                    f.write(rendered)
+            else:
+                shutil.copy2(src, dst)
+
+    copy_with_render(template_dir, branch_dir)
 
 
 def create_branch_context(
     workspace: str, branch: str, template: str | None = None
 ) -> Literal["exists", "created_from_template", "created_empty"]:
     branch_dir = get_branch_dir(workspace, branch)
+    branch_key = sanitize_branch_name(branch)
 
     if os.path.exists(branch_dir):
         return "exists"
 
     os.makedirs(branch_dir, exist_ok=True)
+    create_branch_meta(workspace, branch_key, branch)
 
     template_dir = _resolve_template_dir(workspace, branch, template)
 
     if template_dir:
-        _copy_template_to_branch(template_dir, branch_dir)
+        _copy_template_to_branch(template_dir, branch_dir, branch)
         return "created_from_template"
 
     return "created_empty"
@@ -115,7 +140,7 @@ def reset_branch_context(
         shutil.rmtree(branch_dir)
 
     os.makedirs(branch_dir, exist_ok=True)
-    _copy_template_to_branch(template_dir, branch_dir)
+    _copy_template_to_branch(template_dir, branch_dir, branch)
 
     return "reset"
 
@@ -147,12 +172,15 @@ def run_on_switch(workspace: str, branch: str, config: Config):
 
     cmd = config.on_switch.replace("{branch}", shlex.quote(branch))
 
-    subprocess.run(
-        cmd,
-        shell=True,
-        cwd=workspace,
-        env={**os.environ, ENV_BRANCH: branch},
-    )
+    try:
+        subprocess.run(
+            cmd,
+            shell=True,
+            cwd=workspace,
+            env={**os.environ, ENV_BRANCH: branch},
+        )
+    except OSError:
+        pass
 
 
 def sync_branch(workspace: str, branch: str) -> dict:
@@ -181,5 +209,34 @@ def list_branches(workspace: str) -> list[str]:
         return []
 
     return [
-        d for d in os.listdir(branches_dir) if os.path.isdir(os.path.join(branches_dir, d)) and not d.startswith(".")
+        d
+        for d in os.listdir(branches_dir)
+        if os.path.isdir(os.path.join(branches_dir, d)) and not d.startswith(".") and d != ARCHIVED_DIR
     ]
+
+
+def get_archived_dir(workspace: str) -> str:
+    return os.path.join(get_branches_dir(workspace), ARCHIVED_DIR)
+
+
+def list_archived_branches(workspace: str) -> list[str]:
+    archived_dir = get_archived_dir(workspace)
+    if not os.path.exists(archived_dir):
+        return []
+
+    return [d for d in os.listdir(archived_dir) if os.path.isdir(os.path.join(archived_dir, d))]
+
+
+def archive_branch(workspace: str, branch_name: str) -> bool:
+    branches_dir = get_branches_dir(workspace)
+    archived_dir = get_archived_dir(workspace)
+    src = os.path.join(branches_dir, branch_name)
+    dst = os.path.join(archived_dir, branch_name)
+
+    if not os.path.exists(src):
+        return False
+
+    os.makedirs(archived_dir, exist_ok=True)
+    shutil.move(src, dst)
+    archive_branch_meta(workspace, branch_name)
+    return True

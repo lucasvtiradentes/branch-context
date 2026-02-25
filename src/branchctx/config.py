@@ -34,20 +34,12 @@ class ChangedFilesConfig:
 
 
 @dataclass
-class SyncConfig:
-    provider: str = field(default_factory=lambda: _get_defaults()["sync"]["provider"])
-    gcp_bucket: str | None = None
-    gcp_credentials_file: str | None = None
-
-
-@dataclass
 class Config:
     symlink: str = field(default_factory=lambda: _get_defaults()["symlink"])
     on_switch: str | None = field(default_factory=lambda: _get_defaults()["on_switch"])
     sound: bool = field(default_factory=lambda: _get_defaults()["sound"])
     sound_file: str | None = None
     template_rules: list[TemplateRule] = field(default_factory=list)
-    sync: SyncConfig = field(default_factory=SyncConfig)
     changed_files: ChangedFilesConfig = field(default_factory=ChangedFilesConfig)
 
     @classmethod
@@ -64,12 +56,6 @@ class Config:
             return cls()
 
         defaults = _get_defaults()
-        sync_data = data.get("sync", {})
-        sync_config = SyncConfig(
-            provider=sync_data.get("provider", defaults["sync"]["provider"]),
-            gcp_bucket=sync_data.get("gcp", {}).get("bucket"),
-            gcp_credentials_file=sync_data.get("gcp", {}).get("credentials_file"),
-        )
 
         changed_files_data = data.get("changed_files", {})
         cf_defaults = _get_changed_files_defaults()
@@ -88,7 +74,6 @@ class Config:
             sound=data.get("sound", defaults["sound"]),
             sound_file=data.get("sound_file"),
             template_rules=template_rules,
-            sync=sync_config,
             changed_files=changed_files_config,
         )
 
@@ -99,9 +84,6 @@ class Config:
             "symlink": self.symlink,
             "sound": self.sound,
             "template_rules": [{"prefix": r.prefix, "template": r.template} for r in self.template_rules],
-            "sync": {
-                "provider": self.sync.provider,
-            },
             "changed_files": {
                 "enabled": self.changed_files.enabled,
                 "base_branch": self.changed_files.base_branch,
@@ -113,12 +95,6 @@ class Config:
 
         if self.sound_file:
             data["sound_file"] = self.sound_file
-
-        if self.sync.gcp_bucket:
-            data["sync"]["gcp"] = {
-                "bucket": self.sync.gcp_bucket,
-                "credentials_file": self.sync.gcp_credentials_file,
-            }
 
         with open(config_path, "w") as f:
             json.dump(data, f, indent=2)

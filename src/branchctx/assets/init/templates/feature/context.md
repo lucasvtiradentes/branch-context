@@ -1,4 +1,6 @@
-# Feature: [name]
+# Feature: {{branch}}
+
+Created: {{date}} by {{author}}
 
 ## Problem
 

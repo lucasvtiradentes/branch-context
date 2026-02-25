@@ -225,7 +225,7 @@ def test_reset_branch_context(workspace):
 
     with open(os.path.join(branch_dir, "context.md")) as f:
         content = f.read()
-    assert "# Branch Context" in content
+    assert "# Branch: main" in content
     assert "MODIFIED CONTENT" not in content
 
 

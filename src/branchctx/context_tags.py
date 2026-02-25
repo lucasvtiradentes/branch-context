@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import os
 import re
-import subprocess
 from dataclasses import dataclass
+
+from branchctx.constants import CONTEXT_FILE_EXTENSIONS
+from branchctx.meta import get_branch_meta
 
 TAG_COMMITS = "bctx:commits"
 TAG_FILES = "bctx:files"
 TAG_PATTERN = re.compile(r"<(bctx:(?:commits|files))>(.*?)</\1>", re.DOTALL)
-CONTEXT_FILE_EXTENSIONS = (".md", ".txt")
 SYNC_MESSAGE_TEMPLATE = "N/A - in sync with {base_branch}"
 
 
@@ -18,79 +19,6 @@ class TagUpdate:
     tag: str
     old_content: str
     new_content: str
-
-
-def git_commits_since_base(path: str, base_branch: str) -> str | None:
-    try:
-        result = subprocess.run(
-            ["git", "log", f"{base_branch}..HEAD", "--oneline"],
-            cwd=path,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return result.stdout.strip()
-    except subprocess.CalledProcessError:
-        return None
-
-
-def git_changed_files(path: str, base_branch: str) -> str | None:
-    try:
-        status_result = subprocess.run(
-            ["git", "diff", "--name-status", f"{base_branch}...HEAD"],
-            cwd=path,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-
-        numstat_result = subprocess.run(
-            ["git", "diff", "--numstat", f"{base_branch}...HEAD"],
-            cwd=path,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-
-        status_lines = status_result.stdout.strip().split("\n")
-        numstat_lines = numstat_result.stdout.strip().split("\n")
-
-        if not status_lines or status_lines == [""]:
-            return None
-
-        file_stats: dict[str, tuple[str, str]] = {}
-        for line in numstat_lines:
-            if not line:
-                continue
-            parts = line.split("\t")
-            if len(parts) >= 3:
-                added, removed, filepath = parts[0], parts[1], parts[2]
-                file_stats[filepath] = (added, removed)
-
-        files: list[tuple[str, str, str, str]] = []
-        for line in status_lines:
-            if not line:
-                continue
-            parts = line.split("\t")
-            if len(parts) >= 2:
-                status = parts[0][0]
-                filepath = parts[-1]
-                added, removed = file_stats.get(filepath, ("0", "0"))
-                files.append((status, filepath, added, removed))
-
-        if not files:
-            return None
-
-        max_path_len = max(len(f[1]) for f in files)
-
-        result_lines = []
-        for status, filepath, added, removed in files:
-            padding = " " * (max_path_len - len(filepath))
-            result_lines.append(f"{status}  {filepath}{padding}  (+{added} -{removed})")
-
-        return "\n".join(result_lines)
-    except subprocess.CalledProcessError:
-        return None
 
 
 def find_context_files(context_dir: str) -> list[str]:
@@ -123,19 +51,19 @@ def update_tag_content(content: str, tag: str, new_value: str) -> str:
 def update_context_tags(
     workspace: str,
     context_dir: str,
+    branch_key: str,
     base_branch: str,
 ) -> list[TagUpdate]:
     updates: list[TagUpdate] = []
 
-    commits_content = git_commits_since_base(workspace, base_branch)
-    files_content = git_changed_files(workspace, base_branch)
-
+    meta = get_branch_meta(workspace, branch_key)
     sync_message = SYNC_MESSAGE_TEMPLATE.format(base_branch=base_branch)
 
-    if not commits_content:
+    if meta:
+        commits_content = meta.get("commits") or sync_message
+        files_content = meta.get("changed_files") or sync_message
+    else:
         commits_content = sync_message
-
-    if not files_content:
         files_content = sync_message
 
     context_files = find_context_files(context_dir)

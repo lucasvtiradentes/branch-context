@@ -49,6 +49,7 @@ include = [
   "src/branchctx/**/*.py",
   "src/branchctx/assets/*",
   "src/branchctx/assets/**/*",
+  "src/branchctx/py.typed",
 ]
 
 [tool.pytest.ini_options]

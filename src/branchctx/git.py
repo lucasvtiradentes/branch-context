@@ -32,17 +32,14 @@ def git_checkout(path: str, branch: str, create: bool = False) -> subprocess.Com
 
 
 def git_current_branch(path: str) -> str | None:
-    try:
-        result = subprocess.run(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            cwd=path,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+    result = subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        cwd=path,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
         return result.stdout.strip()
-    except subprocess.CalledProcessError:
-        pass
 
     head_file = f"{path}/.git/HEAD"
     try:
@@ -70,16 +67,20 @@ def git_root(path: str) -> str | None:
         return None
 
 
-def git_config_get(key: str, scope: Literal["global"] | None = None) -> str | None:
+def git_config_get(key: str, scope: Literal["global"] | None = None, path: str | None = None) -> str | None:
     cmd = ["git", "config"]
     if scope == "global":
         cmd.append("--global")
     cmd.append(key)
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        result = subprocess.run(cmd, cwd=path, capture_output=True, text=True, check=True)
         return result.stdout.strip()
     except subprocess.CalledProcessError:
         return None
+
+
+def git_user_name(path: str | None = None) -> str:
+    return git_config_get("user.name", path=path) or ""
 
 
 def git_config_unset(key: str, scope: Literal["global"] | None = None) -> bool:

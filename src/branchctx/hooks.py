@@ -18,6 +18,11 @@ _custom_hooks_confirmed: dict[str, bool] = {}
 _exclude_confirmed: dict[str, bool] = {}
 
 
+def _reset_confirmation_state() -> None:
+    _custom_hooks_confirmed.clear()
+    _exclude_confirmed.clear()
+
+
 def get_branchctx_path() -> str:
     script_name = CLI_NAME
 

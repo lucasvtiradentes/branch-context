@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from branchctx.cmd_registry import get_public_commands
 from branchctx.constants import CLI_ALIASES, CLI_NAME
-from branchctx.registry import get_public_commands
 
 
 def _get_zsh_completion() -> str:
@@ -22,7 +22,7 @@ _{CLI_NAME}() {{
     _get_templates() {{
         git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
         if [[ -n "$git_root" ]]; then
-            templates_dir="$git_root/.branchctx/templates"
+            templates_dir="$git_root/.bctx/templates"
             if [[ -d "$templates_dir" ]]; then
                 _values 'template' $(ls "$templates_dir" 2>/dev/null)
             fi
@@ -30,7 +30,7 @@ _{CLI_NAME}() {{
     }}
 
     case "$words[2]" in
-        reset)
+        template)
             if (( CURRENT == 3 )); then
                 _get_templates
             fi
@@ -66,10 +66,10 @@ def _get_bash_completion() -> str:
     commands="{cmd_names}"
 
     case "$prev" in
-        reset)
+        template)
             git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
             if [[ -n "$git_root" ]]; then
-                templates_dir="$git_root/.branchctx/templates"
+                templates_dir="$git_root/.bctx/templates"
                 if [[ -d "$templates_dir" ]]; then
                     COMPREPLY=( $(compgen -W "$(ls "$templates_dir" 2>/dev/null)" -- "$cur") )
                 fi
@@ -103,8 +103,8 @@ def _get_fish_completion() -> str:
     completion_lines = "\n".join(
         f'complete -c {a} -n "__fish_seen_subcommand_from completion" -a "zsh bash fish"' for a in CLI_ALIASES
     )
-    reset_lines = "\n".join(
-        f'complete -c {a} -n "__fish_seen_subcommand_from reset" -a "(__branchctx_templates)"' for a in CLI_ALIASES
+    template_lines = "\n".join(
+        f'complete -c {a} -n "__fish_seen_subcommand_from template" -a "(__branchctx_templates)"' for a in CLI_ALIASES
     )
 
     return f"""{init_lines}
@@ -116,14 +116,14 @@ def _get_fish_completion() -> str:
 function __branchctx_templates
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
     if test -n "$git_root"
-        set -l templates_dir "$git_root/.branchctx/templates"
+        set -l templates_dir "$git_root/.bctx/templates"
         if test -d "$templates_dir"
             ls "$templates_dir" 2>/dev/null
         end
     end
 end
 
-{reset_lines}
+{template_lines}
 """
 
 

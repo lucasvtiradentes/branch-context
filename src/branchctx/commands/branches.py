@@ -4,11 +4,36 @@ import os
 
 from branchctx.config import config_exists
 from branchctx.constants import CLI_NAME
+from branchctx.git import git_list_branches
 from branchctx.hooks import get_current_branch, get_git_root
-from branchctx.sync import get_branch_dir, list_branches, sanitize_branch_name
+from branchctx.sync import (
+    archive_branch,
+    get_branch_dir,
+    list_archived_branches,
+    list_branches,
+    sanitize_branch_name,
+)
 
 
-def cmd_branches(_args: list[str]) -> int:
+def _print_help():
+    print("""usage: bctx branches <command>
+
+Commands:
+  list    List all branch contexts
+  prune   Archive orphan contexts""")
+
+
+def cmd_branches(args: list[str]) -> int:
+    if not args:
+        _print_help()
+        return 1
+
+    subcommand = args[0]
+
+    if subcommand in ("-h", "--help"):
+        _print_help()
+        return 0
+
     git_root = get_git_root()
     if not git_root:
         print("error: not a git repository")
@@ -18,6 +43,17 @@ def cmd_branches(_args: list[str]) -> int:
         print(f"error: not initialized. Run '{CLI_NAME} init' first")
         return 1
 
+    if subcommand == "list":
+        return _cmd_list(git_root)
+    elif subcommand == "prune":
+        return _cmd_prune(git_root)
+    else:
+        print(f"error: unknown subcommand '{subcommand}'")
+        _print_help()
+        return 1
+
+
+def _cmd_list(git_root: str) -> int:
     branches = list_branches(git_root)
     current = get_current_branch(git_root)
 
@@ -33,4 +69,28 @@ def cmd_branches(_args: list[str]) -> int:
         marker = "*" if current and b == sanitize_branch_name(current) else " "
         print(f"  {marker} {b} ({len(files)} files)")
 
+    archived = list_archived_branches(git_root)
+    if archived:
+        print(f"\nArchived: {len(archived)}")
+
+    return 0
+
+
+def _cmd_prune(git_root: str) -> int:
+    branches = list_branches(git_root)
+    git_branches = git_list_branches(git_root)
+    git_branches_sanitized = {sanitize_branch_name(b) for b in git_branches}
+
+    orphans = set(branches) - git_branches_sanitized
+
+    if not orphans:
+        print("No orphan contexts to prune")
+        return 0
+
+    print(f"Archiving {len(orphans)} orphan contexts:\n")
+    for orphan in sorted(orphans):
+        if archive_branch(git_root, orphan):
+            print(f"  {orphan}")
+
+    print(f"\nDone. Use '{CLI_NAME} branches list' to see current contexts.")
     return 0

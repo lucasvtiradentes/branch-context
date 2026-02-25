@@ -12,7 +12,12 @@ DEFAULT_SOUND_FILE = "notification.oga"
 
 CONFIG_DIR = ".bctx"
 CONFIG_FILE = "config.json"
+META_FILE = "meta.json"
 TEMPLATES_DIR = "templates"
 DEFAULT_TEMPLATE = "_default"
 BRANCHES_DIR = "branches"
+ARCHIVED_DIR = "_archived"
 DEFAULT_SYMLINK = "_context"
+
+TEMPLATE_FILE_EXTENSIONS = (".md", ".txt", ".json", ".yaml", ".yml", ".toml")
+CONTEXT_FILE_EXTENSIONS = (".md", ".txt")
