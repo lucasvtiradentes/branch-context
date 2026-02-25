@@ -25,10 +25,9 @@ Options:
 
 Examples:
   {CLI_NAME} init                             # initialize + install hook
-  {CLI_NAME} sync                             # sync current branch
+  {CLI_NAME} status                           # show status and health
   {CLI_NAME} branches list                    # list contexts
   {CLI_NAME} branches prune                   # archive orphan contexts
-  {CLI_NAME} status                           # show status and health
   {CLI_NAME} reset                            # reset to auto-detected template
   {CLI_NAME} reset feature                    # reset to feature template
   {CLI_NAME} completion zsh                   # generate zsh completion

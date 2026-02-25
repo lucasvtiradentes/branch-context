@@ -52,10 +52,9 @@ pip install branch-ctx
 
 ```bash
 bctx init                          # initialize + install hook
-bctx sync                          # sync current branch manually
+bctx status                        # show status and health
 bctx branches list                 # list all branch contexts
 bctx branches prune                # archive orphan contexts
-bctx status                        # show status and health
 bctx reset                         # reset context to template
 bctx reset feature                 # reset to specific template
 bctx completion zsh                # generate shell completion
