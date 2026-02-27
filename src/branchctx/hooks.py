@@ -60,8 +60,13 @@ def get_hook_path(git_root: str, hook_type: HookType = HOOK_POST_CHECKOUT, use_c
         custom_path = git_hooks_path(git_root)
         if custom_path:
             if os.path.isabs(custom_path):
-                return os.path.join(custom_path, hook_type)
-            return os.path.join(git_root, custom_path, hook_type)
+                hooks_dir = custom_path
+            else:
+                hooks_dir = os.path.join(git_root, custom_path)
+            husky_dir = _get_husky_user_hooks_dir(hooks_dir)
+            if husky_dir:
+                return os.path.join(husky_dir, hook_type)
+            return os.path.join(hooks_dir, hook_type)
     return os.path.join(git_root, GIT_DIR, "hooks", hook_type)
 
 
@@ -74,6 +79,16 @@ def get_custom_hooks_dir(git_root: str) -> str | None:
     return os.path.join(git_root, custom_path)
 
 
+def _is_husky_dir(hooks_dir: str) -> bool:
+    return os.path.exists(os.path.join(hooks_dir, "h"))
+
+
+def _get_husky_user_hooks_dir(hooks_dir: str) -> str | None:
+    if not _is_husky_dir(hooks_dir):
+        return None
+    return os.path.dirname(hooks_dir)
+
+
 def _prompt_yes_no(question: str) -> bool:
     while True:
         answer = input(f"{question} [y/n]: ").strip().lower()
@@ -84,9 +99,19 @@ def _prompt_yes_no(question: str) -> bool:
         print("Please answer 'y' or 'n'.")
 
 
+def _get_all_hook_paths(git_root: str, hook_type: HookType) -> list[str]:
+    paths = [get_hook_path(git_root, hook_type, use_custom=False)]
+    custom_hooks_dir = get_custom_hooks_dir(git_root)
+    if custom_hooks_dir:
+        paths.append(os.path.join(custom_hooks_dir, hook_type))
+        husky_dir = _get_husky_user_hooks_dir(custom_hooks_dir)
+        if husky_dir:
+            paths.append(os.path.join(husky_dir, hook_type))
+    return paths
+
+
 def is_hook_installed(git_root: str, hook_type: HookType = HOOK_POST_CHECKOUT) -> bool:
-    for use_custom in [True, False]:
-        hook_path = get_hook_path(git_root, hook_type, use_custom=use_custom)
+    for hook_path in _get_all_hook_paths(git_root, hook_type):
         if os.path.exists(hook_path):
             with open(hook_path) as f:
                 if HOOK_MARKER in f.read():
@@ -201,9 +226,7 @@ def _is_standalone_bctx_hook(content: str) -> bool:
 
 
 def uninstall_hook(git_root: str, hook_type: HookType = HOOK_POST_CHECKOUT) -> HookUninstallResult:
-    for use_custom in [True, False]:
-        hook_path = get_hook_path(git_root, hook_type, use_custom=use_custom)
-
+    for hook_path in _get_all_hook_paths(git_root, hook_type):
         if not os.path.exists(hook_path):
             continue
 
@@ -226,11 +249,9 @@ def uninstall_hook(git_root: str, hook_type: HookType = HOOK_POST_CHECKOUT) -> H
 
         return "uninstalled"
 
-    default_path = get_hook_path(git_root, hook_type, use_custom=False)
-    custom_path = get_hook_path(git_root, hook_type, use_custom=True)
-
-    if os.path.exists(default_path) or os.path.exists(custom_path):
-        return "not_managed"
+    for hook_path in _get_all_hook_paths(git_root, hook_type):
+        if os.path.exists(hook_path):
+            return "not_managed"
 
     return "not_installed"
 
