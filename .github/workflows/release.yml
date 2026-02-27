@@ -48,15 +48,15 @@ jobs:
       - name: Build changelog
         run: towncrier build --yes --version ${{ steps.version.outputs.version }}
 
+      - name: Build
+        run: hatch build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
       - name: Commit and tag
         run: |
           git add -A
           git commit -m "chore: release v${{ steps.version.outputs.version }}"
           git tag "v${{ steps.version.outputs.version }}"
           git push origin main --tags
-
-      - name: Build
-        run: hatch build
-
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
