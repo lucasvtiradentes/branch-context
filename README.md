@@ -114,8 +114,7 @@ _context -> .bctx/branches/main/   # symlink to current
 
 ```json
 {
-  "symlink": "_context",
-  "on_switch": "echo 'switched to {branch}'",
+  "default_base_branch": "origin/main",
   "sound": true,
   "sound_file": "/path/to/custom.wav",
   "template_rules": [
@@ -125,13 +124,14 @@ _context -> .bctx/branches/main/   # symlink to current
 }
 ```
 
-| Key              | Description                                     |
-|------------------|-------------------------------------------------|
-| `symlink`        | symlink name (default: `_context`)              |
-| `on_switch`      | command to run on branch switch                 |
-| `sound`          | play sound on sync (default: `false`)           |
-| `sound_file`      | custom sound file (default: bundled sound)       |
-| `template_rules` | per-prefix template mapping (fallback: _default) |
+| Key                 | Description                                      |
+|---------------------|--------------------------------------------------|
+| `default_base_branch` | base branch for diff/commits (default: `origin/main`) |
+| `sound`             | play sound on sync (default: `false`)            |
+| `sound_file`        | custom sound file (default: bundled sound)       |
+| `template_rules`    | per-prefix template mapping (fallback: _default) |
+
+Per-branch base override: create `_context/base_branch` with branch name.
 
 ## Development
 
