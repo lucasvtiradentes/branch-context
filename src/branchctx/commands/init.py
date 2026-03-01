@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from branchctx.assets import copy_init_templates, get_gitignore
+from branchctx.assets import copy_init_templates
 from branchctx.config import (
     Config,
     config_exists,
@@ -37,9 +37,6 @@ def cmd_init(_args: list[str]) -> int:
 
         copy_init_templates(Path(templates_dir))
 
-        with open(os.path.join(config_dir, ".gitignore"), "w") as f:
-            f.write(get_gitignore())
-
         print(f"Initialized: {config_dir}")
         print(f"  config:    {config_dir}/{CONFIG_FILE}")
         print(f"  templates: {templates_dir}/")
@@ -65,6 +62,7 @@ def cmd_init(_args: list[str]) -> int:
         print(f"warning: {HOOK_POST_COMMIT} hook exists but not managed by {CLI_NAME}")
 
     _add_to_gitignore(git_root, DEFAULT_SYMLINK)
+    _add_to_gitignore(git_root, ".bctx/branches/")
 
     branch = get_current_branch(git_root)
     if branch:

@@ -6,6 +6,7 @@ build/
 .venv/
 .ignore
 _context
+.bctx/branches/
 **/.DS_Store
 CLAUDE.local.md
 .devpanel

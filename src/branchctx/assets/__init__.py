@@ -20,10 +20,6 @@ def get_default_config() -> dict:
     return json.loads(get_init_asset("config.json"))
 
 
-def get_gitignore() -> str:
-    return get_init_asset("gitignore")
-
-
 def get_post_checkout_hook_template() -> str:
     return get_init_asset("hook_post_checkout.sh")
 
