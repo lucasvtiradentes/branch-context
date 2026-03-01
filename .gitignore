@@ -8,5 +8,6 @@ build/
 _branch
 .bctx/branches/
 **/.DS_Store
+CLAUDE.md
 CLAUDE.local.md
 .devpanel

@@ -17,6 +17,7 @@ from branchctx.constants import (
     PACKAGE_NAME,
     TEMPLATE_FILE_EXTENSIONS,
 )
+from branchctx.data.branch_base import init_base_branch
 from branchctx.data.config import Config, get_branches_dir, get_default_template, get_template_dir
 from branchctx.data.meta import archive_branch_meta, create_branch_meta
 from branchctx.utils.template import get_template_variables, render_template_content
@@ -119,6 +120,7 @@ def create_branch_context(
 
     os.makedirs(branch_dir, exist_ok=True)
     create_branch_meta(workspace, branch_key, branch)
+    init_base_branch(workspace, branch_dir)
 
     template_dir = _resolve_template_dir(workspace, branch, template)
 

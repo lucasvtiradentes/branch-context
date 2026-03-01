@@ -19,6 +19,7 @@ ARCHIVED_DIR = "_archived"
 DEFAULT_SYMLINK = "_branch"
 DEFAULT_TEMPLATE = "_default"
 DEFAULT_BASE_BRANCH = "origin/main"
+BASE_BRANCH_FILE = "base_branch"
 
 TEMPLATE_FILE_EXTENSIONS = (".md", ".txt", ".json", ".yaml", ".yml", ".toml")
 CONTEXT_FILE_EXTENSIONS = (".md", ".txt")
