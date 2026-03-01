@@ -1,8 +1,8 @@
 import os
 import tempfile
 
-from branchctx.assets import get_default_config
 from branchctx.commands.init import _add_to_gitignore, cmd_init
+from branchctx.constants import DEFAULT_SYMLINK
 from branchctx.git import git_init
 
 
@@ -64,7 +64,7 @@ def test_init_creates_symlink():
         try:
             os.chdir(tmpdir)
             cmd_init([])
-            symlink = os.path.join(tmpdir, get_default_config()["symlink"])
+            symlink = os.path.join(tmpdir, DEFAULT_SYMLINK)
             assert os.path.islink(symlink)
         finally:
             os.chdir(old_cwd)
@@ -80,6 +80,6 @@ def test_init_adds_to_gitignore():
             gitignore = os.path.join(tmpdir, ".gitignore")
             with open(gitignore) as f:
                 content = f.read()
-            assert get_default_config()["symlink"] in content
+            assert DEFAULT_SYMLINK in content
         finally:
             os.chdir(old_cwd)

@@ -3,8 +3,8 @@ import tempfile
 
 import pytest
 
-from branchctx.assets import get_default_config
 from branchctx.config import Config, get_branches_dir, get_template_dir
+from branchctx.constants import DEFAULT_SYMLINK
 from branchctx.git import git_add, git_checkout, git_commit, git_config, git_init
 from branchctx.hooks import install_hook
 from branchctx.sync import get_branch_rel_path, sync_branch
@@ -43,7 +43,7 @@ def git_repo():
 
 
 def test_e2e_branch_switch_preserves_content(git_repo):
-    symlink_path = os.path.join(git_repo, get_default_config()["symlink"])
+    symlink_path = os.path.join(git_repo, DEFAULT_SYMLINK)
 
     sync_branch(git_repo, "main")
     assert os.path.islink(symlink_path)
@@ -77,7 +77,7 @@ def test_e2e_branch_switch_preserves_content(git_repo):
 
 
 def test_e2e_multiple_branches(git_repo):
-    symlink_path = os.path.join(git_repo, get_default_config()["symlink"])
+    symlink_path = os.path.join(git_repo, DEFAULT_SYMLINK)
     branches = ["main", "dev", "staging"]
     contents = {}
 
@@ -102,7 +102,7 @@ def test_e2e_multiple_branches(git_repo):
 
 
 def test_e2e_slash_branch_names(git_repo):
-    symlink_path = os.path.join(git_repo, get_default_config()["symlink"])
+    symlink_path = os.path.join(git_repo, DEFAULT_SYMLINK)
 
     sync_branch(git_repo, "main")
     with open(os.path.join(symlink_path, "context.md"), "w") as f:

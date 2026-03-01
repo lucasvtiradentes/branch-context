@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from branchctx.assets import copy_init_templates, get_default_config
+from branchctx.assets import copy_init_templates
 from branchctx.config import Config, TemplateRule, get_branches_dir, get_config_dir, get_templates_dir
-from branchctx.constants import GIT_DIR
+from branchctx.constants import DEFAULT_SYMLINK, GIT_DIR
 from branchctx.sync import (
     branch_context_exists,
     create_branch_context,
@@ -134,16 +134,15 @@ def test_update_symlink_error_not_symlink(workspace):
 
 
 def test_sync_branch(workspace):
-    defaults = get_default_config()
     result = sync_branch(workspace, "feature/test")
 
     assert result["branch"] == "feature/test"
     assert "feature-test" in result["branch_dir"]
     assert result["create_result"] == "created_from_template"
     assert result["symlink_result"] == "updated"
-    assert result["symlink_path"] == defaults["symlink"]
+    assert result["symlink_path"] == DEFAULT_SYMLINK
 
-    symlink_path = os.path.join(workspace, defaults["symlink"])
+    symlink_path = os.path.join(workspace, DEFAULT_SYMLINK)
     assert os.path.islink(symlink_path)
 
 

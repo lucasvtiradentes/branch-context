@@ -1,6 +1,4 @@
 {
-  "symlink": "_context",
-  "default_template": "_default",
   "sound": true,
   "template_rules": [
     {

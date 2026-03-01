@@ -18,5 +18,8 @@ TEMPLATES_DIR = "templates"
 BRANCHES_DIR = "branches"
 ARCHIVED_DIR = "_archived"
 
+DEFAULT_SYMLINK = "_context"
+DEFAULT_TEMPLATE = "_default"
+
 TEMPLATE_FILE_EXTENSIONS = (".md", ".txt", ".json", ".yaml", ".yml", ".toml")
 CONTEXT_FILE_EXTENSIONS = (".md", ".txt")

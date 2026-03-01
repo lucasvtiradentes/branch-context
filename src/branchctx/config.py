@@ -5,7 +5,15 @@ import os
 from dataclasses import dataclass, field
 
 from branchctx.assets import get_default_config
-from branchctx.constants import BASE_BRANCH_FILE, BRANCHES_DIR, CONFIG_DIR, CONFIG_FILE, TEMPLATES_DIR
+from branchctx.constants import (
+    BASE_BRANCH_FILE,
+    BRANCHES_DIR,
+    CONFIG_DIR,
+    CONFIG_FILE,
+    DEFAULT_SYMLINK,
+    DEFAULT_TEMPLATE,
+    TEMPLATES_DIR,
+)
 
 _DEFAULTS: dict | None = None
 
@@ -28,7 +36,7 @@ def _get_default_template_rules() -> list[TemplateRule]:
 
 
 def get_default_template() -> str:
-    return _get_defaults()["default_template"]
+    return DEFAULT_TEMPLATE
 
 
 def get_default_base_branch() -> str:
@@ -37,12 +45,18 @@ def get_default_base_branch() -> str:
 
 @dataclass
 class Config:
-    symlink: str = field(default_factory=lambda: _get_defaults()["symlink"])
-    default_template: str = field(default_factory=get_default_template)
     on_switch: str | None = field(default_factory=lambda: _get_defaults()["on_switch"])
     sound: bool = field(default_factory=lambda: _get_defaults()["sound"])
     sound_file: str | None = None
     template_rules: list[TemplateRule] = field(default_factory=_get_default_template_rules)
+
+    @property
+    def symlink(self) -> str:
+        return DEFAULT_SYMLINK
+
+    @property
+    def default_template(self) -> str:
+        return DEFAULT_TEMPLATE
 
     @classmethod
     def load(cls, workspace: str) -> "Config":
@@ -64,8 +78,6 @@ class Config:
         ]
 
         return cls(
-            symlink=data.get("symlink", defaults["symlink"]),
-            default_template=data.get("default_template", defaults["default_template"]),
             on_switch=data.get("on_switch"),
             sound=data.get("sound", defaults["sound"]),
             sound_file=data.get("sound_file"),
@@ -76,8 +88,6 @@ class Config:
         config_path = os.path.join(workspace, CONFIG_DIR, CONFIG_FILE)
 
         data = {
-            "symlink": self.symlink,
-            "default_template": self.default_template,
             "sound": self.sound,
             "template_rules": [{"prefix": r.prefix, "template": r.template} for r in self.template_rules],
         }

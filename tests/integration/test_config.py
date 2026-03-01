@@ -3,7 +3,6 @@ import tempfile
 
 import pytest
 
-from branchctx.assets import get_default_config
 from branchctx.config import (
     Config,
     TemplateRule,
@@ -12,7 +11,7 @@ from branchctx.config import (
     get_config_dir,
     get_template_dir,
 )
-from branchctx.constants import BRANCHES_DIR, CONFIG_DIR, TEMPLATES_DIR
+from branchctx.constants import BRANCHES_DIR, CONFIG_DIR, DEFAULT_SYMLINK, DEFAULT_TEMPLATE, TEMPLATES_DIR
 
 
 @pytest.fixture
@@ -35,7 +34,7 @@ def test_get_branches_dir(workspace):
 
 def test_get_template_dir(workspace):
     result = get_template_dir(workspace)
-    assert result == os.path.join(workspace, CONFIG_DIR, TEMPLATES_DIR, get_default_config()["default_template"])
+    assert result == os.path.join(workspace, CONFIG_DIR, TEMPLATES_DIR, DEFAULT_TEMPLATE)
 
 
 def test_get_template_dir_custom(workspace):
@@ -54,28 +53,25 @@ def test_config_exists_true(workspace):
 
 
 def test_config_default_values():
-    defaults = get_default_config()
     config = Config()
-    assert config.symlink == defaults["symlink"]
+    assert config.symlink == DEFAULT_SYMLINK
     assert config.on_switch is None
 
 
 def test_config_save_and_load(workspace):
     config = Config(
-        symlink=".my-context",
         on_switch="echo {branch}",
     )
     config.save(workspace)
 
     loaded = Config.load(workspace)
-    assert loaded.symlink == ".my-context"
+    assert loaded.symlink == DEFAULT_SYMLINK
     assert loaded.on_switch == "echo {branch}"
 
 
 def test_config_load_missing_file(workspace):
-    defaults = get_default_config()
     config = Config.load(workspace)
-    assert config.symlink == defaults["symlink"]
+    assert config.symlink == DEFAULT_SYMLINK
     assert config.on_switch is None
 
 
@@ -95,7 +91,6 @@ def test_config_template_rules(workspace):
 
 
 def test_config_get_template_for_branch():
-    defaults = get_default_config()
     config = Config(
         template_rules=[
             TemplateRule(prefix="feature/", template="feature"),
@@ -105,5 +100,5 @@ def test_config_get_template_for_branch():
 
     assert config.get_template_for_branch("feature/login") == "feature"
     assert config.get_template_for_branch("bugfix/123") == "bugfix"
-    assert config.get_template_for_branch("main") == defaults["default_template"]
-    assert config.get_template_for_branch("develop") == defaults["default_template"]
+    assert config.get_template_for_branch("main") == DEFAULT_TEMPLATE
+    assert config.get_template_for_branch("develop") == DEFAULT_TEMPLATE

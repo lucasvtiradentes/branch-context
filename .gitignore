@@ -7,3 +7,5 @@ build/
 .ignore
 _context
 **/.DS_Store
+CLAUDE.local.md
+.devpanel
