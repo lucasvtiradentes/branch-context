@@ -18,10 +18,13 @@ jobs:
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
 
+      - name: Install claude-code-pretty
+        run: pip install claude-code-pretty
+
       - name: Run completion sync check
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-        run: claude -p "/check-completion-sync"
+        run: claudep -p "/check-completion-sync"
 
       - name: Check for changes
         id: check
