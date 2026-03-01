@@ -40,6 +40,11 @@ _{CLI_NAME}() {{
                 _values 'shell' 'zsh' 'bash' 'fish'
             fi
             ;;
+        branches)
+            if (( CURRENT == 3 )); then
+                _values 'subcommand' 'list' 'prune'
+            fi
+            ;;
         *)
             if (( CURRENT == 2 )); then
                 _describe -t commands 'command' commands
@@ -80,6 +85,10 @@ def _get_bash_completion() -> str:
             COMPREPLY=( $(compgen -W "zsh bash fish" -- "$cur") )
             return 0
             ;;
+        branches)
+            COMPREPLY=( $(compgen -W "list prune" -- "$cur") )
+            return 0
+            ;;
         {case_aliases})
             COMPREPLY=( $(compgen -W "$commands" -- "$cur") )
             return 0
@@ -106,12 +115,17 @@ def _get_fish_completion() -> str:
     template_lines = "\n".join(
         f'complete -c {a} -n "__fish_seen_subcommand_from template" -a "(__branchctx_templates)"' for a in CLI_ALIASES
     )
+    branches_lines = "\n".join(
+        f'complete -c {a} -n "__fish_seen_subcommand_from branches" -a "list prune"' for a in CLI_ALIASES
+    )
 
     return f"""{init_lines}
 
 {cmd_lines}
 
 {completion_lines}
+
+{branches_lines}
 
 function __branchctx_templates
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
