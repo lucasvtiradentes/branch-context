@@ -4,16 +4,16 @@ import os
 from pathlib import Path
 
 from branchctx.assets import copy_init_templates
-from branchctx.config import (
+from branchctx.constants import CLI_NAME, CONFIG_FILE, DEFAULT_SYMLINK, HOOK_POST_CHECKOUT, HOOK_POST_COMMIT
+from branchctx.core.hooks import get_current_branch, get_git_root, install_hook
+from branchctx.core.sync import sync_branch
+from branchctx.data.config import (
     Config,
     config_exists,
     get_branches_dir,
     get_config_dir,
     get_templates_dir,
 )
-from branchctx.constants import CLI_NAME, CONFIG_FILE, DEFAULT_SYMLINK, HOOK_POST_CHECKOUT, HOOK_POST_COMMIT
-from branchctx.hooks import get_current_branch, get_git_root, install_hook
-from branchctx.sync import sync_branch
 
 
 def cmd_init(_args: list[str]) -> int:

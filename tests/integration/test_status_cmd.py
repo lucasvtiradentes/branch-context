@@ -4,11 +4,11 @@ import tempfile
 import pytest
 
 from branchctx.commands.status import cmd_status
-from branchctx.config import Config, get_branches_dir, get_template_dir
 from branchctx.constants import HOOK_POST_CHECKOUT
-from branchctx.git import git_add, git_commit, git_config, git_init
-from branchctx.hooks import install_hook
-from branchctx.sync import sync_branch
+from branchctx.core.hooks import install_hook
+from branchctx.core.sync import sync_branch
+from branchctx.data.config import Config, get_branches_dir, get_template_dir
+from branchctx.utils.git import git_add, git_commit, git_config, git_init
 
 
 @pytest.fixture

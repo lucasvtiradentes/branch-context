@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 
-from branchctx.git import git_user_name
+from branchctx.utils.git import git_user_name
 
 VAR_PATTERN = re.compile(r"\{\{(\w+)\}\}")
 

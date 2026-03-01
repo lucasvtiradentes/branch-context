@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 
-from branchctx.context_tags import (
+from branchctx.core.context_tags import (
     SYNC_MESSAGE_TEMPLATE,
     TAG_COMMITS,
     TAG_FILES,

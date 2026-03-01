@@ -3,7 +3,7 @@ import tempfile
 
 from branchctx.commands.init import _add_to_gitignore, cmd_init
 from branchctx.constants import DEFAULT_SYMLINK
-from branchctx.git import git_init
+from branchctx.utils.git import git_init
 
 
 def test_add_to_gitignore_creates_file():

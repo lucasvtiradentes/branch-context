@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from branchctx.branch_base import get_base_branch
-from branchctx.config import config_exists
 from branchctx.constants import CLI_NAME
-from branchctx.context_tags import update_context_tags
-from branchctx.hooks import get_git_root
-from branchctx.meta import create_branch_meta, update_branch_meta
-from branchctx.sync import get_branch_dir, sanitize_branch_name, sync_branch
+from branchctx.core.context_tags import update_context_tags
+from branchctx.core.hooks import get_git_root
+from branchctx.core.sync import get_branch_dir, sanitize_branch_name, sync_branch
+from branchctx.data.branch_base import get_base_branch
+from branchctx.data.config import config_exists
+from branchctx.data.meta import create_branch_meta, update_branch_meta
 
 
 def cmd_on_checkout(args: list[str]) -> int:

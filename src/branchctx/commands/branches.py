@@ -2,17 +2,17 @@ from __future__ import annotations
 
 import os
 
-from branchctx.config import config_exists
 from branchctx.constants import CLI_NAME
-from branchctx.git import git_list_branches
-from branchctx.hooks import get_current_branch, get_git_root
-from branchctx.sync import (
+from branchctx.core.hooks import get_current_branch, get_git_root
+from branchctx.core.sync import (
     archive_branch,
     get_branch_dir,
     list_archived_branches,
     list_branches,
     sanitize_branch_name,
 )
+from branchctx.data.config import config_exists
+from branchctx.utils.git import git_list_branches
 
 
 def _print_help():

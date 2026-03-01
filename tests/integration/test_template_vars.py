@@ -2,8 +2,8 @@ import tempfile
 
 import pytest
 
-from branchctx.git import git_config, git_init
-from branchctx.template_vars import get_template_variables, render_template_content
+from branchctx.utils.git import git_config, git_init
+from branchctx.utils.template import get_template_variables, render_template_content
 
 
 @pytest.fixture

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import os
 
-from branchctx.branch_base import get_base_branch
-from branchctx.config import config_exists, get_templates_dir, list_templates
 from branchctx.constants import CLI_NAME, DEFAULT_SYMLINK, DEFAULT_TEMPLATE, HOOK_POST_CHECKOUT, HOOK_POST_COMMIT
-from branchctx.git import git_config_get, git_list_branches
-from branchctx.hooks import get_current_branch, get_git_root, is_hook_installed
-from branchctx.sync import get_branch_dir, list_branches, sanitize_branch_name
+from branchctx.core.hooks import get_current_branch, get_git_root, is_hook_installed
+from branchctx.core.sync import get_branch_dir, list_branches, sanitize_branch_name
+from branchctx.data.branch_base import get_base_branch
+from branchctx.data.config import config_exists, get_templates_dir, list_templates
+from branchctx.utils.git import git_config_get, git_list_branches
 
 STATUS_OK = "[ok]"
 STATUS_ERROR = "[!!]"

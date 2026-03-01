@@ -7,12 +7,12 @@ import pytest
 from branchctx.commands.on_checkout import cmd_on_checkout
 from branchctx.commands.on_commit import cmd_on_commit
 from branchctx.commands.template import cmd_template
-from branchctx.config import get_branches_dir, get_config_dir, get_template_dir
 from branchctx.constants import DEFAULT_SYMLINK, HOOK_POST_CHECKOUT, HOOK_POST_COMMIT
-from branchctx.git import git_add, git_checkout, git_commit, git_config, git_init
-from branchctx.hooks import install_hook
-from branchctx.meta import get_branch_meta, load_archived_meta
-from branchctx.sync import archive_branch, sanitize_branch_name, sync_branch
+from branchctx.core.hooks import install_hook
+from branchctx.core.sync import archive_branch, sanitize_branch_name, sync_branch
+from branchctx.data.config import get_branches_dir, get_config_dir, get_template_dir
+from branchctx.data.meta import get_branch_meta, load_archived_meta
+from branchctx.utils.git import git_add, git_checkout, git_commit, git_config, git_init
 
 
 @pytest.fixture

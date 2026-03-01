@@ -8,7 +8,6 @@ import subprocess
 from importlib import resources
 from typing import Literal
 
-from branchctx.config import Config, get_branches_dir, get_default_template, get_template_dir
 from branchctx.constants import (
     ARCHIVED_DIR,
     BRANCHES_DIR,
@@ -18,8 +17,9 @@ from branchctx.constants import (
     PACKAGE_NAME,
     TEMPLATE_FILE_EXTENSIONS,
 )
-from branchctx.meta import archive_branch_meta, create_branch_meta
-from branchctx.template_vars import get_template_variables, render_template_content
+from branchctx.data.config import Config, get_branches_dir, get_default_template, get_template_dir
+from branchctx.data.meta import archive_branch_meta, create_branch_meta
+from branchctx.utils.template import get_template_variables, render_template_content
 
 
 def get_default_sound_file() -> str | None:

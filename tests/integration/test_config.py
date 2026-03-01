@@ -3,7 +3,8 @@ import tempfile
 
 import pytest
 
-from branchctx.config import (
+from branchctx.constants import BRANCHES_DIR, CONFIG_DIR, DEFAULT_TEMPLATE, TEMPLATES_DIR
+from branchctx.data.config import (
     Config,
     TemplateRule,
     config_exists,
@@ -11,7 +12,6 @@ from branchctx.config import (
     get_config_dir,
     get_template_dir,
 )
-from branchctx.constants import BRANCHES_DIR, CONFIG_DIR, DEFAULT_TEMPLATE, TEMPLATES_DIR
 
 
 @pytest.fixture

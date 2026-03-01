@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from branchctx.constants import CLI_NAME, HOOK_POST_CHECKOUT, HOOK_POST_COMMIT
-from branchctx.git import git_config_unset
-from branchctx.hooks import get_git_root, uninstall_hook
+from branchctx.core.hooks import get_git_root, uninstall_hook
+from branchctx.utils.git import git_config_unset
 
 
 def cmd_uninstall(args: list[str]) -> int:

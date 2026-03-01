@@ -9,7 +9,7 @@ from typing import Literal
 
 from branchctx.assets import get_post_checkout_hook_template, get_post_commit_hook_template
 from branchctx.constants import CLI_NAME, GIT_DIR, HOOK_MARKER, HOOK_POST_CHECKOUT
-from branchctx.git import git_current_branch, git_hooks_path, git_info_exclude_add, git_root
+from branchctx.utils.git import git_current_branch, git_hooks_path, git_info_exclude_add, git_root
 
 HookType = Literal["post-checkout", "post-commit"]
 HookInstallResult = Literal["installed", "already_installed", "hook_exists", "appended", "skipped"]

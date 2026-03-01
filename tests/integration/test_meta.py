@@ -3,9 +3,9 @@ import tempfile
 
 import pytest
 
-from branchctx.config import Config, get_branches_dir, get_template_dir
-from branchctx.git import git_add, git_checkout, git_commit, git_config, git_init
-from branchctx.meta import (
+from branchctx.core.sync import sanitize_branch_name, sync_branch
+from branchctx.data.config import Config, get_branches_dir, get_template_dir
+from branchctx.data.meta import (
     _get_changed_files,
     archive_branch_meta,
     create_branch_meta,
@@ -15,7 +15,7 @@ from branchctx.meta import (
     load_branch_meta,
     update_branch_meta,
 )
-from branchctx.sync import sanitize_branch_name, sync_branch
+from branchctx.utils.git import git_add, git_checkout, git_commit, git_config, git_init
 
 
 @pytest.fixture

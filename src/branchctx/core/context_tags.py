@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 
 from branchctx.constants import CONTEXT_FILE_EXTENSIONS
-from branchctx.meta import get_branch_meta
+from branchctx.data.meta import get_branch_meta
 
 TAG_COMMITS = "bctx:commits"
 TAG_FILES = "bctx:files"

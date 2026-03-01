@@ -5,9 +5,8 @@ from pathlib import Path
 import pytest
 
 from branchctx.assets import copy_init_templates
-from branchctx.config import Config, TemplateRule, get_branches_dir, get_config_dir, get_templates_dir
 from branchctx.constants import DEFAULT_SYMLINK, GIT_DIR
-from branchctx.sync import (
+from branchctx.core.sync import (
     branch_context_exists,
     create_branch_context,
     get_branch_dir,
@@ -17,6 +16,7 @@ from branchctx.sync import (
     sync_branch,
     update_symlink,
 )
+from branchctx.data.config import Config, TemplateRule, get_branches_dir, get_config_dir, get_templates_dir
 from tests.utils import normalize_path
 
 

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from branchctx.config import config_exists
 from branchctx.constants import CLI_NAME
-from branchctx.hooks import get_current_branch, get_git_root
-from branchctx.sync import sync_branch
+from branchctx.core.hooks import get_current_branch, get_git_root
+from branchctx.core.sync import sync_branch
+from branchctx.data.config import config_exists
 
 
 def cmd_sync(_args: list[str]) -> int:

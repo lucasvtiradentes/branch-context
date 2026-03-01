@@ -4,9 +4,9 @@ import tempfile
 import pytest
 
 from branchctx.commands.branches import cmd_branches
-from branchctx.config import Config, get_branches_dir, get_template_dir
-from branchctx.git import git_add, git_checkout, git_commit, git_config, git_init
-from branchctx.sync import sync_branch
+from branchctx.core.sync import sync_branch
+from branchctx.data.config import Config, get_branches_dir, get_template_dir
+from branchctx.utils.git import git_add, git_checkout, git_commit, git_config, git_init
 
 
 @pytest.fixture

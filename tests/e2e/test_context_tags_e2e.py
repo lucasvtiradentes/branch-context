@@ -3,13 +3,13 @@ import tempfile
 
 import pytest
 
-from branchctx.config import Config, get_branches_dir, get_template_dir
 from branchctx.constants import DEFAULT_SYMLINK, HOOK_POST_CHECKOUT, HOOK_POST_COMMIT
-from branchctx.context_tags import update_context_tags
-from branchctx.git import git_add, git_checkout, git_commit, git_config, git_init
-from branchctx.hooks import install_hook
-from branchctx.meta import create_branch_meta, update_branch_meta
-from branchctx.sync import sanitize_branch_name, sync_branch
+from branchctx.core.context_tags import update_context_tags
+from branchctx.core.hooks import install_hook
+from branchctx.core.sync import sanitize_branch_name, sync_branch
+from branchctx.data.config import Config, get_branches_dir, get_template_dir
+from branchctx.data.meta import create_branch_meta, update_branch_meta
+from branchctx.utils.git import git_add, git_checkout, git_commit, git_config, git_init
 
 
 @pytest.fixture

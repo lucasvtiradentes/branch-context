@@ -5,9 +5,9 @@ import os
 import subprocess
 from datetime import datetime
 
-from branchctx.config import get_branches_dir
 from branchctx.constants import ARCHIVED_DIR, META_FILE
-from branchctx.git import git_user_name
+from branchctx.data.config import get_branches_dir
+from branchctx.utils.git import git_user_name
 
 
 def _get_meta_path(workspace: str) -> str:

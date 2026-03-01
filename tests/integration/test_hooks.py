@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from branchctx.constants import GIT_DIR, HOOK_MARKER, HOOK_POST_CHECKOUT, HOOK_POST_COMMIT
-from branchctx.hooks import (
+from branchctx.core.hooks import (
     _reset_confirmation_state,
     get_hook_path,
     install_hook,
@@ -43,7 +43,7 @@ class TestPostCheckoutHook:
         result = install_hook(git_repo, HOOK_POST_CHECKOUT)
         assert result == "already_installed"
 
-    @patch("branchctx.hooks._prompt_yes_no", return_value=False)
+    @patch("branchctx.core.hooks._prompt_yes_no", return_value=False)
     def test_install_hook_exists_not_managed(self, mock_prompt, git_repo):
         hook_path = get_hook_path(git_repo, HOOK_POST_CHECKOUT)
         with open(hook_path, "w") as f:
@@ -52,7 +52,7 @@ class TestPostCheckoutHook:
         result = install_hook(git_repo, HOOK_POST_CHECKOUT)
         assert result == "hook_exists"
 
-    @patch("branchctx.hooks._prompt_yes_no", return_value=True)
+    @patch("branchctx.core.hooks._prompt_yes_no", return_value=True)
     def test_install_hook_appended(self, mock_prompt, git_repo):
         hook_path = get_hook_path(git_repo, HOOK_POST_CHECKOUT)
         with open(hook_path, "w") as f:
@@ -92,7 +92,7 @@ class TestPostCheckoutHook:
         result = uninstall_hook(git_repo, HOOK_POST_CHECKOUT)
         assert result == "not_managed"
 
-    @patch("branchctx.hooks._prompt_yes_no", return_value=True)
+    @patch("branchctx.core.hooks._prompt_yes_no", return_value=True)
     def test_uninstall_appended_hook(self, mock_prompt, git_repo):
         hook_path = get_hook_path(git_repo, HOOK_POST_CHECKOUT)
         with open(hook_path, "w") as f:
@@ -126,7 +126,7 @@ class TestPostCommitHook:
         result = install_hook(git_repo, HOOK_POST_COMMIT)
         assert result == "already_installed"
 
-    @patch("branchctx.hooks._prompt_yes_no", return_value=False)
+    @patch("branchctx.core.hooks._prompt_yes_no", return_value=False)
     def test_install_hook_exists_not_managed(self, mock_prompt, git_repo):
         hook_path = get_hook_path(git_repo, HOOK_POST_COMMIT)
         with open(hook_path, "w") as f:
@@ -135,7 +135,7 @@ class TestPostCommitHook:
         result = install_hook(git_repo, HOOK_POST_COMMIT)
         assert result == "hook_exists"
 
-    @patch("branchctx.hooks._prompt_yes_no", return_value=True)
+    @patch("branchctx.core.hooks._prompt_yes_no", return_value=True)
     def test_install_hook_appended(self, mock_prompt, git_repo):
         hook_path = get_hook_path(git_repo, HOOK_POST_COMMIT)
         with open(hook_path, "w") as f:
@@ -175,7 +175,7 @@ class TestPostCommitHook:
         result = uninstall_hook(git_repo, HOOK_POST_COMMIT)
         assert result == "not_managed"
 
-    @patch("branchctx.hooks._prompt_yes_no", return_value=True)
+    @patch("branchctx.core.hooks._prompt_yes_no", return_value=True)
     def test_uninstall_appended_hook(self, mock_prompt, git_repo):
         hook_path = get_hook_path(git_repo, HOOK_POST_COMMIT)
         with open(hook_path, "w") as f:

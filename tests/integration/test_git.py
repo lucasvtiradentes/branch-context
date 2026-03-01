@@ -1,6 +1,6 @@
 import tempfile
 
-from branchctx.git import git_current_branch, git_init
+from branchctx.utils.git import git_current_branch, git_init
 
 
 def test_git_current_branch_empty_repo():
