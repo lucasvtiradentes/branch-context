@@ -11,13 +11,14 @@ class CommandInfo(TypedDict):
 COMMANDS: dict[str, CommandInfo] = {
     "init": {"desc": "Initialize and install hook", "args": ""},
     "uninstall": {"desc": "Remove hook from current repo", "args": ""},
+    "sync": {"desc": "Sync context and update meta/tags", "args": ""},
     "branches": {"desc": "Manage branch contexts", "args": "<list|prune>"},
     "status": {"desc": "Show status and health", "args": ""},
     "template": {"desc": "Apply template to current branch", "args": "[name]"},
     "completion": {"desc": "Generate shell completion", "args": "<shell>"},
 }
 
-INTERNAL_COMMANDS: set[str] = {"on-checkout", "on-commit", "sync"}
+INTERNAL_COMMANDS: set[str] = {"on-checkout", "on-commit"}
 
 _ALL_COMMANDS: set[str] = set(COMMANDS.keys()) | INTERNAL_COMMANDS
 
