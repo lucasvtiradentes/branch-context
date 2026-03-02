@@ -5,7 +5,7 @@
     ".changelog": true,
     ".claude": true,
     ".devpanel": true,
-    ".github": true,
+    ".github": false,
     ".ignore": true,
     ".pytest_cache": true,
     ".ruff_cache": true,

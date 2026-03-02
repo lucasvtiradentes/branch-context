@@ -5,65 +5,90 @@
 <p align="center">
   <a href="#-overview">Overview</a> •
   <a href="#-features">Features</a> •
+  <a href="#-motivation">Motivation</a> •
   <a href="#-quick-start">Quick Start</a> •
-  <a href="#-usage">Usage</a> •
+  <a href="#-commands">Commands</a> •
+  <a href="#-configuration">Configuration</a> •
   <a href="#-contributing">Contributing</a> •
   <a href="#-license">License</a>
 </p>
 
 <div width="100%" align="center">
-  <img src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/divider.png?raw=true" />
+  <img src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/images/divider.png" />
 </div>
 
-## 🎺 Overview<a href="#TOC"><img align="right" src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/up_arrow.png?raw=true" width="22"></a>
+## 🎺 Overview<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/images/up_arrow.png" width="22"></a>
 
 Git branch context manager that automatically syncs context folders across branches. Each branch gets an isolated context directory containing notes, metadata, and files that follow the branch lifecycle.
 
+<div align="center">
+  <img src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/images/demo.gif" width="650" />
+</div>
+
+<div align="center">
+<details>
+<summary>How it works</summary>
+<div align="left">
+
 ```
-           git checkout feature/login
-                       │
-                       V
-               ┌───────────────┐
-               │ post-checkout │
-               │    git hook   │
-               └───────┬───────┘
-                       │
-                       V
-      .bctx/branches/feature-login/ exists?
-                       │
-                  ┌────┴─────┐
-                  │          │
-                 NO         YES
-                  │          │
-                  V          │
-            ┌──────────┐     │
-            │   copy   │     │
-            │ template │     │
-            └─────┬────┘     │
-                  │          │
-                  └────┬─────┘
-                       │
-                       V
-┌───────────────────────────────────────────┐
-│ _branch -> .bctx/branches/feature-login/  │
-└───────────────────────────────────────────┘
+  git checkout feature/login
+              │
+              ▼
+      ┌────────────────┐
+      │  post-checkout │
+      │    git hook    │
+      └───────┬────────┘
+              │
+              ▼
+    context exists? ──NO──▶ copy template (by prefix rules)
+              │                     │
+             YES                    │
+              │◀────────────────────┘
+              ▼
+    ┌───────────────────────────────────────────┐
+    │ _branch/ → .bctx/branches/feature-login   │
+    └───────────────────────────────────────────┘
+              │
+              ▼
+    ┌─────────────────────────────────┐
+    │ • update meta.json (commits)    │
+    │ • update <bctx:*> tags          │
+    │ • play sound (if enabled)       │
+    └─────────────────────────────────┘
 ```
 
-## ⭐ Features<a href="#TOC"><img align="right" src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/up_arrow.png?raw=true" width="22"></a>
+</div>
+</details>
+</div>
 
-- Branch contexts  - separate folder for each branch
-- Auto-sync        - hook syncs on checkout/switch
-- Templates        - new branches start from template (per-prefix support)
-- Symlink          - `_branch/` always points to current branch
-- Sound            - plays sound on branch switch
-- Gitignored       - branch data stays local
-- Shell completion - zsh, bash, fish
+## ⭐ Features<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/images/up_arrow.png" width="22"></a>
 
-## 🚀 Quick Start<a href="#TOC"><img align="right" src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/up_arrow.png?raw=true" width="22"></a>
+- Isolated contexts - per-branch folder, `_branch/` symlink to current
+- Auto-sync         - git hook triggers on checkout
+- Templates         - per-prefix rules (feature/, bugfix/, etc.)
+- Meta tracking     - commits, changed files, timestamps
+- Context tags      - `<bctx:commits>` and `<bctx:files>` auto-updated
+
+## ❓ Motivation<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/images/up_arrow.png" width="22"></a>
+
+When working on multiple branches, it's easy to lose track of what you were doing. This tool helps you:
+
+- Keep notes, TODOs, and context organized per branch
+- Provide context to AI coding assistants (Claude Code, Codex, Cursor, etc.) via `_branch/context.md`
+- Track commits and changed files automatically with `<bctx:*>` tags
+
+The `_branch/` symlink gives AI tools a stable path to read your current branch context, helping them understand what you're working on.
+
+## 🚀 Quick Start<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/images/up_arrow.png" width="22"></a>
+
+Install:
 
 ```bash
-pip install branch-ctx
+brew install pipx         # if not installed (macOS/linux)
+pipx install branch-ctx   # or: pip install branch-ctx
 ```
+
+Setup in your repo:
 
 ```bash
 cd your-repo
@@ -73,11 +98,7 @@ git checkout -b feature/new      # auto-creates context from template
 cat _branch/context.md
 ```
 
-## 📖 Usage<a href="#TOC"><img align="right" src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/up_arrow.png?raw=true" width="22"></a>
-
-<details>
-  <summary>Commands</summary>
-  <br />
+## 📖 Commands<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/images/up_arrow.png" width="22"></a>
 
 ```bash
 bctx init                          # initialize + install hook
@@ -93,37 +114,40 @@ bctx uninstall                     # remove hook
 
 Alias: `branch-ctx` works too.
 
-</details>
+## ⚙️ Configuration<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/images/up_arrow.png" width="22"></a>
 
+<div align="center">
 <details>
-  <summary>Structure</summary>
-  <br />
+<summary>Structure</summary>
+<div align="left">
 
 ```
 .bctx/
 ├── config.json
-├── meta.json                # branch metadata (commits, files, timestamps)
 ├── templates/
 │   ├── _default/            # fallback template
 │   │   └── context.md
 │   └── feature/             # template for feature/* branches
 │       └── context.md
-├── branches/                # one folder per branch (gitignored)
-│   ├── main/
-│   │   └── context.md
-│   └── feature-login/
-│       ├── context.md
-│       └── base_branch      # optional per-branch base override
-└── .gitignore
+└── branches/                # gitignored
+    ├── meta.json            # branch metadata (commits, files, timestamps)
+    ├── main/
+    │   └── context.md
+    └── feature-login/
+        ├── context.md
+        └── base_branch      # optional per-branch base override
 
 _branch -> .bctx/branches/main/   # symlink to current
 ```
 
+</div>
 </details>
+</div>
 
+<div align="center">
 <details>
-  <summary>Configuration</summary>
-  <br />
+<summary>Config file</summary>
+<div align="left">
 
 `.bctx/config.json`:
 
@@ -148,11 +172,14 @@ _branch -> .bctx/branches/main/   # symlink to current
 
 Per-branch base override: create `_branch/base_branch` with branch name.
 
+</div>
 </details>
+</div>
 
+<div align="center">
 <details>
-  <summary>Shell Completion</summary>
-  <br />
+<summary>Shell Completion</summary>
+<div align="left">
 
 ```bash
 # zsh - add to ~/.zshrc
@@ -165,24 +192,19 @@ eval "$(bctx completion bash)"
 bctx completion fish | source
 ```
 
+</div>
 </details>
+</div>
 
-## 🤝 Contributing<a href="#TOC"><img align="right" src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/up_arrow.png?raw=true" width="22"></a>
+## 🤝 Contributing<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/images/up_arrow.png" width="22"></a>
 
 ```bash
-make install    # creates venv, installs deps + pre-commit hooks
+make install    # venv + deps + pre-commit
 make test       # run tests
 make format     # ruff fix + format
 make check      # validate ruff rules
-```
-
-Manual setup:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-pytest -v
+make build      # build package
+make clean      # remove venv + dist
 ```
 
 Dev alias:
@@ -192,12 +214,12 @@ ln -sf $(pwd)/.venv/bin/bctx ~/.local/bin/bctxd   # install
 rm ~/.local/bin/bctxd                             # remove
 ```
 
-## 📜 License<a href="#TOC"><img align="right" src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/up_arrow.png?raw=true" width="22"></a>
+## 📜 License<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/images/up_arrow.png" width="22"></a>
 
 This project is licensed under the [MIT License](LICENSE).
 
 <div width="100%" align="center">
-  <img src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/divider.png?raw=true" />
+  <img src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/images/divider.png" />
 </div>
 
 <br />
