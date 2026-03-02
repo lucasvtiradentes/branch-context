@@ -1,0 +1,28 @@
+{
+  "files.exclude": {
+    "_branch": false,
+    ".bctx": false,
+    ".changelog": true,
+    ".claude": true,
+    ".devpanel": true,
+    ".github": true,
+    ".ignore": true,
+    ".pytest_cache": true,
+    ".ruff_cache": true,
+    ".venv": true,
+    ".vscode": false,
+    "dist": true,
+    "docs": false,
+    "src": false,
+    "tests": false,
+    ".bumpversion.cfg": false,
+    ".gitignore": false,
+    ".pre-commit-config.yaml": false,
+    "CHANGELOG.md": false,
+    "CLAUDE.md": false,
+    "LICENSE": false,
+    "Makefile": false,
+    "pyproject.toml": false,
+    "README.md": false,
+  }
+}

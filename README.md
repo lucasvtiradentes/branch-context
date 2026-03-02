@@ -1,54 +1,83 @@
-# branch-context
+<a name="TOC"></a>
 
-Git branch context manager - sync context folders across branches automatically.
+<h1 align="center">branch-context</h1>
+
+<p align="center">
+  <a href="#-overview">Overview</a> •
+  <a href="#-features">Features</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-usage">Usage</a> •
+  <a href="#-contributing">Contributing</a> •
+  <a href="#-license">License</a>
+</p>
+
+<div width="100%" align="center">
+  <img src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/divider.png?raw=true" />
+</div>
+
+## 🎺 Overview<a href="#TOC"><img align="right" src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/up_arrow.png?raw=true" width="22"></a>
+
+Git branch context manager that automatically syncs context folders across branches. Each branch gets an isolated context directory containing notes, metadata, and files that follow the branch lifecycle.
 
 ```
            git checkout feature/login
                        │
-                       ▼
+                       V
                ┌───────────────┐
                │ post-checkout │
                │    git hook   │
                └───────┬───────┘
                        │
-                       ▼
+                       V
       .bctx/branches/feature-login/ exists?
                        │
-                 ┌─────┴─────┐
-                 │           │
-                NO          YES
-                 │           │
-                 ▼           │
-            ┌─────────┐      │
-            │  copy   │      │
-            │template │      │
-            └────┬────┘      │
-                 │           │
-                 └─────┬─────┘
+                  ┌────┴─────┐
+                  │          │
+                 NO         YES
+                  │          │
+                  V          │
+            ┌──────────┐     │
+            │   copy   │     │
+            │ template │     │
+            └─────┬────┘     │
+                  │          │
+                  └────┬─────┘
                        │
-                       ▼
+                       V
 ┌───────────────────────────────────────────┐
-│ _branch -> .bctx/branches/feature-login/ │
+│ _branch -> .bctx/branches/feature-login/  │
 └───────────────────────────────────────────┘
 ```
 
-## Features
+## ⭐ Features<a href="#TOC"><img align="right" src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/up_arrow.png?raw=true" width="22"></a>
 
-- branch contexts   - separate folder for each branch
-- auto-sync         - hook syncs on checkout/switch
-- templates         - new branches start from template (per-prefix support)
-- symlink           - `_branch/` always points to current branch
-- sound             - plays sound on branch switch
-- gitignored        - branch data stays local
-- shell completion  - zsh, bash, fish
+- Branch contexts  - separate folder for each branch
+- Auto-sync        - hook syncs on checkout/switch
+- Templates        - new branches start from template (per-prefix support)
+- Symlink          - `_branch/` always points to current branch
+- Sound            - plays sound on branch switch
+- Gitignored       - branch data stays local
+- Shell completion - zsh, bash, fish
 
-## Install
+## 🚀 Quick Start<a href="#TOC"><img align="right" src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/up_arrow.png?raw=true" width="22"></a>
 
 ```bash
 pip install branch-ctx
 ```
 
-## Commands
+```bash
+cd your-repo
+bctx init                        # creates .bctx/ + installs hook
+
+git checkout -b feature/new      # auto-creates context from template
+cat _branch/context.md
+```
+
+## 📖 Usage<a href="#TOC"><img align="right" src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/up_arrow.png?raw=true" width="22"></a>
+
+<details>
+  <summary>Commands</summary>
+  <br />
 
 ```bash
 bctx init                          # initialize + install hook
@@ -64,32 +93,11 @@ bctx uninstall                     # remove hook
 
 Alias: `branch-ctx` works too.
 
-## Quick Start
+</details>
 
-```bash
-pip install branch-ctx
-
-cd your-repo
-bctx init      # creates .bctx/ + installs hook
-
-git checkout -b feature/new   # auto-creates context from template
-cat _branch/context.md
-```
-
-## Shell Completion
-
-```bash
-# zsh - add to ~/.zshrc
-eval "$(bctx completion zsh)"
-
-# bash - add to ~/.bashrc
-eval "$(bctx completion bash)"
-
-# fish
-bctx completion fish | source
-```
-
-## Structure
+<details>
+  <summary>Structure</summary>
+  <br />
 
 ```
 .bctx/
@@ -111,7 +119,11 @@ bctx completion fish | source
 _branch -> .bctx/branches/main/   # symlink to current
 ```
 
-## Config
+</details>
+
+<details>
+  <summary>Configuration</summary>
+  <br />
 
 `.bctx/config.json`:
 
@@ -127,16 +139,35 @@ _branch -> .bctx/branches/main/   # symlink to current
 }
 ```
 
-| Key                 | Description                                      |
-|---------------------|--------------------------------------------------|
+| Key                   | Description                                           |
+|-----------------------|-------------------------------------------------------|
 | `default_base_branch` | base branch for diff/commits (default: `origin/main`) |
-| `sound`             | play sound on sync (default: `false`)            |
-| `sound_file`        | custom sound file (default: bundled sound)       |
-| `template_rules`    | per-prefix template mapping (fallback: _default) |
+| `sound`               | play sound on sync (default: `false`)                 |
+| `sound_file`          | custom sound file (default: bundled sound)            |
+| `template_rules`      | per-prefix template mapping (fallback: _default)      |
 
 Per-branch base override: create `_branch/base_branch` with branch name.
 
-## Development
+</details>
+
+<details>
+  <summary>Shell Completion</summary>
+  <br />
+
+```bash
+# zsh - add to ~/.zshrc
+eval "$(bctx completion zsh)"
+
+# bash - add to ~/.bashrc
+eval "$(bctx completion bash)"
+
+# fish
+bctx completion fish | source
+```
+
+</details>
+
+## 🤝 Contributing<a href="#TOC"><img align="right" src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/up_arrow.png?raw=true" width="22"></a>
 
 ```bash
 make install    # creates venv, installs deps + pre-commit hooks
@@ -160,3 +191,19 @@ Dev alias:
 ln -sf $(pwd)/.venv/bin/bctx ~/.local/bin/bctxd   # install
 rm ~/.local/bin/bctxd                             # remove
 ```
+
+## 📜 License<a href="#TOC"><img align="right" src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/up_arrow.png?raw=true" width="22"></a>
+
+This project is licensed under the [MIT License](LICENSE).
+
+<div width="100%" align="center">
+  <img src="https://github.com/lucasvtiradentes/branch-context/blob/main/.github/images/divider.png?raw=true" />
+</div>
+
+<br />
+
+<div align="center">
+  <a target="_blank" href="https://www.linkedin.com/in/lucasvtiradentes/"><img src="https://img.shields.io/badge/-linkedin-blue?logo=Linkedin&logoColor=white" alt="LinkedIn"></a>
+  <a target="_blank" href="mailto:lucasvtiradentes@gmail.com"><img src="https://img.shields.io/badge/-email-red?logo=Gmail&logoColor=white" alt="Email"></a>
+  <a target="_blank" href="https://github.com/lucasvtiradentes"><img src="https://img.shields.io/badge/-github-gray?logo=Github&logoColor=white" alt="GitHub"></a>
+</div>
