@@ -70,10 +70,10 @@ bctx branches prune
 Archives contexts for branches that no longer exist in git.
 
 ```
-┌─────────────────┐         ┌──────────────────────────┐
-│ .bctx/branches/ │   ──→   │ .bctx/branches/_archived/│
+┌─────────────────┐         ┌───────────────────────────┐
+│ .bctx/branches/ │   ──→   │ .bctx/branches/_archived/ │
 │ deleted-branch/ │ prune   │ deleted-branch/           │
-└─────────────────┘         └──────────────────────────┘
+└─────────────────┘         └───────────────────────────┘
 ```
 
 ## Template System

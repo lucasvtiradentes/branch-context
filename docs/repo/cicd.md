@@ -73,11 +73,11 @@ Triggered manually with version bump input (patch/minor/major/initial).
 
 ## Secrets
 
-| Secret                  | Used By          | Purpose            |
-|-------------------------|------------------|--------------------|
+| Secret                  | Used By                       | Purpose            |
+|-------------------------|-------------------------------|--------------------|
 | CLAUDE_CODE_OAUTH_TOKEN | check-completion, update-docs | Claude Code auth   |
-| GITHUB_TOKEN            | all workflows    | Git operations     |
-| (PyPI trusted pub)      | release.yml      | Package publishing |
+| GITHUB_TOKEN            | all workflows                 | Git operations     |
+| (PyPI trusted pub)      | release.yml                   | Package publishing |
 
 ## Branch Strategy
 

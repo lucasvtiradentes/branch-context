@@ -34,15 +34,15 @@ Branch metadata stored in `.bctx/branches/meta.json`:
 
 ### Meta Fields
 
-| Field         | Type     | Description                       |
-|---------------|----------|-----------------------------------|
-| branch        | string   | Original branch name              |
-| created_at    | datetime | Creation timestamp                |
-| author        | string   | Git user who created the context  |
-| updated_at    | datetime | Last update timestamp             |
+| Field         | Type     | Description                           |
+|---------------|----------|---------------------------------------|
+| branch        | string   | Original branch name                  |
+| created_at    | datetime | Creation timestamp                    |
+| author        | string   | Git user who created the context      |
+| updated_at    | datetime | Last update timestamp                 |
 | last_commit   | object   | Last commit (hash, message, datetime) |
-| commits       | string   | Commits since base (one per line) |
-| changed_files | string   | Files changed vs base             |
+| commits       | string   | Commits since base (one per line)     |
+| changed_files | string   | Files changed vs base                 |
 
 ### Update Flow
 
@@ -53,10 +53,10 @@ Branch metadata stored in `.bctx/branches/meta.json`:
 └────────────────┘    └────────────────────┘    └────────────────┘
                               │
                               ↓
-                      ┌─────────────────────┐
+                      ┌──────────────────────┐
                       │ git log base..HEAD   │
                       │ git diff base...HEAD │
-                      └─────────────────────┘
+                      └──────────────────────┘
 ```
 
 ## Context Tags
@@ -110,7 +110,7 @@ src/login.py
 │            ↓                                                  │
 │     ┌─────────────────────────────────┐                       │
 │     │ commits  →  git log base..HEAD  │                       │
-│     │ files    →  git diff base...HEAD │                       │
+│     │ files   →  git diff base...HEAD │                       │
 │     └─────────────────────────────────┘                       │
 │                                                               │
 └───────────────────────────────────────────────────────────────┘
@@ -162,10 +162,10 @@ develop
 
 Variables rendered when copying templates:
 
-| Variable       | Example Value | Description              |
-|----------------|---------------|--------------------------|
-| `{{branch}}`   | feature/auth  | Current branch name      |
-| `{{date}}`     | 2024-01-15    | Current date             |
-| `{{author}}`   | Jane Doe      | Git user name            |
+| Variable     | Example Value | Description         |
+|--------------|---------------|---------------------|
+| `{{branch}}` | feature/auth  | Current branch name |
+| `{{date}}`   | 2024-01-15    | Current date        |
+| `{{author}}` | Jane Doe      | Git user name       |
 
 Supported file types: `.md`, `.txt`, `.json`, `.yaml`, `.yml`, `.toml`
