@@ -44,18 +44,17 @@ from branchctx.data.config import ...
 All git operations go through `utils/git.py`:
 
 ```python
-def git_root(cwd: str | None = None) -> str | None:
+def git_root(path: str) -> str | None:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--show-toplevel"],
+            cwd=path,
             capture_output=True,
             text=True,
-            cwd=cwd,
+            check=True,
         )
-        if result.returncode == 0:
-            return result.stdout.strip()
-        return None
-    except Exception:
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
         return None
 ```
 
@@ -66,7 +65,7 @@ def git_root(cwd: str | None = None) -> str | None:
 Python 3.9+ style:
 
 ```python
-def sync_branch(workspace: str, branch: str) -> dict[str, str]:
+def sync_branch(workspace: str, branch: str) -> dict:
     ...
 
 def list_branches(workspace: str) -> list[str]:
@@ -87,8 +86,8 @@ Line length: 120 characters
 
 ```python
 # constants.py
-CONTEXT_FILE_EXTENSIONS = (".md", ".yaml", ".yml", ".json", ".toml")
-TEMPLATE_FILE_EXTENSIONS = (".md", ".yaml", ".yml", ".json", ".toml")
+CONTEXT_FILE_EXTENSIONS = (".md", ".txt")
+TEMPLATE_FILE_EXTENSIONS = (".md", ".txt", ".json", ".yaml", ".yml", ".toml")
 ```
 
 ### Command Handler Pattern

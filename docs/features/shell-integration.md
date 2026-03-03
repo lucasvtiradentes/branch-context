@@ -108,11 +108,18 @@ Husky:        .husky/post-checkout
 Generated hook script (post-checkout):
 
 ```bash
-#!/bin/sh
-# branch-ctx
-OLD_BRANCH=$(git rev-parse --abbrev-ref @{-1} 2>/dev/null || echo "unknown")
-NEW_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-"bctx" on-checkout "$OLD_BRANCH" "$NEW_BRANCH"
+#!/bin/bash
+# branch-ctx-managed
+
+PREV_HEAD="$1"
+NEW_HEAD="$2"
+CHECKOUT_TYPE="$3"
+
+if [ "$CHECKOUT_TYPE" == "1" ]; then
+    OLD_BRANCH=$(git rev-parse --abbrev-ref @{-1} 2>/dev/null || echo "unknown")
+    NEW_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    "bctx" on-checkout "$OLD_BRANCH" "$NEW_BRANCH" "$PREV_HEAD" "$NEW_HEAD"
+fi
 ```
 
 ### Append Mode
@@ -123,7 +130,7 @@ If existing hooks detected, bctx can append its callback:
 #!/bin/sh
 # existing hook content...
 
-# branch-ctx
+# branch-ctx-managed
 OLD_BRANCH=$(git rev-parse --abbrev-ref @{-1} 2>/dev/null || echo "unknown")
 NEW_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 "bctx" on-checkout "$OLD_BRANCH" "$NEW_BRANCH"
@@ -138,15 +145,15 @@ In `.bctx/config.json`:
 
 ```json
 {
-  "sound_enabled": true,
+  "sound": true,
   "sound_file": null
 }
 ```
 
-| Field         | Type   | Description                      |
-|---------------|--------|----------------------------------|
-| sound_enabled | bool   | Play sound on branch switch      |
-| sound_file    | string | Custom sound path (null=default) |
+| Field      | Type   | Description                      |
+|------------|--------|----------------------------------|
+| sound      | bool   | Play sound on branch switch      |
+| sound_file | string | Custom sound path (null=default) |
 
 ### Platform Support
 
@@ -156,4 +163,4 @@ In `.bctx/config.json`:
 | Linux    | paplay                       |
 | Windows  | PowerShell Media.SoundPlayer |
 
-Default sound bundled at `src/branchctx/assets/switch.wav`
+Default sound bundled at `src/branchctx/assets/notification.oga`

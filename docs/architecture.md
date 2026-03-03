@@ -107,11 +107,11 @@ CLI dispatcher (`cli.py`) routes commands via `cmd_registry`:
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  ┌──────────────────┐  ┌─────────────────┐  ┌─────────────────────┐ │
-│  │ .bctx/           │  │ .bctx/meta.json │  │ .bctx/branches/     │ │
-│  │ config.json      │  │                 │  │ {branch}/           │ │
+│  │ .bctx/           │  │ .bctx/branches/ │  │ .bctx/branches/     │ │
+│  │ config.json      │  │ meta.json       │  │ {branch}/           │ │
 │  │                  │  │ - commits       │  │ - context.md        │ │
-│  │ - base_branch    │  │ - changed_files │  │ - base_branch       │ │
-│  │ - template_rules │  │ - last_sync     │  │                     │ │
+│  │ - default_base   │  │ - changed_files │  │ - base_branch       │ │
+│  │ - template_rules │  │ - updated_at    │  │                     │ │
 │  └────────┬─────────┘  └────────┬────────┘  └──────────┬──────────┘ │
 │           │                     │                      │            │
 │           ↓                    ↓                      ↓             │
@@ -165,9 +165,7 @@ CLI dispatcher (`cli.py`) routes commands via `cmd_registry`:
 |----------------------|-----------------------------|----------------------|
 | git_root()           | rev-parse --show-toplevel   | repo root path       |
 | git_current_branch() | rev-parse --abbrev-ref HEAD | branch name          |
-| git_list_branches()  | branch --list               | list of branch names |
-| git_commits_since()  | log base..HEAD --oneline    | commit messages      |
-| git_changed_files()  | diff base..HEAD --name-only | list of file paths   |
+| git_list_branches()  | branch --format=short       | list of branch names |
 | git_hooks_path()     | config core.hooksPath       | custom hooks dir     |
 
 ## Template System
@@ -179,10 +177,9 @@ CLI dispatcher (`cli.py`) routes commands via `cmd_registry`:
 │                   Template Variables                            │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  {{BRANCH}}        →  current branch name                       │
-│  {{BASE}}          →  base branch (from config or override)     │
-│  {{BRANCH_SCOPE}}  →  second segment of branch (feat/SCOPE)     │
-│  {{DATE}}          →  current date                              │
+│  {{branch}}        →  current branch name                       │
+│  {{date}}          →  current date                              │
+│  {{author}}        →  git user.name                             │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -213,7 +210,7 @@ cli.py
               ├── sync.py        → core/sync.py, data/config.py, data/meta.py
               ├── status.py      → core/hooks.py, data/config.py
               ├── branches.py    → core/sync.py
-              ├── template.py    → core/sync.py, utils/template.py
+              ├── template.py    → core/sync.py, core/context_tags.py
               ├── on_checkout.py → core/sync.py, core/context_tags.py
               ├── on_commit.py   → core/context_tags.py, data/meta.py
               ├── completion.py  → cmd_registry.py
@@ -221,11 +218,11 @@ cli.py
 
 core/
   ├── hooks.py        → utils/git.py
-  ├── sync.py         → data/config.py, data/meta.py, utils/template.py
+  ├── sync.py         → data/config.py, data/meta.py, data/branch_base.py, utils/template.py
   └── context_tags.py → data/meta.py
 
 data/
   ├── config.py       → (standalone)
   ├── meta.py         → utils/git.py
-  └── branch_base.py  → data/config.py
+  └── branch_base.py  → (standalone)
 ```

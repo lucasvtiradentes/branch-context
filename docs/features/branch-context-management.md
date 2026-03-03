@@ -70,10 +70,10 @@ bctx branches prune
 Archives contexts for branches that no longer exist in git.
 
 ```
-┌─────────────────┐         ┌─────────────────┐
-│ .bctx/branches/ │   ──→   │ .bctx/archived/ │
-│ deleted-branch/ │ prune   │ deleted-branch/ │
-└─────────────────┘         └─────────────────┘
+┌─────────────────┐         ┌──────────────────────────┐
+│ .bctx/branches/ │   ──→   │ .bctx/branches/_archived/│
+│ deleted-branch/ │ prune   │ deleted-branch/           │
+└─────────────────┘         └──────────────────────────┘
 ```
 
 ## Template System
@@ -95,11 +95,11 @@ Configure in `.bctx/config.json`:
 
 ```json
 {
-  "template_rules": {
-    "feature/": "feature",
-    "fix/": "fix",
-    "hotfix/": "fix"
-  }
+  "template_rules": [
+    {"prefix": "feature/", "template": "feature"},
+    {"prefix": "fix/", "template": "fix"},
+    {"prefix": "hotfix/", "template": "fix"}
+  ]
 }
 ```
 
@@ -148,8 +148,8 @@ Forces sync of current branch context:
 │                                 │                                 │
 │  3. Render variables            ↓                                 │
 │     ┌────────────────┐    ┌─────────────────┐                     │
-│     │ {{BRANCH}}     │───→│ feature/auth    │                     │
-│     │ {{BASE}}       │───→│ main            │                     │
+│     │ {{branch}}     │───→│ feature/auth    │                     │
+│     │ {{date}}       │───→│ 2024-01-15      │                     │
 │     └────────────────┘    └─────────────────┘                     │
 │                                 │                                 │
 │  4. Update symlink              ↓                                 │

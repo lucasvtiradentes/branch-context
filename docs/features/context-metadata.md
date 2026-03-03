@@ -16,13 +16,16 @@ sources:
 
 ## Meta Tracking
 
-Branch metadata stored in `.bctx/meta.json`:
+Branch metadata stored in `.bctx/branches/meta.json`:
 
 ```json
 {
   "feature-auth": {
-    "base_branch": "main",
-    "last_sync": "2024-01-15T10:30:00",
+    "branch": "feature/auth",
+    "created_at": "2024-01-15T10:30:00",
+    "author": "Jane Doe",
+    "updated_at": "2024-01-15T12:00:00",
+    "last_commit": {"hash": "def456", "message": "Add validation", "datetime": "2024-01-15T12:00:00"},
     "commits": "abc123 Add login form\ndef456 Add validation",
     "changed_files": "src/auth.py\nsrc/login.py"
   }
@@ -33,8 +36,11 @@ Branch metadata stored in `.bctx/meta.json`:
 
 | Field         | Type     | Description                       |
 |---------------|----------|-----------------------------------|
-| base_branch   | string   | Branch this context tracks        |
-| last_sync     | datetime | Last sync timestamp               |
+| branch        | string   | Original branch name              |
+| created_at    | datetime | Creation timestamp                |
+| author        | string   | Git user who created the context  |
+| updated_at    | datetime | Last update timestamp             |
+| last_commit   | object   | Last commit (hash, message, datetime) |
 | commits       | string   | Commits since base (one per line) |
 | changed_files | string   | Files changed vs base             |
 
@@ -48,8 +54,8 @@ Branch metadata stored in `.bctx/meta.json`:
                               │
                               ↓
                       ┌─────────────────────┐
-                      │ git log base..HEAD  │
-                      │ git diff base..HEAD │
+                      │ git log base..HEAD   │
+                      │ git diff base...HEAD │
                       └─────────────────────┘
 ```
 
@@ -88,8 +94,8 @@ src/login.py
 │                                                               │
 │  1. Find context files                                        │
 │     ┌──────────────┐                                          │
-│     │ .md, .yaml   │  Scan context directory                  │
-│     │ .json, .toml │                                          │
+│     │ .md, .txt    │  Scan context directory                  │
+│     │              │                                          │
 │     └──────┬───────┘                                          │
 │            │                                                  │
 │  2. Find tags in each file                                    │
@@ -104,7 +110,7 @@ src/login.py
 │            ↓                                                  │
 │     ┌─────────────────────────────────┐                       │
 │     │ commits  →  git log base..HEAD  │                       │
-│     │ files    →  git diff base..HEAD │                       │
+│     │ files    →  git diff base...HEAD │                       │
 │     └─────────────────────────────────┘                       │
 │                                                               │
 └───────────────────────────────────────────────────────────────┘
@@ -117,7 +123,7 @@ src/login.py
 Default base branch resolved from:
 1. Per-branch override: `{context}/base_branch` file
 2. Config default: `.bctx/config.json` -> `default_base_branch`
-3. Fallback: `origin/main` or `origin/master`
+3. Fallback: `origin/main`
 
 ### Per-Branch Override
 
@@ -156,11 +162,10 @@ develop
 
 Variables rendered when copying templates:
 
-| Variable           | Example Value | Description              |
-|--------------------|---------------|--------------------------|
-| `{{BRANCH}}`       | feature/auth  | Current branch name      |
-| `{{BASE}}`         | main          | Base branch              |
-| `{{BRANCH_SCOPE}}` | auth          | Second segment of branch |
-| `{{DATE}}`         | 2024-01-15    | Current date             |
+| Variable       | Example Value | Description              |
+|----------------|---------------|--------------------------|
+| `{{branch}}`   | feature/auth  | Current branch name      |
+| `{{date}}`     | 2024-01-15    | Current date             |
+| `{{author}}`   | Jane Doe      | Git user name            |
 
-Supported file types: `.md`, `.yaml`, `.yml`, `.json`, `.toml`
+Supported file types: `.md`, `.txt`, `.json`, `.yaml`, `.yml`, `.toml`

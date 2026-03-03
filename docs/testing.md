@@ -75,12 +75,12 @@ def test_something():
 ### Git Repository Setup
 
 ```python
-import subprocess
+from branchctx.utils.git import git_init, git_config
 
-def create_git_repo(path: Path) -> None:
-    subprocess.run(["git", "init"], cwd=path, check=True)
-    subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=path)
-    subprocess.run(["git", "config", "user.name", "Test"], cwd=path)
+def create_git_repo(path: str) -> None:
+    git_init(path, "main")
+    git_config(path, "user.email", "test@test.com")
+    git_config(path, "user.name", "Test")
 ```
 
 ### Integration Test Pattern

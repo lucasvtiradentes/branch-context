@@ -47,8 +47,8 @@ branch-context/
 │   │
 │   └── assets/             Bundled files
 │       ├── __init__.py     Asset loading helpers
-│       ├── init_templates/ Default templates
-│       └── switch.wav      Notification sound
+│       ├── init/            Init assets and default templates
+│       └── notification.oga Notification sound
 │
 ├── tests/
 │   ├── utils.py            Test utilities

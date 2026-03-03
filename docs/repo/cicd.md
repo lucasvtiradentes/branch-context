@@ -24,7 +24,9 @@ sources:
 │                                                                 │
 │  Manual        ──→  release.yml  ──→  PyPI publish              │
 │                                                                 │
-│  Weekly        ──→  check-completion-sync.yml                   │
+│  Weekly        ──→  check-completion.yml                        │
+│                                                                 │
+│  Daily         ──→  update-docs.yml                             │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -73,7 +75,7 @@ Triggered manually with version bump input (patch/minor/major/initial).
 
 | Secret                  | Used By          | Purpose            |
 |-------------------------|------------------|--------------------|
-| CLAUDE_CODE_OAUTH_TOKEN | check-completion | Claude Code auth   |
+| CLAUDE_CODE_OAUTH_TOKEN | check-completion, update-docs | Claude Code auth   |
 | GITHUB_TOKEN            | all workflows    | Git operations     |
 | (PyPI trusted pub)      | release.yml      | Package publishing |
 

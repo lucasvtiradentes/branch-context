@@ -51,7 +51,7 @@ Example: `.changelog/+per-branch-base.feature.md`
 ┌─────────────────────┐
 │ 3. Run release.yml  │
 │    (patch/minor/    │
-│     major)          │
+│     major/initial)  │
 └──────────┬──────────┘
            │
            v
@@ -59,6 +59,7 @@ Example: `.changelog/+per-branch-base.feature.md`
 │ Workflow actions:   │
 │ - bump version      │
 │ - towncrier build   │
+│ - hatch build       │
 │ - publish to PyPI   │
 │ - commit + tag      │
 └─────────────────────┘
@@ -76,4 +77,4 @@ Trigger release (via GitHub Actions):
 
 1. Go to Actions → release.yml
 2. Click "Run workflow"
-3. Select bump type: patch / minor / major
+3. Select bump type: patch / minor / major / initial

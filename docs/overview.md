@@ -49,7 +49,7 @@ Configuration lives at `.bctx/config.json`:
 | Field               | Type   | Description                        |
 |---------------------|--------|------------------------------------|
 | default_base_branch | string | Base branch for new contexts       |
-| sound_enabled       | bool   | Play sound on branch switch        |
+| sound               | bool   | Play sound on branch switch        |
 | sound_file          | string | Custom sound file path             |
 | template_rules      | object | Branch prefix to template mappings |
 

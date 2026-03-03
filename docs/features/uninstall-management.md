@@ -69,7 +69,7 @@ Full hook file created by bctx:
 
 ```bash
 #!/bin/sh
-# branch-ctx
+# branch-ctx-managed
 ...
 ```
 
@@ -83,7 +83,7 @@ bctx callback added to existing hook:
 #!/bin/sh
 # existing content...
 
-# branch-ctx
+# branch-ctx-managed
 ...callback...
 # branch-ctx-end
 ```
