@@ -1,3 +1,25 @@
+---
+title: Documentation Index
+description: Table of contents for all project documentation
+related_docs:
+  - docs/architecture.md:                       system design and data flows
+  - docs/overview.md:                           project overview
+  - docs/rules.md:                              coding principles and conventions
+  - docs/testing.md:                            test framework and patterns
+  - docs/features/branch-context-management.md: branch context management
+  - docs/features/context-metadata.md:          context metadata tracking
+  - docs/features/repository-status.md:         health checks and status
+  - docs/features/shell-integration.md:         shell completions and hooks
+  - docs/features/uninstall-management.md:      uninstall and cleanup
+  - docs/guides/create-release.md:              release guide
+  - docs/repo/cicd.md:                          CI/CD pipelines
+  - docs/repo/local-setup.md:                   dev environment setup
+  - docs/repo/structure.md:                     codebase organization
+  - docs/repo/tooling.md:                       development tools
+required_docs: []
+sources: []
+---
+
 ## Documentation Index
 
 | Category  | File                                       | Description                                                                         | Rel. docs | Req. docs | Sources |
