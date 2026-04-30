@@ -1,6 +1,7 @@
 import type * as vscode from 'vscode';
 import { registerCommands } from './commands';
 import { registerInternalCommands } from './commands/internal';
+import { initializeContextFileUx } from './context-file-ux';
 import { initializeBranchContextState } from './core/state';
 import { initializeBranchContextWatcher } from './core/watcher';
 import { initializeStatusBar } from './status-bar';
@@ -11,6 +12,7 @@ function initializeCore(context: vscode.ExtensionContext): void {
 }
 
 function initializeUi(context: vscode.ExtensionContext): void {
+  initializeContextFileUx(context);
   initializeStatusBar(context);
   initializeTreeViews(context);
   registerCommands(context);
