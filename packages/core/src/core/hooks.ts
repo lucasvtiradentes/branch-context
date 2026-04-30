@@ -17,7 +17,7 @@ import {
   gitInfoExcludeAdd,
   gitRoot,
 } from '../utils/git';
-import { type PromptYesNo, promptYesNo } from '../utils/prompt';
+import type { PromptYesNo } from '../utils/prompt';
 
 export type HookType = 'post-checkout' | 'post-commit';
 export type HookInstallResult =
@@ -154,8 +154,9 @@ ${SNIPPET_END_MARKER}
 export async function installHook(
   gitRootPath: string,
   hookType: HookType = HOOK_POST_CHECKOUT,
-  ask: PromptYesNo = promptYesNo,
+  ask?: PromptYesNo,
 ): Promise<HookInstallResult> {
+  const prompt = ask ?? (await import('../utils/prompt')).promptYesNo;
   const customHooksDir = getCustomHooksDir(gitRootPath);
   let useCustom = false;
 
@@ -163,13 +164,13 @@ export async function installHook(
     if (!customHooksConfirmed.has(gitRootPath)) {
       const relPath = relative(gitRootPath, customHooksDir);
       console.log(`\nDetected custom hooks directory: ${relPath}`);
-      useCustom = await ask('Install hooks in this directory?');
+      useCustom = await prompt('Install hooks in this directory?');
       customHooksConfirmed.set(gitRootPath, useCustom);
 
       if (useCustom && !excludeConfirmed.has(gitRootPath)) {
         excludeConfirmed.set(
           gitRootPath,
-          await ask('Exclude hooks from git tracking (.git/info/exclude)?'),
+          await prompt('Exclude hooks from git tracking (.git/info/exclude)?'),
         );
       } else if (!useCustom) {
         console.log(
@@ -193,7 +194,7 @@ export async function installHook(
     const appendKey = `${gitRootPath}:${hookType}`;
     if (!appendConfirmed.has(appendKey)) {
       console.log(`\nExisting ${hookType} hook detected (not managed by bctx)`);
-      appendConfirmed.set(appendKey, await ask('Append bctx callback to existing hook?'));
+      appendConfirmed.set(appendKey, await prompt('Append bctx callback to existing hook?'));
     }
 
     if (!appendConfirmed.get(appendKey)) {

@@ -1,5 +1,6 @@
 export const APP_ID = 'branch-context';
 export const APP_NAME = 'Branch Context';
+export const CONTEXT_FILE_NAME = 'context.md';
 
 export const commandIds = {
   openCurrentContext: `${APP_ID}.openCurrentContext`,

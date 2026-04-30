@@ -15,6 +15,21 @@
       "types": "./dist/constants.d.ts",
       "development": "./src/constants.ts",
       "import": "./dist/constants.js"
+    },
+    "./services": {
+      "types": "./dist/services/index.d.ts",
+      "development": "./src/services/index.ts",
+      "import": "./dist/services/index.js"
+    },
+    "./services/status": {
+      "types": "./dist/services/status.d.ts",
+      "development": "./src/services/status.ts",
+      "import": "./dist/services/status.js"
+    },
+    "./services/actions": {
+      "types": "./dist/services/actions.d.ts",
+      "development": "./src/services/actions.ts",
+      "import": "./dist/services/actions.js"
     }
   },
   "files": [
