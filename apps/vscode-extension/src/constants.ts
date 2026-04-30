@@ -1,6 +1,8 @@
 export const APP_ID = 'branch-context';
 export const APP_NAME = 'Branch Context';
 export const CONTEXT_FILE_NAME = 'context.md';
+export const STATUS_BAR_PRIORITY = 100;
+export const STATUS_BAR_MAX_CONTEXT_LENGTH = 40;
 
 export const commandIds = {
   openCurrentContext: `${APP_ID}.openCurrentContext`,

@@ -3,12 +3,14 @@ import { registerCommands } from './commands';
 import { registerInternalCommands } from './commands/internal';
 import { initializeBranchContextState } from './core/state';
 import { initializeBranchContextWatcher } from './core/watcher';
+import { initializeStatusBar } from './status-bar';
 
 function initializeCore(context: vscode.ExtensionContext): void {
   initializeBranchContextState(context);
 }
 
 function initializeUi(context: vscode.ExtensionContext): void {
+  initializeStatusBar(context);
   registerCommands(context);
   registerInternalCommands(context);
 }
