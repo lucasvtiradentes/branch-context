@@ -1,12 +1,20 @@
-import { CLI_NAME } from '@branch-context/core/constants';
-import * as vscode from 'vscode';
+import type * as vscode from 'vscode';
+import { registerCommands } from './commands';
+import { registerInternalCommands } from './commands/internal';
 
-export function activate(context: vscode.ExtensionContext) {
-  const disposable = vscode.commands.registerCommand('branch-context.showSharedSum', () =>
-    vscode.window.showInformationMessage(`${CLI_NAME} workspace package loaded`),
-  );
+function initializeCore(_context: vscode.ExtensionContext): void {}
 
-  context.subscriptions.push(disposable);
+function initializeUi(context: vscode.ExtensionContext): void {
+  registerCommands(context);
+  registerInternalCommands(context);
 }
 
-export function deactivate() {}
+function initializeRuntime(_context: vscode.ExtensionContext): void {}
+
+export function activate(context: vscode.ExtensionContext): void {
+  initializeCore(context);
+  initializeUi(context);
+  initializeRuntime(context);
+}
+
+export function deactivate(): void {}

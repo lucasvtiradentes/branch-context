@@ -7,7 +7,7 @@ export default defineConfig({
   platform: 'node',
   outDir: 'dist',
   external: ['vscode'],
-  noExternal: ['@branch-context/core/constants'],
+  noExternal: [/^@branch-context\/core/],
   clean: true,
   sourcemap: true,
 });

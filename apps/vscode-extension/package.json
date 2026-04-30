@@ -11,14 +11,38 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:branch-context.showSharedSum"
+    "*"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "branch-context.showSharedSum",
-        "title": "Branch Context: Show Shared Sum"
+        "command": "branch-context.openCurrentContext",
+        "title": "Branch Context: Open Current Context"
+      },
+      {
+        "command": "branch-context.sync",
+        "title": "Branch Context: Sync"
+      },
+      {
+        "command": "branch-context.status",
+        "title": "Branch Context: Status"
+      },
+      {
+        "command": "branch-context.setBase",
+        "title": "Branch Context: Set Base"
+      },
+      {
+        "command": "branch-context.applyTemplate",
+        "title": "Branch Context: Apply Template"
+      },
+      {
+        "command": "branch-context.openConfig",
+        "title": "Branch Context: Open Config"
+      },
+      {
+        "command": "branch-context.refreshViews",
+        "title": "Branch Context: Refresh Views"
       }
     ]
   },
