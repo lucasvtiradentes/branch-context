@@ -124,7 +124,10 @@ ${templateLines}
 `;
 }
 
-export function cmdCompletion(args: string[], prog = basename(process.argv[1] ?? 'bctx')) {
+export function cmdCompletion(
+  args: string[],
+  prog = process.env.BCTX_PROG_NAME ?? basename(process.argv[1] ?? 'bctx'),
+) {
   if (args.length === 0) {
     console.log(`usage: ${prog} completion <shell>`);
     console.log('shells: zsh, bash, fish');

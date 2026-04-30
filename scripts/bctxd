@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+set -eu
+
+self=$0
+while [ -L "$self" ]; do
+  dir=$(CDPATH= cd -- "$(dirname -- "$self")" && pwd)
+  target=$(readlink "$self")
+  case "$target" in
+    /*) self=$target ;;
+    *) self=$dir/$target ;;
+  esac
+done
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$self")" && pwd)
+root_dir=$(CDPATH= cd -- "$script_dir/.." && pwd)
+tsx_bin=$root_dir/apps/cli/node_modules/.bin/tsx
+entry=$root_dir/apps/cli/src/index.ts
+
+if [ "${1-}" = "--" ]; then
+  shift
+fi
+
+if [ -x "$tsx_bin" ]; then
+  BCTX_PROG_NAME=bctxd exec "$tsx_bin" --conditions=development "$entry" "$@"
+fi
+
+BCTX_PROG_NAME=bctxd exec pnpm --dir "$root_dir" --filter @branch-context/cli exec tsx --conditions=development "$entry" "$@"

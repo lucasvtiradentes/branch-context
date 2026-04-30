@@ -2,6 +2,9 @@
   "name": "branch-context",
   "private": true,
   "version": "0.3.2",
+  "bin": {
+    "bctxd": "./scripts/bctxd"
+  },
   "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=22",
@@ -12,6 +15,9 @@
     "postinstall": "turbo run build --filter='./packages/*'",
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:cli": "scripts/bctxd",
+    "bctxd:install": "mkdir -p ~/.local/bin && ln -sf \"$PWD/scripts/bctxd\" ~/.local/bin/bctxd",
+    "bctxd:uninstall": "rm -f ~/.local/bin/bctxd",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "check": "biome check .",
