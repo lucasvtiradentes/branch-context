@@ -7,9 +7,6 @@ import {
 import * as vscode from 'vscode';
 import { getWorkspaceInfo } from './workspace';
 
-export type BranchContextSummary = BranchContextContextSummary;
-export type ArchivedBranchContextSummary = BranchContextArchivedContextSummary;
-
 export type BranchContextExtensionState = {
   workspaceRoot: string | null;
   initialized: boolean;
@@ -17,8 +14,8 @@ export type BranchContextExtensionState = {
   currentBranch: string | null;
   currentContextDir: string | null;
   currentContextFile: string | null;
-  recentContexts: BranchContextSummary[];
-  archivedContexts: ArchivedBranchContextSummary[];
+  recentContexts: BranchContextContextSummary[];
+  archivedContexts: BranchContextArchivedContextSummary[];
   templates: string[];
   configPath: string | null;
 };

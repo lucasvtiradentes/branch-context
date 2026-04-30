@@ -6,15 +6,9 @@ import { onDidChangeState } from '../core/state';
 
 const MAX_DIRECTORY_ITEMS = 200;
 
-export type BranchContextTreeNodeKind =
-  | 'message'
-  | 'file'
-  | 'folder'
-  | 'context'
-  | 'template'
-  | 'config';
+type BranchContextTreeNodeKind = 'message' | 'file' | 'folder' | 'context' | 'template' | 'config';
 
-export type BranchContextTreeNode = {
+type BranchContextTreeNode = {
   label: string;
   kind: BranchContextTreeNodeKind;
   path?: string;
@@ -109,7 +103,7 @@ export function createTemplateNode(label: string, templateDir: string): BranchCo
   };
 }
 
-export function createFileNode(path: string, label = basename(path)): BranchContextTreeNode {
+function createFileNode(path: string, label = basename(path)): BranchContextTreeNode {
   return {
     label,
     kind: 'file',

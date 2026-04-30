@@ -25,7 +25,19 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "workspaceContains:.bctx/config.json",
+    "onCommand:branch-context.openCurrentContext",
+    "onCommand:branch-context.sync",
+    "onCommand:branch-context.status",
+    "onCommand:branch-context.setBase",
+    "onCommand:branch-context.applyTemplate",
+    "onCommand:branch-context.openConfig",
+    "onCommand:branch-context.refreshViews",
+    "onView:branch-context.currentContext",
+    "onView:branch-context.recentContexts",
+    "onView:branch-context.archivedContexts",
+    "onView:branch-context.templates",
+    "onView:branch-context.config"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -130,14 +142,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "vscode:prepublish": "pnpm run build"
   },
-  "dependencies": {
-    "@branch-context/core": "workspace:*"
-  },
   "devDependencies": {
+    "@branch-context/core": "workspace:*",
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.104.0",
     "@vscode/vsce": "^3.6.1",
-    "ovsx": "^0.10.6",
     "tsx": "^4.21.0",
     "tsup": "^8.5.1"
   }

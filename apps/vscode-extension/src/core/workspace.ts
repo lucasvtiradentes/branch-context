@@ -12,7 +12,7 @@ import {
 import * as vscode from 'vscode';
 import { CONTEXT_FILE_NAME } from '../constants';
 
-export type BranchContextWorkspaceInfo = {
+type BranchContextWorkspaceInfo = {
   workspaceRoot: string | null;
   bctxDir: string | null;
   branchSymlinkPath: string | null;
@@ -25,7 +25,7 @@ export type BranchContextWorkspaceInfo = {
   templatesDir: string | null;
 };
 
-export function getWorkspaceRoot(): string | null {
+function getWorkspaceRoot(): string | null {
   return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? null;
 }
 
