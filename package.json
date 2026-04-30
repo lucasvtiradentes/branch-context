@@ -19,6 +19,8 @@
     "dev:vscode": "pnpm --filter branch-context-vscode-extension dev",
     "bctxd:install": "mkdir -p ~/.local/bin && ln -sf \"$PWD/scripts/bctxd\" ~/.local/bin/bctxd",
     "bctxd:uninstall": "rm -f ~/.local/bin/bctxd",
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
     "vscode:build": "pnpm --filter branch-context-vscode-extension build",
     "vscode:package": "pnpm --filter branch-context-vscode-extension package",
     "vscode:install-local": "pnpm --filter branch-context-vscode-extension install-local",
@@ -30,6 +32,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",
+    "@changesets/cli": "^2.31.0",
     "husky": "^9.1.7",
     "knip": "^6.4.1",
     "lint-staged": "^16.4.0",

@@ -1,0 +1,54 @@
+name: Release VS Code extension
+description: Build and publish the VS Code extension to Open VSX and VS Code Marketplace
+
+inputs:
+  azure-pat:
+    description: Azure DevOps Personal Access Token for VS Code Marketplace
+    required: true
+  open-vsx-pat:
+    description: Personal Access Token for Open VSX Registry
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Build extension
+      shell: bash
+      run: pnpm --filter branch-context-vscode-extension build
+      env:
+        CI: true
+
+    - name: Get extension version
+      id: version
+      shell: bash
+      run: |
+        version="$(node -p "require('./apps/vscode-extension/package.json').version")"
+        echo "current=$version" >> "$GITHUB_OUTPUT"
+
+    - name: Publish to Open VSX
+      id: publish_open_vsx
+      uses: HaaLeo/publish-vscode-extension@v2
+      with:
+        pat: ${{ inputs.open-vsx-pat }}
+        packagePath: apps/vscode-extension
+        dependencies: false
+        skipDuplicate: true
+
+    - name: Publish to VS Code Marketplace
+      uses: HaaLeo/publish-vscode-extension@v2
+      with:
+        pat: ${{ inputs.azure-pat }}
+        registryUrl: https://marketplace.visualstudio.com
+        extensionFile: ${{ steps.publish_open_vsx.outputs.vsixPath }}
+        dependencies: false
+        skipDuplicate: true
+
+    - name: Create git tag
+      shell: bash
+      run: |
+        tag="vscode-extension-v${{ steps.version.outputs.current }}"
+        if git ls-remote --tags origin | grep -q "refs/tags/$tag$"; then
+          exit 0
+        fi
+        git tag "$tag"
+        git push origin "$tag"

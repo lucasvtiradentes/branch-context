@@ -1,0 +1,78 @@
+name: Callable CI
+
+on:
+  workflow_call:
+    inputs:
+      run_lint:
+        description: Run check
+        type: boolean
+        required: true
+      run_build:
+        description: Run typecheck and build
+        type: boolean
+        required: true
+      run_test:
+        description: Run tests
+        type: boolean
+        required: false
+        default: false
+    outputs:
+      should_release:
+        description: Whether the VS Code extension version changed and release tag is missing
+        value: ${{ jobs.check_version.outputs.should_release }}
+
+jobs:
+  check_version:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check extension version
+        id: check
+        run: bash scripts/release/check-version-bump.sh
+
+  check:
+    if: inputs.run_lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-and-install
+
+      - name: Run check
+        run: pnpm run check
+
+  build:
+    if: inputs.run_build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-and-install
+
+      - name: Run typecheck
+        run: pnpm run typecheck
+
+      - name: Run build
+        run: pnpm run build
+        env:
+          CI: true
+
+  test:
+    if: inputs.run_test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-and-install
+
+      - name: Run tests
+        run: pnpm run test
