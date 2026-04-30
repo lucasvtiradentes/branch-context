@@ -1,5 +1,7 @@
 import { CLI_NAME } from '../constants';
 import { getGitRoot } from '../core/hooks';
+import { playSound } from '../core/sync';
+import { Config } from '../data/config';
 import { syncCurrentBranch } from '../services/actions';
 
 export function cmdSync(_args: string[]) {
@@ -9,7 +11,11 @@ export function cmdSync(_args: string[]) {
     return 1;
   }
 
-  const result = syncCurrentBranch(gitRoot);
+  const config = Config.load(gitRoot);
+  const result = syncCurrentBranch(gitRoot, {
+    sound: config.sound,
+    playSound,
+  });
   if (!result.ok) {
     if (result.reason === 'not_initialized') {
       console.log(`error: not initialized. Run '${CLI_NAME} init' first`);

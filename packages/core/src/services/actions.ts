@@ -1,15 +1,17 @@
 import { existsSync } from 'node:fs';
+import { DEFAULT_SYMLINK } from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
 import { getCurrentBranch } from '../core/hooks';
 import {
   type CreateBranchContextResult,
+  createBranchContext,
   getBranchDir,
   type ResetBranchContextResult,
   resetBranchContext,
   sanitizeBranchName,
-  syncBranch,
   type UpdateSymlinkResult,
+  updateSymlink,
 } from '../core/sync';
 import { getBaseBranch, saveBaseBranch } from '../data/branch-base';
 import { Config, configExists, listTemplates } from '../data/config';
@@ -32,6 +34,7 @@ export type BranchContextActionError = {
 
 export type SyncCurrentBranchOptions = {
   sound?: boolean;
+  playSound?: (soundFile: string | null) => void;
 };
 
 export type SyncCurrentBranchResult =
@@ -95,22 +98,26 @@ export function syncCurrentBranch(
     return current;
   }
 
-  const result = syncBranch(gitRoot, current.branch, { sound: options.sound });
   const branchKey = sanitizeBranchName(current.branch);
-  const contextDir = result.branch_dir;
+  const createResult = createBranchContext(gitRoot, current.branch);
+  const symlinkResult = updateSymlink(gitRoot, current.branch);
+  const contextDir = getBranchDir(gitRoot, current.branch);
   const baseBranch = getBaseBranch(gitRoot, contextDir);
   const config = Config.load(gitRoot);
 
   updateBranchMeta(gitRoot, branchKey, baseBranch, config.commitDescription);
+  if (options.sound) {
+    options.playSound?.(config.soundFile);
+  }
 
   return {
     ok: true,
-    branch: result.branch,
+    branch: current.branch,
     branchKey,
     contextDir,
-    symlinkPath: result.symlink_path,
-    createResult: result.create_result,
-    symlinkResult: result.symlink_result,
+    symlinkPath: DEFAULT_SYMLINK,
+    createResult,
+    symlinkResult,
     baseBranch,
     updates: updateContextTags(gitRoot, contextDir, branchKey, baseBranch),
   };
