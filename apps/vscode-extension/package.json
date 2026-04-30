@@ -1,0 +1,38 @@
+{
+  "name": "branch-context-vscode-extension",
+  "displayName": "Branch Context",
+  "version": "0.0.0",
+  "private": true,
+  "publisher": "lucasvtiradentes",
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:branch-context.showSharedSum"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "branch-context.showSharedSum",
+        "title": "Branch Context: Show Shared Sum"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@branch-context/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.104.0",
+    "tsup": "^8.5.1"
+  }
+}

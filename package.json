@@ -1,0 +1,30 @@
+{
+  "name": "branch-context",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "postinstall": "turbo run build --filter='./packages/*'",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "typecheck": "turbo run typecheck",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "knip": "knip"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.13",
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
+    "husky": "^9.1.7",
+    "knip": "^6.4.1",
+    "lint-staged": "^16.4.0",
+    "turbo": "^2.9.6",
+    "typescript": "^6.0.3"
+  }
+}
