@@ -22,3 +22,10 @@ export const viewIds = {
   templates: `${APP_ID}.templates`,
   config: `${APP_ID}.config`,
 } as const;
+
+export const codeLensTitles = {
+  sync: 'Sync',
+  setBase: 'Set Base',
+  applyTemplate: 'Apply Template',
+  openConfig: 'Open Config',
+} as const;
