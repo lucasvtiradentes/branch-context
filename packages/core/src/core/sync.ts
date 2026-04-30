@@ -197,12 +197,16 @@ export function updateSymlink(workspace: string, branch: string): UpdateSymlinkR
   return 'updated';
 }
 
-export function syncBranch(workspace: string, branch: string) {
+export type SyncBranchOptions = {
+  sound?: boolean;
+};
+
+export function syncBranch(workspace: string, branch: string, options: SyncBranchOptions = {}) {
   const config = Config.load(workspace);
   const createResult = createBranchContext(workspace, branch);
   const symlinkResult = updateSymlink(workspace, branch);
 
-  if (config.sound) {
+  if (options.sound ?? config.sound) {
     playSound(config.soundFile);
   }
 

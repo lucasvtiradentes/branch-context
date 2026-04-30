@@ -16,13 +16,21 @@ import {
   DEFAULT_SYMLINK,
   getBranchDir,
   getBranchRelPath,
+  getCurrentBase,
   listArchivedBranches,
   listBranches,
   resetBranchContext,
+  setCurrentBase,
   syncBranch,
+  syncCurrentBranch,
   updateSymlink,
 } from '../src/index';
-import { createWorkspace, createWorkspaceNoTemplate } from './helpers';
+import {
+  createGitRepo,
+  createWorkspace,
+  createWorkspaceNoTemplate,
+  initBctxWorkspace,
+} from './helpers';
 
 function normalize(path: string) {
   return path.replaceAll('\\', '/');
@@ -208,5 +216,68 @@ describe('sync parity', () => {
     archiveBranch(workspace, 'feature-archived');
     expect(syncBranch(workspace, 'feature/archived').create_result).toBe('restored_from_archive');
     expect(readFileSync(join(branchDir, 'context.md'), 'utf8')).toBe('RESTORE ME');
+  });
+
+  it('syncs current branch through service', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    const result = syncCurrentBranch(repo, { sound: false });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.branch).toBe('main');
+    expect(result.branchKey).toBe('main');
+    expect(result.createResult).toBe('created_from_template');
+    expect(result.symlinkResult).toBe('updated');
+    expect(result.baseBranch).toBe('origin/main');
+    expect(existsSync(join(repo, DEFAULT_SYMLINK))).toBe(true);
+  });
+
+  it('reports missing config through sync service', () => {
+    const repo = createGitRepo();
+    const result = syncCurrentBranch(repo, { sound: false });
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+    expect(result.reason).toBe('not_initialized');
+  });
+
+  it('gets and sets current base through service', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    syncCurrentBranch(repo, { sound: false });
+    const initial = getCurrentBase(repo);
+    expect(initial.ok).toBe(true);
+    if (!initial.ok) {
+      return;
+    }
+    expect(initial.baseBranch).toBe('origin/main');
+    const updated = setCurrentBase(repo, 'develop');
+    expect(updated.ok).toBe(true);
+    if (!updated.ok) {
+      return;
+    }
+    expect(updated.branch).toBe('main');
+    expect(updated.baseBranch).toBe('develop');
+    const current = getCurrentBase(repo);
+    expect(current.ok).toBe(true);
+    if (!current.ok) {
+      return;
+    }
+    expect(current.baseBranch).toBe('develop');
+  });
+
+  it('reports missing context through base service', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    const result = getCurrentBase(repo);
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+    expect(result.reason).toBe('missing_context');
+    expect(result.branch).toBe('main');
   });
 });

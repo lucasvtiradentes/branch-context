@@ -1,6 +1,14 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { getTemplateVariables, renderTemplateContent } from '../src/index';
-import { createGitRepo } from './helpers';
+import {
+  applyTemplateToCurrentBranch,
+  getBranchDir,
+  getTemplateVariables,
+  renderTemplateContent,
+  syncCurrentBranch,
+} from '../src/index';
+import { createGitRepo, initBctxWorkspace } from './helpers';
 
 describe('template variables', () => {
   it('includes branch', () => {
@@ -50,5 +58,33 @@ describe('template variables', () => {
     expect(renderTemplateContent('No variables here', { branch: 'main' })).toBe(
       'No variables here',
     );
+  });
+
+  it('applies template to current branch through service', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    syncCurrentBranch(repo, { sound: false });
+    const contextPath = join(getBranchDir(repo, 'main'), 'context.md');
+    writeFileSync(contextPath, 'MODIFIED CONTENT');
+    const result = applyTemplateToCurrentBranch(repo, 'feature');
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.branch).toBe('main');
+    expect(result.template).toBe('feature');
+    const content = readFileSync(contextPath, 'utf8');
+    expect(content).toContain('## Decisions');
+    expect(content).not.toContain('MODIFIED CONTENT');
+  });
+
+  it('reports missing config through template service', () => {
+    const repo = createGitRepo();
+    const result = applyTemplateToCurrentBranch(repo, 'feature');
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+    expect(result.reason).toBe('not_initialized');
   });
 });
