@@ -1,9 +1,23 @@
 {
   "name": "branch-context-vscode-extension",
   "displayName": "Branch Context",
-  "version": "0.0.0",
-  "private": true,
+  "description": "Branch Context notes, status, commands, and context.md helpers for VS Code.",
+  "version": "0.1.0",
+  "private": false,
   "publisher": "lucasvtiradentes",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lucasvtiradentes/branch-context.git",
+    "directory": "apps/vscode-extension"
+  },
+  "keywords": [
+    "branch-context",
+    "bctx",
+    "git",
+    "context",
+    "markdown"
+  ],
   "engines": {
     "vscode": "^1.104.0"
   },
@@ -111,7 +125,10 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "install-local": "pnpm run build && tsx scripts/install-local-vscode.ts",
+    "package": "vsce package --no-dependencies --out branch-context-vscode-extension-${npm_package_version}.vsix",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "vscode:prepublish": "pnpm run build"
   },
   "dependencies": {
     "@branch-context/core": "workspace:*"
@@ -119,6 +136,9 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.104.0",
+    "@vscode/vsce": "^3.6.1",
+    "ovsx": "^0.10.6",
+    "tsx": "^4.21.0",
     "tsup": "^8.5.1"
   }
 }
