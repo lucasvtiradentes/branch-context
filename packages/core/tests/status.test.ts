@@ -1,0 +1,122 @@
+import { rmSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+import {
+  cmdStatus,
+  HOOK_POST_CHECKOUT,
+  HOOK_POST_COMMIT,
+  installHook,
+  syncBranch,
+} from '../src/index';
+import { captureConsole, createGitRepo, initBctxWorkspace } from './helpers';
+
+describe('status command', () => {
+  it('errors when not initialized', () => {
+    const repo = createGitRepo();
+    process.chdir(repo);
+    const capture = captureConsole();
+    expect(cmdStatus([])).toBe(1);
+    expect(capture.output).toContain('not initialized');
+  });
+
+  it('shows branch and base', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    process.chdir(repo);
+    const capture = captureConsole();
+    cmdStatus([]);
+    expect(capture.output).toContain('Branch:');
+    expect(capture.output).toContain('Base:');
+  });
+
+  it('shows current branch', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    process.chdir(repo);
+    const capture = captureConsole();
+    cmdStatus([]);
+    expect(capture.output).toContain('main');
+  });
+
+  it('shows health hooks', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    process.chdir(repo);
+    const capture = captureConsole();
+    cmdStatus([]);
+    expect(capture.output).toContain('hook');
+  });
+
+  it('shows installed checkout hook', async () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    process.chdir(repo);
+    await installHook(repo, HOOK_POST_CHECKOUT);
+    const capture = captureConsole();
+    cmdStatus([]);
+    expect(capture.output).toContain('post-checkout');
+  });
+
+  it('shows templates', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    process.chdir(repo);
+    const capture = captureConsole();
+    cmdStatus([]);
+    expect(capture.output).toContain('Templates:');
+    expect(capture.output).toContain('_default');
+  });
+
+  it('shows contexts count', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    syncBranch(repo, 'main');
+    process.chdir(repo);
+    const capture = captureConsole();
+    cmdStatus([]);
+    expect(capture.output).toContain('1 contexts');
+  });
+
+  it('shows health section', async () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    await installHook(repo, HOOK_POST_CHECKOUT);
+    await installHook(repo, HOOK_POST_COMMIT);
+    syncBranch(repo, 'main');
+    process.chdir(repo);
+    const capture = captureConsole();
+    cmdStatus([]);
+    expect(capture.output).toContain('Health:');
+    expect(capture.output).toContain('[ok]');
+  });
+
+  it('shows symlink not set', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    process.chdir(repo);
+    const capture = captureConsole();
+    cmdStatus([]);
+    expect(capture.output).toContain('symlink not set');
+  });
+
+  it('shows symlink valid', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    syncBranch(repo, 'main');
+    process.chdir(repo);
+    const capture = captureConsole();
+    cmdStatus([]);
+    expect(capture.output).toContain('symlink valid');
+  });
+
+  it('returns error when hook missing', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    syncBranch(repo, 'main');
+    rmSync(`${repo}/.git/hooks/post-checkout`, { force: true });
+    process.chdir(repo);
+    const capture = captureConsole();
+    expect(cmdStatus([])).toBe(1);
+    expect(capture.output).toContain('[!!]');
+    expect(capture.output).toContain('post-checkout');
+  });
+});

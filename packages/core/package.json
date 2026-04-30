@@ -1,6 +1,6 @@
 {
   "name": "@branch-context/core",
-  "version": "0.0.0",
+  "version": "0.3.2",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -9,19 +9,26 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./constants": {
+      "types": "./dist/constants.d.ts",
+      "import": "./dist/constants.js"
     }
   },
   "files": [
+    "assets",
     "dist"
   ],
   "scripts": {
     "build": "tsup",
+    "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check": "biome check .",
     "check:fix": "biome check --write ."
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "tsup": "^8.5.1"
+    "tsup": "^8.5.1",
+    "vitest": "^4.1.0"
   }
 }

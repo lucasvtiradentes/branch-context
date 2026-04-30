@@ -1,9 +1,9 @@
-import { add } from '@branch-context/core';
+import { CLI_NAME } from '@branch-context/core/constants';
 import * as vscode from 'vscode';
 
 export function activate(context: vscode.ExtensionContext) {
   const disposable = vscode.commands.registerCommand('branch-context.showSharedSum', () =>
-    vscode.window.showInformationMessage(`Core sum: ${add(1, 2)}`),
+    vscode.window.showInformationMessage(`${CLI_NAME} workspace package loaded`),
   );
 
   context.subscriptions.push(disposable);
