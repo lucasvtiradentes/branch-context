@@ -4,6 +4,7 @@ import { registerInternalCommands } from './commands/internal';
 import { initializeBranchContextState } from './core/state';
 import { initializeBranchContextWatcher } from './core/watcher';
 import { initializeStatusBar } from './status-bar';
+import { initializeTreeViews } from './tree-views';
 
 function initializeCore(context: vscode.ExtensionContext): void {
   initializeBranchContextState(context);
@@ -11,6 +12,7 @@ function initializeCore(context: vscode.ExtensionContext): void {
 
 function initializeUi(context: vscode.ExtensionContext): void {
   initializeStatusBar(context);
+  initializeTreeViews(context);
   registerCommands(context);
   registerInternalCommands(context);
 }

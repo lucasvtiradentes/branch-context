@@ -16,9 +16,9 @@ export const commandIds = {
 } as const;
 
 export const viewIds = {
-  currentContext: `${APP_ID}.views.currentContext`,
-  recentContexts: `${APP_ID}.views.recentContexts`,
-  archivedContexts: `${APP_ID}.views.archivedContexts`,
-  templates: `${APP_ID}.views.templates`,
-  configs: `${APP_ID}.views.configs`,
+  currentContext: `${APP_ID}.currentContext`,
+  recentContexts: `${APP_ID}.recentContexts`,
+  archivedContexts: `${APP_ID}.archivedContexts`,
+  templates: `${APP_ID}.templates`,
+  config: `${APP_ID}.config`,
 } as const;

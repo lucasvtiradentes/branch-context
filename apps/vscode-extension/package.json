@@ -15,6 +15,39 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "branch-context",
+          "title": "Branch Context",
+          "icon": "resources/branch-context.svg"
+        }
+      ]
+    },
+    "views": {
+      "branch-context": [
+        {
+          "id": "branch-context.currentContext",
+          "name": "Current Context"
+        },
+        {
+          "id": "branch-context.recentContexts",
+          "name": "Recent Contexts"
+        },
+        {
+          "id": "branch-context.archivedContexts",
+          "name": "Archived Contexts"
+        },
+        {
+          "id": "branch-context.templates",
+          "name": "Templates"
+        },
+        {
+          "id": "branch-context.config",
+          "name": "Config"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "branch-context.openCurrentContext",
@@ -44,7 +77,36 @@
         "command": "branch-context.refreshViews",
         "title": "Branch Context: Refresh Views"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "branch-context.refreshViews",
+          "when": "view == branch-context.currentContext",
+          "group": "navigation"
+        },
+        {
+          "command": "branch-context.refreshViews",
+          "when": "view == branch-context.recentContexts",
+          "group": "navigation"
+        },
+        {
+          "command": "branch-context.refreshViews",
+          "when": "view == branch-context.archivedContexts",
+          "group": "navigation"
+        },
+        {
+          "command": "branch-context.refreshViews",
+          "when": "view == branch-context.templates",
+          "group": "navigation"
+        },
+        {
+          "command": "branch-context.refreshViews",
+          "when": "view == branch-context.config",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "build": "tsup",
