@@ -14,6 +14,7 @@ type GroupByOption = {
 };
 
 const groupByOptions: GroupByOption[] = [
+  { label: 'Flat', value: 'flat' },
   { label: 'Provider', value: 'provider' },
   { label: 'Recent', value: 'recent' },
   { label: 'Size', value: 'size' },

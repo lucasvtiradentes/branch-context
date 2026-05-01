@@ -5,7 +5,7 @@ import { getBranchContextState } from '../core/state';
 import { formatRelativeTime } from '../lib/format-relative-time';
 import { createMessageNode, StateTreeProvider } from './items';
 
-const agentSessionsGroupByValues = ['provider', 'recent', 'size'] as const;
+const agentSessionsGroupByValues = ['flat', 'provider', 'recent', 'size'] as const;
 const agentSessionTextModeValues = ['initial', 'last', 'summary'] as const;
 const agentSessionsGroupByWorkspaceKey = 'agentSessions.groupBy';
 const agentSessionTextModeWorkspaceKey = 'agentSessions.textMode';
@@ -98,14 +98,7 @@ export function createAgentSessionsProvider(): StateTreeProvider {
       return [createMessageNode('No sessions')];
     }
 
-    return groupAgentSessions(items).map((group) =>
-      createGroupNode(
-        group.label,
-        group.sessions,
-        group.icon,
-        agentSessionsGroupBy === 'provider' ? vscode.TreeItemCollapsibleState.Expanded : undefined,
-      ),
-    );
+    return groupAgentSessions(items);
   });
 }
 
@@ -157,12 +150,23 @@ function createSessionViewItem(session: AgentSession): AgentSessionViewItem {
 }
 
 function groupAgentSessions(items: AgentSessionViewItem[]) {
+  if (agentSessionsGroupBy === 'flat') {
+    return items.map(createAgentSessionNode);
+  }
+
   if (agentSessionsGroupBy === 'recent') {
-    return createOrderedGroups(items, ['Today', 'This week', 'Older'], getRecentGroup, 'history');
+    return createOrderedGroups(
+      items,
+      ['Today', 'This week', 'Older'],
+      getRecentGroup,
+      'history',
+    ).map(createAgentSessionGroupNode);
   }
 
   if (agentSessionsGroupBy === 'size') {
-    return createOrderedGroups(items, ['Small', 'Medium', 'Large'], getSizeGroup, 'database');
+    return createOrderedGroups(items, ['Small', 'Medium', 'Large'], getSizeGroup, 'database').map(
+      createAgentSessionGroupNode,
+    );
   }
 
   const groups = new Map<AgentSession['provider'], AgentSessionViewItem[]>();
@@ -180,7 +184,15 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
       label: formatProviderName(provider),
       sessions,
       icon: new vscode.ThemeIcon(provider === 'codex' ? 'terminal' : 'sparkle'),
-    }));
+    }))
+    .map((group) => createAgentSessionGroupNode(group, vscode.TreeItemCollapsibleState.Expanded));
+}
+
+function createAgentSessionGroupNode(
+  group: { label: string; sessions: AgentSessionViewItem[]; icon: vscode.ThemeIcon },
+  collapsibleState?: vscode.TreeItemCollapsibleState,
+) {
+  return createGroupNode(group.label, group.sessions, group.icon, collapsibleState);
 }
 
 function createOrderedGroups(

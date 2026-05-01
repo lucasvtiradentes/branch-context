@@ -5,9 +5,15 @@ import type {
 import * as vscode from 'vscode';
 import { getBranchContextState } from '../core/state';
 import { formatRelativeTime } from '../lib/format-relative-time';
-import { createContextNode, createGroupNode, createMessageNode, StateTreeProvider } from './items';
+import {
+  createArchivedContextResourceUri,
+  createContextNode,
+  createGroupNode,
+  createMessageNode,
+  StateTreeProvider,
+} from './items';
 
-const contextsGroupByValues = ['status', 'recent', 'size', 'template'] as const;
+const contextsGroupByValues = ['flat', 'status', 'recent', 'size', 'template'] as const;
 export type ContextsGroupBy = (typeof contextsGroupByValues)[number];
 
 type ContextViewItem = {
@@ -69,13 +75,7 @@ export function createContextsProvider(): StateTreeProvider {
       return [createMessageNode('No other branches')];
     }
 
-    return groupContexts(contexts).map((group) =>
-      createGroupNode(
-        group.label,
-        group.contexts.map(createContextTreeNode),
-        `${group.contexts.length}`,
-      ),
-    );
+    return groupContexts(contexts);
   });
 }
 
@@ -98,20 +98,42 @@ function toArchivedContext(context: BranchContextArchivedContextSummary): Contex
 }
 
 function groupContexts(contexts: ContextViewItem[]) {
+  if (contextsGroupBy === 'flat') {
+    return contexts.map(createContextTreeNode);
+  }
+
   if (contextsGroupBy === 'recent') {
-    return createOrderedGroups(contexts, ['Today', 'This week', 'Older'], getRecentGroup);
+    return createContextGroupNodes(
+      createOrderedGroups(contexts, ['Today', 'This week', 'Older'], getRecentGroup),
+    );
   }
 
   if (contextsGroupBy === 'size') {
-    return createOrderedGroups(contexts, ['Small', 'Medium', 'Large'], getSizeGroup);
+    return createContextGroupNodes(
+      createOrderedGroups(contexts, ['Small', 'Medium', 'Large'], getSizeGroup),
+    );
   }
 
   if (contextsGroupBy === 'template') {
-    return createSortedGroups(contexts, (context) => context.template || 'Unknown');
+    return createContextGroupNodes(
+      createSortedGroups(contexts, (context) => context.template || 'Unknown'),
+    );
   }
 
-  return createOrderedGroups(contexts, ['Active', 'Archived'], (context) =>
-    context.archived ? 'Archived' : 'Active',
+  return createContextGroupNodes(
+    createOrderedGroups(contexts, ['Active', 'Archived'], (context) =>
+      context.archived ? 'Archived' : 'Active',
+    ),
+  );
+}
+
+function createContextGroupNodes(groups: Array<{ label: string; contexts: ContextViewItem[] }>) {
+  return groups.map((group) =>
+    createGroupNode(
+      group.label,
+      group.contexts.map(createContextTreeNode),
+      `${group.contexts.length}`,
+    ),
   );
 }
 
@@ -153,7 +175,8 @@ function createSortedGroups(
 
 function createContextTreeNode(context: ContextViewItem) {
   return createContextNode(context.branch, context.contextDir, {
-    useResourceUri: context.archived,
+    resourceUri: context.archived ? createArchivedContextResourceUri(context.branchKey) : undefined,
+    useResourceUri: false,
     branch: context.branch,
     branchKey: context.branchKey,
     archived: context.archived,

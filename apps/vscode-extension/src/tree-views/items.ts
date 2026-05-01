@@ -6,6 +6,7 @@ import { CONTEXT_FILE_NAME } from '../constants';
 import { onDidChangeState } from '../core/state';
 
 const MAX_DIRECTORY_ITEMS = 200;
+const archivedContextResourceScheme = 'branch-context-archived';
 
 type BranchContextTreeNodeKind =
   | 'message'
@@ -32,6 +33,7 @@ export type BranchContextTreeNode = {
   tooltip?: string | vscode.MarkdownString;
   icon?: vscode.ThemeIcon;
   command?: vscode.Command;
+  resourceUri?: vscode.Uri;
   useResourceUri?: boolean;
   collapsibleState?: vscode.TreeItemCollapsibleState;
   children?: () => BranchContextTreeNode[];
@@ -61,7 +63,9 @@ export class StateTreeProvider
     item.iconPath = node.icon;
     item.command = node.command;
 
-    if (node.path && node.useResourceUri !== false) {
+    if (node.resourceUri) {
+      item.resourceUri = node.resourceUri;
+    } else if (node.path && node.useResourceUri !== false) {
       item.resourceUri = vscode.Uri.file(node.path);
     }
 
@@ -80,6 +84,32 @@ export class StateTreeProvider
     this.stateDisposable.dispose();
     this.changeEmitter.dispose();
   }
+}
+
+export function initializeTreeItemDecorations(context: vscode.ExtensionContext): void {
+  context.subscriptions.push(
+    vscode.window.registerFileDecorationProvider({
+      provideFileDecoration(uri) {
+        if (uri.scheme !== archivedContextResourceScheme) {
+          return undefined;
+        }
+
+        return new vscode.FileDecoration(
+          undefined,
+          'Archived branch context',
+          new vscode.ThemeColor('disabledForeground'),
+        );
+      },
+    }),
+  );
+}
+
+export function createArchivedContextResourceUri(branchKey: string): vscode.Uri {
+  return vscode.Uri.from({
+    scheme: archivedContextResourceScheme,
+    authority: 'branch',
+    path: `/${branchKey}`,
+  });
 }
 
 export function createMessageNode(label: string): BranchContextTreeNode {
@@ -127,6 +157,7 @@ type ContextNodeOptions = {
   local?: boolean;
   remote?: boolean;
   contextValue?: string;
+  resourceUri?: vscode.Uri;
   useResourceUri?: boolean;
 };
 

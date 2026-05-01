@@ -12,9 +12,11 @@ import {
   getGitChangesViewDescription,
   initializeGitChangesMode,
 } from './git-changes';
+import { initializeTreeItemDecorations } from './items';
 import { createTemplatesProvider } from './templates';
 
 export function initializeTreeViews(context: vscode.ExtensionContext): void {
+  initializeTreeItemDecorations(context);
   initializeAgentSessionsViewState(context);
   initializeGitChangesMode(context);
 
