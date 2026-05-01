@@ -1,5 +1,5 @@
-import { gitDiff } from '@branch-context/core';
 import type { BranchGitSummary } from '@branch-context/core/services/git-summary';
+import { gitDiff } from '@branch-context/core/utils/git';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { formatError } from '../lib/format-error';

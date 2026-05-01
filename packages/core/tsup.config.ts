@@ -10,6 +10,7 @@ export default defineConfig({
     'src/services/actions.ts',
     'src/services/agents.ts',
     'src/services/git-summary.ts',
+    'src/utils/git.ts',
   ],
   format: ['esm'],
   target: 'node22',
