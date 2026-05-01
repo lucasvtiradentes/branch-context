@@ -129,7 +129,7 @@ function createAgentSessionNode(item: AgentSessionViewItem, showIcon = true) {
     sessionId: session.sessionId,
     description,
     tooltip: createAgentTooltip(item),
-    icon: showIcon ? getProviderIcon(session.provider, active) : undefined,
+    icon: showIcon ? getProviderIcon(session.provider, active) : new vscode.ThemeIcon('blank'),
     resourceUri: active ? undefined : createInactiveAgentSessionResourceUri(session.sessionId),
     useResourceUri: showIcon,
     contextValue: 'branchContext.agentSession resumable',
