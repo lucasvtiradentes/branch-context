@@ -17,6 +17,9 @@ export const commandIds = {
   openConfig: `${APP_ID}.openConfig`,
   openCurrentContextFolder: `${APP_ID}.openCurrentContextFolder`,
   reviewDiff: `${APP_ID}.reviewDiff`,
+  toggleGitChangesMode: `${APP_ID}.toggleGitChangesMode`,
+  groupAgentSessionsBy: `${APP_ID}.groupAgentSessionsBy`,
+  toggleAgentSessionText: `${APP_ID}.toggleAgentSessionText`,
   groupContextsBy: `${APP_ID}.groupContextsBy`,
   checkoutContextBranch: `${APP_ID}.checkoutContextBranch`,
   openContext: `${APP_ID}.openContext`,
@@ -32,6 +35,8 @@ export const commandIds = {
 
 export const viewIds = {
   currentContext: `${APP_ID}.currentContext`,
+  agentSessions: `${APP_ID}.agentSessions`,
+  gitChanges: `${APP_ID}.gitChanges`,
   contexts: `${APP_ID}.contexts`,
   templates: `${APP_ID}.templates`,
 } as const;

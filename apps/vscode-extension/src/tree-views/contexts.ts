@@ -61,10 +61,12 @@ export function createContextsProvider(): StateTreeProvider {
     const contexts = [
       ...state.recentContexts.map(toActiveContext),
       ...state.archivedContexts.map(toArchivedContext),
-    ].sort(compareByUpdatedAt);
+    ]
+      .filter((context) => !isCurrentContext(context, state.currentBranch))
+      .sort(compareByUpdatedAt);
 
     if (contexts.length === 0) {
-      return [createMessageNode('No contexts')];
+      return [createMessageNode('No other branches')];
     }
 
     return groupContexts(contexts).map((group) =>
@@ -151,6 +153,7 @@ function createSortedGroups(
 
 function createContextTreeNode(context: ContextViewItem) {
   return createContextNode(context.branch, context.contextDir, {
+    useResourceUri: false,
     branch: context.branch,
     branchKey: context.branchKey,
     archived: context.archived,
@@ -166,6 +169,10 @@ function createContextTreeNode(context: ContextViewItem) {
         ? new vscode.ThemeIcon('star-full')
         : new vscode.ThemeIcon('git-branch'),
   });
+}
+
+function isCurrentContext(context: ContextViewItem, currentBranch: string | null) {
+  return context.current || (!!currentBranch && context.branch === currentBranch);
 }
 
 function createContextValue(context: ContextViewItem) {

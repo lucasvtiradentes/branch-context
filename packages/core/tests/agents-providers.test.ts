@@ -35,6 +35,12 @@ describe('agent provider parsers', () => {
     expect(session.title).toBe('testando codex');
   });
 
+  it('prefers Codex event messages over injected response items', () => {
+    const session = parseCodexSessionFile(join(fixturesDir, 'codex-injected.jsonl'));
+
+    expect(session.title).toBe('real prompt');
+  });
+
   it('scans Claude sessions from the repo-specific directory', () => {
     const root = createTempDir();
     const repoRoot = '/repo/project';

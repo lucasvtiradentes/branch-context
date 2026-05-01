@@ -237,6 +237,7 @@ export function parseCodexSessionFile(path: string): ParsedCodexSession {
     startedAt: null,
     updatedAt: getFileUpdatedAt(path),
   };
+  let responseItemTitle: string | null = null;
 
   for (const line of readJsonLines(path)) {
     const data = parseJsonObject(line);
@@ -257,9 +258,11 @@ export function parseCodexSessionFile(path: string): ParsedCodexSession {
     } else if (data.type === 'event_msg' && payload?.type === 'user_message') {
       parsed.title ??= asString(payload.message);
     } else if (data.type === 'response_item' && payload?.role === 'user') {
-      parsed.title ??= extractContentTitle(payload.content);
+      responseItemTitle ??= extractContentTitle(payload.content);
     }
   }
+
+  parsed.title ??= responseItemTitle;
 
   return parsed;
 }

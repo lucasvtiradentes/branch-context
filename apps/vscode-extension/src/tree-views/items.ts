@@ -14,7 +14,7 @@ type BranchContextTreeNodeKind =
   | 'group'
   | 'context'
   | 'template'
-  | 'overview'
+  | 'commit'
   | 'agent';
 
 export type BranchContextTreeNode = {
@@ -32,6 +32,7 @@ export type BranchContextTreeNode = {
   tooltip?: string | vscode.MarkdownString;
   icon?: vscode.ThemeIcon;
   command?: vscode.Command;
+  useResourceUri?: boolean;
   collapsibleState?: vscode.TreeItemCollapsibleState;
   children?: () => BranchContextTreeNode[];
 };
@@ -60,7 +61,7 @@ export class StateTreeProvider
     item.iconPath = node.icon;
     item.command = node.command;
 
-    if (node.path) {
+    if (node.path && node.useResourceUri !== false) {
       item.resourceUri = vscode.Uri.file(node.path);
     }
 
@@ -126,6 +127,7 @@ type ContextNodeOptions = {
   local?: boolean;
   remote?: boolean;
   contextValue?: string;
+  useResourceUri?: boolean;
 };
 
 export function createContextNode(
