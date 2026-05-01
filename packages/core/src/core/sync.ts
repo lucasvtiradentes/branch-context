@@ -13,7 +13,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname, extname, join, relative } from 'node:path';
+import { extname, join, relative } from 'node:path';
 import {
   ARCHIVED_DIR,
   BRANCHES_DIR,
@@ -31,7 +31,7 @@ import {
   deleteBranchMeta,
   unarchiveBranchMeta,
 } from '../data/meta';
-import { copyInitTemplatesResource } from '../resources';
+import { copyInitTemplatesResource, getResourcesDir } from '../resources';
 import { getTemplateVariables, renderTemplateContent } from '../utils/template';
 
 export type CreateBranchContextResult =
@@ -45,7 +45,7 @@ export type ResetBranchContextResult = 'reset' | 'template_not_found';
 export type UpdateSymlinkResult = 'unchanged' | 'error_not_symlink' | 'updated';
 
 export function getDefaultSoundFile() {
-  return join(dirname(new URL(import.meta.url).pathname), '..', 'assets', DEFAULT_SOUND_FILE);
+  return join(getResourcesDir(), 'assets', DEFAULT_SOUND_FILE);
 }
 
 export function playSound(soundFile?: string | null) {

@@ -58,7 +58,6 @@
     }
   },
   "files": [
-    "assets",
     "dist",
     "resources"
   ],
