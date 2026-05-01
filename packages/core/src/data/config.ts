@@ -1,13 +1,16 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { defaultConfig } from '../assets';
 import {
   BRANCHES_DIR,
   CONFIG_DIR,
   CONFIG_FILE,
+  DEFAULT_BASE_BRANCH,
   DEFAULT_TEMPLATE,
   TEMPLATES_DIR,
 } from '../constants';
+import { copyInitConfigResource, loadDefaultConfigResource } from '../resources';
+
+const defaultConfig = loadDefaultConfigResource();
 
 export type TemplateRule = {
   prefix: string;
@@ -22,13 +25,14 @@ export class Config {
   templateRules: TemplateRule[];
 
   constructor(options: Partial<Config> = {}) {
-    this.defaultBaseBranch = options.defaultBaseBranch ?? defaultConfig.default_base_branch;
-    this.sound = options.sound ?? defaultConfig.sound;
+    this.defaultBaseBranch =
+      options.defaultBaseBranch ?? defaultConfig.default_base_branch ?? DEFAULT_BASE_BRANCH;
+    this.sound = options.sound ?? defaultConfig.sound ?? true;
     this.soundFile = options.soundFile ?? null;
-    this.commitDescription = options.commitDescription ?? defaultConfig.commit_description;
+    this.commitDescription = options.commitDescription ?? defaultConfig.commit_description ?? false;
     this.templateRules =
       options.templateRules ??
-      defaultConfig.template_rules.map((rule) => ({
+      (defaultConfig.template_rules ?? []).map((rule) => ({
         prefix: rule.prefix,
         template: rule.template,
       }));
@@ -48,13 +52,13 @@ export class Config {
         defaultBaseBranch:
           typeof data.default_base_branch === 'string'
             ? data.default_base_branch
-            : defaultConfig.default_base_branch,
-        sound: typeof data.sound === 'boolean' ? data.sound : defaultConfig.sound,
+            : (defaultConfig.default_base_branch ?? DEFAULT_BASE_BRANCH),
+        sound: typeof data.sound === 'boolean' ? data.sound : (defaultConfig.sound ?? true),
         soundFile: typeof data.sound_file === 'string' ? data.sound_file : null,
         commitDescription:
           typeof data.commit_description === 'boolean'
             ? data.commit_description
-            : defaultConfig.commit_description,
+            : (defaultConfig.commit_description ?? false),
         templateRules: rawRules
           .filter(
             (rule): rule is Record<string, unknown> => typeof rule === 'object' && rule !== null,
@@ -122,6 +126,10 @@ export function getBranchesDir(workspace: string) {
 
 export function configExists(workspace: string) {
   return existsSync(join(workspace, CONFIG_DIR, CONFIG_FILE));
+}
+
+export function copyInitConfig(workspace: string) {
+  copyInitConfigResource(workspace);
 }
 
 export function listTemplates(workspace: string) {

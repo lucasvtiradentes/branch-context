@@ -22,6 +22,7 @@ import { getBaseBranch, saveBaseBranch } from '../data/branch-base';
 import {
   Config,
   configExists,
+  copyInitConfig,
   getBranchesDir,
   getConfigDir,
   getTemplatesDir,
@@ -135,7 +136,7 @@ export async function initProject(
   if (!alreadyInitialized) {
     mkdirSync(configDir, { recursive: true });
     mkdirSync(branchesDir, { recursive: true });
-    new Config().save(gitRoot);
+    copyInitConfig(gitRoot);
     copyInitTemplates(templatesDir);
   }
 

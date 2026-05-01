@@ -10,8 +10,8 @@ import {
 import { getCurrentBranch, getGitRoot, installHook } from '../core/hooks';
 import { copyInitTemplates, syncBranch } from '../core/sync';
 import {
-  Config,
   configExists,
+  copyInitConfig,
   getBranchesDir,
   getConfigDir,
   getTemplatesDir,
@@ -32,7 +32,7 @@ export async function cmdInit(_args: string[]) {
   if (!alreadyInitialized) {
     mkdirSync(configDir, { recursive: true });
     mkdirSync(branchesDir, { recursive: true });
-    new Config().save(gitRoot);
+    copyInitConfig(gitRoot);
     copyInitTemplates(templatesDir);
 
     console.log(`Initialized: ${configDir}`);

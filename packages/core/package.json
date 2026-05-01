@@ -39,7 +39,8 @@
   },
   "files": [
     "assets",
-    "dist"
+    "dist",
+    "resources"
   ],
   "scripts": {
     "build": "tsup",

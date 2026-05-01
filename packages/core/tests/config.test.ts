@@ -6,6 +6,7 @@ import {
   BranchContextConfigSchema,
   CONFIG_DIR,
   Config,
+  copyInitConfig,
   createBranchContextConfigJsonSchema,
   DEFAULT_TEMPLATE,
   getBranchesDir,
@@ -64,6 +65,14 @@ describe('config', () => {
     mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
     new Config({ sound: true }).save(workspace);
     expect(Config.load(workspace).sound).toBe(true);
+  });
+
+  it('copies init config from resources', () => {
+    const workspace = createTempDir();
+    copyInitConfig(workspace);
+    const loaded = Config.load(workspace);
+    expect(loaded.defaultBaseBranch).toBe('origin/main');
+    expect(loaded.templateRules).toContainEqual({ prefix: 'feature/', template: 'feature' });
   });
 
   it('loads defaults when config file is missing', () => {

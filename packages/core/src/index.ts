@@ -1,4 +1,3 @@
-export * from './assets';
 export * from './cli';
 export * from './cmd-registry';
 export * from './commands/_branches';
@@ -20,6 +19,7 @@ export * from './data/branch-base';
 export * from './data/config';
 export * from './data/config-schema';
 export * from './data/meta';
+export * from './resources';
 export * from './services';
 export * from './utils/color';
 export * from './utils/git';

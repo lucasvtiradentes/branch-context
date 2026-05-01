@@ -14,7 +14,6 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { dirname, extname, join, relative } from 'node:path';
-import { initTemplates } from '../assets';
 import {
   ARCHIVED_DIR,
   BRANCHES_DIR,
@@ -32,6 +31,7 @@ import {
   deleteBranchMeta,
   unarchiveBranchMeta,
 } from '../data/meta';
+import { copyInitTemplatesResource } from '../resources';
 import { getTemplateVariables, renderTemplateContent } from '../utils/template';
 
 export type CreateBranchContextResult =
@@ -313,12 +313,5 @@ export function deleteBranchContext(workspace: string, branchName: string, archi
 }
 
 export function copyInitTemplates(dest: string) {
-  mkdirSync(dest, { recursive: true });
-  for (const [templateName, files] of Object.entries(initTemplates)) {
-    const templateDir = join(dest, templateName);
-    mkdirSync(templateDir, { recursive: true });
-    for (const [filename, content] of Object.entries(files)) {
-      writeFileSync(join(templateDir, filename), content);
-    }
-  }
+  copyInitTemplatesResource(dest);
 }

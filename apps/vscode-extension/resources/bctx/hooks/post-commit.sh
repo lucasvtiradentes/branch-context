@@ -1,0 +1,4 @@
+#!/bin/bash
+{marker}
+
+{callback}

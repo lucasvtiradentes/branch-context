@@ -8,8 +8,8 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative } from 'node:path';
-import { postCheckoutHookTemplate, postCommitHookTemplate } from '../assets';
 import { CLI_NAME, GIT_DIR, HOOK_MARKER, HOOK_POST_CHECKOUT } from '../constants';
+import { loadHookTemplateResource } from '../resources';
 import {
   gitConfigUnset,
   gitCurrentBranch,
@@ -125,10 +125,7 @@ export function isHookInstalled(gitRootPath: string, hookType: HookType = HOOK_P
 }
 
 function getHookTemplate(hookType: HookType) {
-  if (hookType === HOOK_POST_CHECKOUT) {
-    return postCheckoutHookTemplate;
-  }
-  return postCommitHookTemplate;
+  return loadHookTemplateResource(hookType);
 }
 
 const SNIPPET_END_MARKER = '# branch-ctx-end';
