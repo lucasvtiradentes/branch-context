@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as vscode from 'vscode';
 import { commandIds } from '../constants';
+import { removeAgentSessionPin, upsertAgentSessionPin } from '../core/agent-session-pins';
 import { getBranchContextState, refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
 import type { BranchContextTreeNode } from '../tree-views/items';
@@ -18,9 +19,59 @@ type CachedAgentsFile = {
 
 export function registerAgentSessionActionCommands(): vscode.Disposable[] {
   return [
+    vscode.commands.registerCommand(commandIds.pinAgentSession, pinAgentSession),
+    vscode.commands.registerCommand(commandIds.unpinAgentSession, unpinAgentSession),
     vscode.commands.registerCommand(commandIds.copyAgentSessionId, copyAgentSessionId),
     vscode.commands.registerCommand(commandIds.deleteAgentSession, deleteAgentSession),
   ];
+}
+
+async function pinAgentSession(node: unknown): Promise<void> {
+  const session = node as Partial<BranchContextTreeNode> | undefined;
+  if (!session?.agentProvider || !session.sessionId) {
+    await vscode.window.showErrorMessage('Missing agent session metadata.');
+    return;
+  }
+
+  const description = await vscode.window.showInputBox({
+    title: 'Pin agent session',
+    prompt: 'Session description',
+    value: session.pinDescription,
+  });
+  if (!description?.trim()) {
+    return;
+  }
+
+  try {
+    upsertAgentSessionPin(session.agentProvider, session.sessionId, description.trim());
+    refreshBranchContextState();
+  } catch (error) {
+    await vscode.window.showErrorMessage(formatError(error));
+  }
+}
+
+async function unpinAgentSession(node: unknown): Promise<void> {
+  const session = node as Partial<BranchContextTreeNode> | undefined;
+  if (!session?.agentProvider || !session.sessionId) {
+    await vscode.window.showErrorMessage('Missing agent session metadata.');
+    return;
+  }
+
+  const confirmed = await vscode.window.showWarningMessage(
+    `Unpin agent session ${session.pinDescription ?? session.sessionId.slice(0, 7)}?`,
+    { modal: true },
+    'Unpin',
+  );
+  if (confirmed !== 'Unpin') {
+    return;
+  }
+
+  try {
+    removeAgentSessionPin(session.agentProvider, session.sessionId);
+    refreshBranchContextState();
+  } catch (error) {
+    await vscode.window.showErrorMessage(formatError(error));
+  }
 }
 
 async function copyAgentSessionId(node: unknown): Promise<void> {

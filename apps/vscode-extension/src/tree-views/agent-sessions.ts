@@ -2,6 +2,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import type { AgentSession } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { isAgentSessionActive } from '../core/active-agent-sessions';
+import { type AgentSessionPin, readAgentSessionPins } from '../core/agent-session-pins';
 import { getBranchContextState } from '../core/state';
 import { groupByDate } from '../lib/date-groups';
 import { formatRelativeTime } from '../lib/format-relative-time';
@@ -25,6 +26,7 @@ type AgentSessionViewItem = {
   session: AgentSession;
   details: AgentSessionDetails;
   sizeBytes: number;
+  pin: AgentSessionPin | null;
 };
 
 type AgentSessionDetails = {
@@ -91,7 +93,8 @@ export function createAgentSessionsProvider(): StateTreeProvider {
       return [createMessageNode('No .bctx config')];
     }
 
-    const items = state.agentSessions.map(createSessionViewItem);
+    const pins = readAgentSessionPins();
+    const items = state.agentSessions.map((session) => createSessionViewItem(session, pins));
     if (items.length === 0) {
       return [createMessageNode('No sessions')];
     }
@@ -113,28 +116,42 @@ function createGroupNode(
     description: String(sessions.length),
     icon,
     collapsibleState,
-    children: () => sessions.map((session) => createAgentSessionNode(session, showSessionIcons)),
+    children: () =>
+      sessions.map((session) =>
+        createAgentSessionNode(session, {
+          showIcon: showSessionIcons,
+        }),
+      ),
   };
 }
 
-function createAgentSessionNode(item: AgentSessionViewItem, showIcon = true) {
+function createAgentSessionNode(
+  item: AgentSessionViewItem,
+  options: { showIcon?: boolean; pinned?: boolean } = {},
+) {
   const session = item.session;
   const description = formatRelativeTime(session.updatedAt ?? session.startedAt);
   const path = session.path ?? undefined;
   const active = isAgentSessionActive(session);
+  const showIcon = options.showIcon ?? true;
+  const pinned = options.pinned ?? Boolean(item.pin);
 
   return {
-    label: getSessionDisplayText(item),
+    label: pinned
+      ? (item.pin?.description ?? getSessionDisplayText(item))
+      : getSessionDisplayText(item),
     kind: 'agent' as const,
     path,
     agentProvider: session.provider,
     sessionId: session.sessionId,
-    description,
+    pinned,
+    pinDescription: item.pin?.description,
+    description: pinned ? `${formatProviderName(session.provider)} ${description}` : description,
     tooltip: createAgentTooltip(item),
     icon: showIcon ? getProviderIcon(session.provider, active) : new vscode.ThemeIcon('blank'),
     resourceUri: active ? undefined : createInactiveAgentSessionResourceUri(session.sessionId),
     useResourceUri: showIcon,
-    contextValue: 'branchContext.agentSession resumable',
+    contextValue: createAgentSessionContextValue(pinned),
     command: path
       ? {
           command: 'vscode.open',
@@ -145,16 +162,50 @@ function createAgentSessionNode(item: AgentSessionViewItem, showIcon = true) {
   };
 }
 
-function createSessionViewItem(session: AgentSession): AgentSessionViewItem {
+function createSessionViewItem(
+  session: AgentSession,
+  pins: AgentSessionPin[],
+): AgentSessionViewItem {
   const path = session.path ?? null;
   return {
     session,
     details: readSessionDetails(path),
     sizeBytes: getSessionSize(path),
+    pin:
+      pins.find(
+        (pin) => pin.provider === session.provider && pin.sessionId === session.sessionId,
+      ) ?? null,
   };
 }
 
 function groupAgentSessions(items: AgentSessionViewItem[]) {
+  const pinnedItems = getPinnedItems(items);
+  const unpinnedItems = items.filter((item) => !item.pin);
+  const groupedItems = groupUnpinnedAgentSessions(unpinnedItems);
+
+  if (pinnedItems.length === 0) {
+    return groupedItems;
+  }
+
+  return [
+    {
+      label: 'Pinned',
+      kind: 'group' as const,
+      description: String(pinnedItems.length),
+      icon: new vscode.ThemeIcon('pinned'),
+      collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+      children: () =>
+        pinnedItems.map((item) =>
+          createAgentSessionNode(item, {
+            pinned: true,
+          }),
+        ),
+    },
+    ...groupedItems,
+  ];
+}
+
+function groupUnpinnedAgentSessions(items: AgentSessionViewItem[]) {
   if (agentSessionsGroupBy === 'flat') {
     return items.map((item) => createAgentSessionNode(item));
   }
@@ -197,6 +248,30 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
       showSessionIcons: false,
     }))
     .map((group) => createAgentSessionGroupNode(group, vscode.TreeItemCollapsibleState.Expanded));
+}
+
+function getPinnedItems(items: AgentSessionViewItem[]) {
+  const itemsByKey = new Map(
+    items.map((item) => [getAgentSessionKey(item.session.provider, item.session.sessionId), item]),
+  );
+  const pinnedItems: AgentSessionViewItem[] = [];
+
+  for (const pin of readAgentSessionPins()) {
+    const item = itemsByKey.get(getAgentSessionKey(pin.provider, pin.sessionId));
+    if (item) {
+      pinnedItems.push({ ...item, pin });
+    }
+  }
+
+  return pinnedItems;
+}
+
+function getAgentSessionKey(provider: AgentSession['provider'], sessionId: string) {
+  return `${provider}:${sessionId}`;
+}
+
+function createAgentSessionContextValue(pinned: boolean) {
+  return `branchContext.agentSession.resumable.${pinned ? 'pinned' : 'pinnable'}`;
 }
 
 function createAgentSessionGroupNode(
@@ -489,7 +564,10 @@ function createAgentTooltip(item: AgentSessionViewItem) {
       markdownTooltipLine('model', session.model ?? 'unknown'),
       markdownTooltipLine('updated', formatRelativeTime(session.updatedAt ?? session.startedAt)),
       markdownTooltipLine('size', formatBytes(item.sizeBytes)),
-    ].join('  \n'),
+      item.pin ? markdownTooltipLine('pin', item.pin.description) : null,
+    ]
+      .filter(Boolean)
+      .join('  \n'),
   );
 }
 

@@ -27,6 +27,8 @@ export const commandIds = {
   groupAgentSessionsBy: `${APP_ID}.groupAgentSessionsBy`,
   toggleAgentSessionText: `${APP_ID}.toggleAgentSessionText`,
   resumeAgentSession: `${APP_ID}.resumeAgentSession`,
+  pinAgentSession: `${APP_ID}.pinAgentSession`,
+  unpinAgentSession: `${APP_ID}.unpinAgentSession`,
   copyAgentSessionId: `${APP_ID}.copyAgentSessionId`,
   deleteAgentSession: `${APP_ID}.deleteAgentSession`,
   groupContextsBy: `${APP_ID}.groupContextsBy`,
