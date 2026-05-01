@@ -42,7 +42,7 @@
     "Other"
   ],
   "activationEvents": [
-    "workspaceContains:.bctx/config.json"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {

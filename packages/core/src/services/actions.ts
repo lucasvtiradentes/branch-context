@@ -1,11 +1,13 @@
-import { existsSync } from 'node:fs';
-import { DEFAULT_SYMLINK } from '../constants';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { CONFIG_FILE, DEFAULT_SYMLINK, HOOK_POST_CHECKOUT, HOOK_POST_COMMIT } from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
-import { getCurrentBranch } from '../core/hooks';
+import { getCurrentBranch, installHook } from '../core/hooks';
 import {
   archiveBranch,
   type CreateBranchContextResult,
+  copyInitTemplates,
   createBranchContext,
   deleteBranchContext,
   getBranchDir,
@@ -17,8 +19,16 @@ import {
   updateSymlink,
 } from '../core/sync';
 import { getBaseBranch, saveBaseBranch } from '../data/branch-base';
-import { Config, configExists, listTemplates } from '../data/config';
+import {
+  Config,
+  configExists,
+  getBranchesDir,
+  getConfigDir,
+  getTemplatesDir,
+  listTemplates,
+} from '../data/config';
 import { updateBranchMeta } from '../data/meta';
+import type { PromptYesNo } from '../utils/prompt';
 
 export type BranchContextActionErrorReason =
   | 'not_initialized'
@@ -98,6 +108,55 @@ export type ContextActionResult =
       branchKey: string;
     }
   | BranchContextActionError;
+
+export type InitProjectResult =
+  | {
+      ok: true;
+      configDir: string;
+      configPath: string;
+      templatesDir: string;
+      branchesDir: string;
+      alreadyInitialized: boolean;
+      checkoutHook: Awaited<ReturnType<typeof installHook>>;
+      commitHook: Awaited<ReturnType<typeof installHook>>;
+      syncResult: SyncCurrentBranchResult | null;
+    }
+  | BranchContextActionError;
+
+export async function initProject(
+  gitRoot: string,
+  ask: PromptYesNo = yes,
+): Promise<InitProjectResult> {
+  const configDir = getConfigDir(gitRoot);
+  const templatesDir = getTemplatesDir(gitRoot);
+  const branchesDir = getBranchesDir(gitRoot);
+  const alreadyInitialized = configExists(gitRoot);
+
+  if (!alreadyInitialized) {
+    mkdirSync(configDir, { recursive: true });
+    mkdirSync(branchesDir, { recursive: true });
+    new Config().save(gitRoot);
+    copyInitTemplates(templatesDir);
+  }
+
+  const checkoutHook = await installHook(gitRoot, HOOK_POST_CHECKOUT, ask);
+  const commitHook = await installHook(gitRoot, HOOK_POST_COMMIT, ask);
+
+  addToGitignore(gitRoot, DEFAULT_SYMLINK);
+  addToGitignore(gitRoot, '.bctx/branches/');
+
+  return {
+    ok: true,
+    configDir,
+    configPath: `${configDir}/${CONFIG_FILE}`,
+    templatesDir,
+    branchesDir,
+    alreadyInitialized,
+    checkoutHook,
+    commitHook,
+    syncResult: syncCurrentBranch(gitRoot, { sound: false }),
+  };
+}
 
 export function syncCurrentBranch(
   gitRoot: string,
@@ -339,6 +398,20 @@ function getExistingCurrentContext(gitRoot: string): ExistingCurrentContext {
     branch: current.branch,
     contextDir,
   };
+}
+
+function addToGitignore(gitRoot: string, value: string) {
+  const gitignoreFile = join(gitRoot, '.gitignore');
+  const existing = existsSync(gitignoreFile) ? readFileSync(gitignoreFile, 'utf8') : '';
+
+  if (!existing.split(/\r?\n/).includes(value)) {
+    const prefix = existing && !existing.endsWith('\n') ? '\n' : '';
+    writeFileSync(gitignoreFile, `${existing}${prefix}${value}\n`);
+  }
+}
+
+async function yes(): Promise<boolean> {
+  return true;
 }
 
 function notInitialized(): BranchContextActionError {

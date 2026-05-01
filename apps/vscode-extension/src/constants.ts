@@ -2,8 +2,7 @@ export { CONTEXT_FILE_NAME } from '@branch-context/core/constants';
 
 const APP_ID = 'branch-context';
 export const APP_NAME = 'Branch Context';
-export const STATUS_BAR_PRIORITY = 100;
-export const STATUS_BAR_MAX_CONTEXT_LENGTH = 40;
+export const STATUS_BAR_PRIORITY = 10;
 
 export const commandIds = {
   openCurrentContext: `${APP_ID}.openCurrentContext`,
@@ -20,6 +19,7 @@ export const commandIds = {
   archiveContext: `${APP_ID}.archiveContext`,
   restoreContext: `${APP_ID}.restoreContext`,
   deleteContext: `${APP_ID}.deleteContext`,
+  showStatusBarActions: `${APP_ID}.internal.showStatusBarActions`,
   showDetails: `${APP_ID}.internal.showDetails`,
 } as const;
 
