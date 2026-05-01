@@ -113,6 +113,11 @@
         "icon": "$(folder-opened)"
       },
       {
+        "command": "branch-context.reviewDiff",
+        "title": "Branch Context: Review Diff",
+        "icon": "$(diff)"
+      },
+      {
         "command": "branch-context.groupContextsBy",
         "title": "Branch Context: Group Contexts By",
         "icon": "$(list-tree)"
@@ -151,6 +156,11 @@
         "command": "branch-context.showLogs",
         "title": "Branch Context: Show Logs",
         "icon": "$(output)"
+      },
+      {
+        "command": "branch-context.internal.syncAgents",
+        "title": "Branch Context: Sync Agents",
+        "icon": "$(sync)"
       }
     ],
     "menus": {
@@ -200,6 +210,10 @@
           "when": "false"
         },
         {
+          "command": "branch-context.reviewDiff",
+          "when": "false"
+        },
+        {
           "command": "branch-context.groupContextsBy",
           "when": "false"
         },
@@ -226,6 +240,10 @@
         {
           "command": "branch-context.deleteContext",
           "when": "false"
+        },
+        {
+          "command": "branch-context.internal.syncAgents",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -235,19 +253,24 @@
           "group": "navigation@1"
         },
         {
-          "command": "branch-context.setBase",
+          "command": "branch-context.reviewDiff",
           "when": "view == branch-context.currentContext && branch-context.initialized",
           "group": "navigation@2"
         },
         {
-          "command": "branch-context.applyTemplate",
+          "command": "branch-context.setBase",
           "when": "view == branch-context.currentContext && branch-context.initialized",
           "group": "navigation@3"
         },
         {
-          "command": "branch-context.openCurrentContextFolder",
+          "command": "branch-context.applyTemplate",
           "when": "view == branch-context.currentContext && branch-context.initialized",
           "group": "navigation@4"
+        },
+        {
+          "command": "branch-context.openCurrentContextFolder",
+          "when": "view == branch-context.currentContext && branch-context.initialized",
+          "group": "navigation@5"
         },
         {
           "command": "branch-context.groupContextsBy",

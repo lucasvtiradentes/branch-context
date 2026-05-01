@@ -25,6 +25,7 @@ export const commandIds = {
   restoreContext: `${APP_ID}.restoreContext`,
   deleteContext: `${APP_ID}.deleteContext`,
   showLogs: `${APP_ID}.showLogs`,
+  syncAgents: `${APP_ID}.internal.syncAgents`,
   showStatusBarActions: `${APP_ID}.internal.showStatusBarActions`,
   showDetails: `${APP_ID}.internal.showDetails`,
 } as const;
