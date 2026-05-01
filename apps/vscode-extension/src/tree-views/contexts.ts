@@ -153,7 +153,7 @@ function createSortedGroups(
 
 function createContextTreeNode(context: ContextViewItem) {
   return createContextNode(context.branch, context.contextDir, {
-    useResourceUri: false,
+    useResourceUri: context.archived,
     branch: context.branch,
     branchKey: context.branchKey,
     archived: context.archived,
@@ -198,12 +198,7 @@ function createContextValue(context: ContextViewItem) {
 }
 
 function createContextDescription(context: ContextViewItem) {
-  return [
-    formatRelativeTime(context.updatedAt),
-    formatCount(context.commitCount, 'commit'),
-    formatCount(context.changedFileCount, 'file'),
-    getSizeBadge(context.sizeBytes),
-  ].join(' | ');
+  return formatRelativeTime(context.updatedAt);
 }
 
 function createContextTooltip(context: ContextViewItem) {
@@ -256,15 +251,6 @@ function getSizeGroup(context: ContextViewItem) {
   }
 
   return 'Large';
-}
-
-function getSizeBadge(sizeBytes: number) {
-  const group = sizeBytes < 64 * 1024 ? 'Small' : sizeBytes < 1024 * 1024 ? 'Medium' : 'Large';
-  return `[${group[0]}]`;
-}
-
-function formatCount(count: number, label: string) {
-  return `${count} ${label}${count === 1 ? '' : 's'}`;
 }
 
 function formatBytes(bytes: number) {

@@ -6,23 +6,39 @@ import type {
   GitCommitSummary,
 } from '@branch-context/core/services/git-summary';
 import * as vscode from 'vscode';
-import { commandIds } from '../constants';
+import { commandIds, contextKeys } from '../constants';
 import { type BranchContextExtensionState, getBranchContextState } from '../core/state';
 import { formatRelativeTime } from '../lib/format-relative-time';
-import { type BranchContextTreeNode, createMessageNode, StateTreeProvider } from './items';
+import {
+  type BranchContextTreeNode,
+  createGroupNode,
+  createMessageNode,
+  StateTreeProvider,
+} from './items';
 
 const gitChangesModeValues = ['files', 'commits'] as const;
+const gitCommitsGroupByValues = ['flat', 'date', 'author'] as const;
 const gitChangesModeWorkspaceKey = 'gitChanges.mode';
+const gitCommitsGroupByWorkspaceKey = 'gitChanges.commitsGroupBy';
 
 export type GitChangesMode = (typeof gitChangesModeValues)[number];
+export type GitCommitsGroupBy = (typeof gitCommitsGroupByValues)[number];
 
 let gitChangesMode: GitChangesMode = 'files';
+let gitCommitsGroupBy: GitCommitsGroupBy = 'flat';
 
 export function initializeGitChangesMode(context: vscode.ExtensionContext): void {
   const savedMode = context.workspaceState.get<unknown>(gitChangesModeWorkspaceKey);
   if (isGitChangesMode(savedMode)) {
     gitChangesMode = savedMode;
   }
+
+  const savedCommitsGroupBy = context.workspaceState.get<unknown>(gitCommitsGroupByWorkspaceKey);
+  if (isGitCommitsGroupBy(savedCommitsGroupBy)) {
+    gitCommitsGroupBy = savedCommitsGroupBy;
+  }
+
+  updateGitChangesModeContext();
 }
 
 export function getGitChangesMode(): GitChangesMode {
@@ -33,12 +49,25 @@ export function getGitChangesViewDescription(): string {
   return gitChangesMode === 'files' ? 'changed files' : 'commits';
 }
 
+export function getGitCommitsGroupBy(): GitCommitsGroupBy {
+  return gitCommitsGroupBy;
+}
+
+export async function saveGitCommitsGroupBy(
+  context: vscode.ExtensionContext,
+  nextGroupBy: GitCommitsGroupBy,
+): Promise<void> {
+  gitCommitsGroupBy = nextGroupBy;
+  await context.workspaceState.update(gitCommitsGroupByWorkspaceKey, nextGroupBy);
+}
+
 export async function toggleGitChangesMode(
   context: vscode.ExtensionContext,
 ): Promise<GitChangesMode> {
   const nextMode = gitChangesMode === 'files' ? 'commits' : 'files';
   gitChangesMode = nextMode;
   await context.workspaceState.update(gitChangesModeWorkspaceKey, nextMode);
+  updateGitChangesModeContext();
   return nextMode;
 }
 
@@ -59,6 +88,16 @@ function isGitChangesMode(value: unknown): value is GitChangesMode {
   return typeof value === 'string' && (gitChangesModeValues as readonly string[]).includes(value);
 }
 
+function updateGitChangesModeContext(): void {
+  void vscode.commands.executeCommand('setContext', contextKeys.gitChangesMode, gitChangesMode);
+}
+
+function isGitCommitsGroupBy(value: unknown): value is GitCommitsGroupBy {
+  return (
+    typeof value === 'string' && (gitCommitsGroupByValues as readonly string[]).includes(value)
+  );
+}
+
 function createChangedFileNodes(state: BranchContextExtensionState) {
   return getGitSummaryChildren(state.gitSummary, (summary) =>
     summary.changedFiles.map((file) => createChangedFileNode(state.workspaceRoot, file)),
@@ -66,7 +105,71 @@ function createChangedFileNodes(state: BranchContextExtensionState) {
 }
 
 function createCommitNodes(gitSummary: BranchGitSummary | null) {
-  return getGitSummaryChildren(gitSummary, (summary) => summary.commits.map(createCommitNode));
+  return getGitSummaryChildren(gitSummary, (summary) => groupCommitNodes(summary.commits));
+}
+
+function groupCommitNodes(commits: GitCommitSummary[]) {
+  if (gitCommitsGroupBy === 'date') {
+    return createOrderedCommitGroups(commits, ['Today', 'This week', 'Older'], getCommitDateGroup);
+  }
+
+  if (gitCommitsGroupBy === 'author') {
+    return createSortedCommitGroups(commits, (commit) => commit.authorName);
+  }
+
+  return commits.map(createCommitNode);
+}
+
+function createOrderedCommitGroups(
+  commits: GitCommitSummary[],
+  labels: string[],
+  getLabel: (commit: GitCommitSummary) => string,
+) {
+  return labels
+    .map((label) =>
+      createGroupNode(
+        label,
+        commits.filter((commit) => getLabel(commit) === label).map(createCommitNode),
+      ),
+    )
+    .filter((group) => group.children?.().length);
+}
+
+function createSortedCommitGroups(
+  commits: GitCommitSummary[],
+  getLabel: (commit: GitCommitSummary) => string,
+) {
+  const groups = new Map<string, GitCommitSummary[]>();
+  for (const commit of commits) {
+    const label = getLabel(commit);
+    const group = groups.get(label) ?? [];
+    group.push(commit);
+    groups.set(label, group);
+  }
+
+  return Array.from(groups.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([label, groupedCommits]) =>
+      createGroupNode(label, groupedCommits.map(createCommitNode), String(groupedCommits.length)),
+    );
+}
+
+function getCommitDateGroup(commit: GitCommitSummary) {
+  const authoredAt = Date.parse(commit.authoredAt);
+  if (Number.isNaN(authoredAt)) {
+    return 'Older';
+  }
+
+  const ageMs = Date.now() - authoredAt;
+  if (ageMs < 24 * 60 * 60 * 1000) {
+    return 'Today';
+  }
+
+  if (ageMs < 7 * 24 * 60 * 60 * 1000) {
+    return 'This week';
+  }
+
+  return 'Older';
 }
 
 function createChangedFileNode(workspaceRoot: string | null, file: GitChangedFileSummary) {

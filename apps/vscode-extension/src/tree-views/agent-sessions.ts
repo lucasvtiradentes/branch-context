@@ -127,9 +127,7 @@ function createGroupNode(
 
 function createAgentSessionNode(item: AgentSessionViewItem) {
   const session = item.session;
-  const description = [formatRelativeTime(session.updatedAt ?? session.startedAt), session.model]
-    .filter(Boolean)
-    .join(' | ');
+  const description = formatRelativeTime(session.updatedAt ?? session.startedAt);
   const path = session.path ?? undefined;
 
   return {

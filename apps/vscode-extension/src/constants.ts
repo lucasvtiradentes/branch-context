@@ -19,6 +19,7 @@ export const commandIds = {
   reviewDiff: `${APP_ID}.reviewDiff`,
   openCommitDiff: `${APP_ID}.internal.openCommitDiff`,
   toggleGitChangesMode: `${APP_ID}.toggleGitChangesMode`,
+  groupGitCommitsBy: `${APP_ID}.groupGitCommitsBy`,
   groupAgentSessionsBy: `${APP_ID}.groupAgentSessionsBy`,
   toggleAgentSessionText: `${APP_ID}.toggleAgentSessionText`,
   groupContextsBy: `${APP_ID}.groupContextsBy`,
@@ -44,6 +45,7 @@ export const viewIds = {
 
 export const contextKeys = {
   initialized: `${APP_ID}.initialized`,
+  gitChangesMode: `${APP_ID}.gitChangesMode`,
 } as const;
 
 export const codeLensTitles = {

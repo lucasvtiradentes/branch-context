@@ -61,17 +61,17 @@
       "branch-context": [
         {
           "id": "branch-context.currentContext",
-          "name": "Current Branch",
+          "name": "Branch Context",
           "icon": "resources/branch-context.svg"
         },
         {
           "id": "branch-context.agentSessions",
-          "name": "Agent Sessions",
+          "name": "Branch AI Sessions",
           "icon": "resources/branch-context.svg"
         },
         {
           "id": "branch-context.gitChanges",
-          "name": "Git Changes",
+          "name": "Branch Git Changes",
           "icon": "resources/branch-context.svg"
         },
         {
@@ -81,7 +81,7 @@
         },
         {
           "id": "branch-context.templates",
-          "name": "Templates",
+          "name": "Config",
           "icon": "resources/branch-context.svg"
         }
       ]
@@ -130,6 +130,11 @@
       {
         "command": "branch-context.toggleGitChangesMode",
         "title": "Branch Context: Toggle Git Changes Mode",
+        "icon": "$(git-compare)"
+      },
+      {
+        "command": "branch-context.groupGitCommitsBy",
+        "title": "Branch Context: Group Git Commits By",
         "icon": "$(list-tree)"
       },
       {
@@ -251,6 +256,10 @@
           "when": "false"
         },
         {
+          "command": "branch-context.groupGitCommitsBy",
+          "when": "false"
+        },
+        {
           "command": "branch-context.groupAgentSessionsBy",
           "when": "false"
         },
@@ -315,12 +324,17 @@
         {
           "command": "branch-context.reviewDiff",
           "when": "view == branch-context.gitChanges && branch-context.initialized",
-          "group": "navigation@1"
+          "group": "navigation@2"
         },
         {
           "command": "branch-context.toggleGitChangesMode",
           "when": "view == branch-context.gitChanges && branch-context.initialized",
-          "group": "navigation@2"
+          "group": "navigation@3"
+        },
+        {
+          "command": "branch-context.groupGitCommitsBy",
+          "when": "view == branch-context.gitChanges && branch-context.initialized && branch-context.gitChangesMode == commits",
+          "group": "navigation@1"
         },
         {
           "command": "branch-context.groupAgentSessionsBy",

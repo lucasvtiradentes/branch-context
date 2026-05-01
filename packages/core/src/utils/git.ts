@@ -15,6 +15,7 @@ export type GitCommitSummary = {
   hash: string;
   subject: string;
   authoredAt: string;
+  authorName: string;
 };
 
 export function gitInit(path: string, branch?: string): SpawnSyncReturns<string> {
@@ -296,7 +297,7 @@ export function gitCommitSummaries(path: string, baseRef: string, limit = 50): G
   const output = gitLog(path, [
     `${baseRef}..HEAD`,
     `--max-count=${limit}`,
-    '--format=%h%x1f%H%x1f%s%x1f%aI',
+    '--format=%h%x1f%H%x1f%s%x1f%aI%x1f%an',
   ]);
 
   if (!output) {
@@ -308,11 +309,11 @@ export function gitCommitSummaries(path: string, baseRef: string, limit = 50): G
     .split('\n')
     .filter(Boolean)
     .flatMap((line) => {
-      const [shortHash, hash, subject, authoredAt] = line.split('\x1f');
-      if (!shortHash || !hash || !subject || !authoredAt) {
+      const [shortHash, hash, subject, authoredAt, authorName] = line.split('\x1f');
+      if (!shortHash || !hash || !subject || !authoredAt || !authorName) {
         return [];
       }
-      return [{ shortHash, hash, subject, authoredAt }];
+      return [{ shortHash, hash, subject, authoredAt, authorName }];
     });
 }
 

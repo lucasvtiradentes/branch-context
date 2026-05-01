@@ -6,7 +6,7 @@ import {
   initializeAgentSessionsViewState,
 } from './agent-sessions';
 import { createContextsProvider } from './contexts';
-import { createCurrentContextProvider } from './current-context';
+import { createCurrentContextProvider, getCurrentContextViewDescription } from './current-context';
 import {
   createGitChangesProvider,
   getGitChangesViewDescription,
@@ -18,10 +18,11 @@ export function initializeTreeViews(context: vscode.ExtensionContext): void {
   initializeAgentSessionsViewState(context);
   initializeGitChangesMode(context);
 
+  const currentContextProvider = createCurrentContextProvider();
   const agentSessionsProvider = createAgentSessionsProvider();
   const gitChangesProvider = createGitChangesProvider();
   const providers = [
-    [viewIds.currentContext, createCurrentContextProvider()],
+    [viewIds.currentContext, currentContextProvider],
     [viewIds.agentSessions, agentSessionsProvider],
     [viewIds.gitChanges, gitChangesProvider],
     [viewIds.contexts, createContextsProvider()],
@@ -32,6 +33,15 @@ export function initializeTreeViews(context: vscode.ExtensionContext): void {
     context.subscriptions.push(provider);
     const view = vscode.window.createTreeView(viewId, { treeDataProvider: provider });
     context.subscriptions.push(view);
+    if (viewId === viewIds.currentContext) {
+      view.description = getCurrentContextViewDescription();
+      context.subscriptions.push(
+        provider.onDidChangeTreeData(() => {
+          view.description = getCurrentContextViewDescription();
+        }),
+      );
+    }
+
     if (viewId === viewIds.agentSessions) {
       view.description = getAgentSessionsViewDescription();
       context.subscriptions.push(
