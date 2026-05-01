@@ -4,6 +4,7 @@ import type {
 } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { getBranchContextState } from '../core/state';
+import { groupByDate } from '../lib/date-groups';
 import { formatRelativeTime } from '../lib/format-relative-time';
 import {
   createArchivedContextResourceUri,
@@ -13,8 +14,9 @@ import {
   StateTreeProvider,
 } from './items';
 
-const contextsGroupByValues = ['flat', 'status', 'recent', 'size', 'template'] as const;
+const contextsGroupByValues = ['flat', 'status', 'date', 'size', 'template'] as const;
 export type ContextsGroupBy = (typeof contextsGroupByValues)[number];
+type SavedContextsGroupBy = ContextsGroupBy | 'recent';
 
 type ContextViewItem = {
   branch: string;
@@ -37,7 +39,7 @@ const contextsGroupByWorkspaceKey = 'contexts.groupBy';
 export function initializeContextsGroupBy(context: vscode.ExtensionContext): void {
   const savedGroupBy = context.workspaceState.get<unknown>(contextsGroupByWorkspaceKey);
   if (isContextsGroupBy(savedGroupBy)) {
-    contextsGroupBy = savedGroupBy;
+    contextsGroupBy = normalizeContextsGroupBy(savedGroupBy);
   }
 }
 
@@ -53,8 +55,15 @@ export async function saveContextsGroupBy(
   await context.workspaceState.update(contextsGroupByWorkspaceKey, nextGroupBy);
 }
 
-function isContextsGroupBy(value: unknown): value is ContextsGroupBy {
-  return typeof value === 'string' && (contextsGroupByValues as readonly string[]).includes(value);
+function isContextsGroupBy(value: unknown): value is SavedContextsGroupBy {
+  return (
+    typeof value === 'string' &&
+    (value === 'recent' || (contextsGroupByValues as readonly string[]).includes(value))
+  );
+}
+
+function normalizeContextsGroupBy(value: SavedContextsGroupBy): ContextsGroupBy {
+  return value === 'recent' ? 'date' : value;
 }
 
 export function createContextsProvider(): StateTreeProvider {
@@ -102,9 +111,12 @@ function groupContexts(contexts: ContextViewItem[]) {
     return contexts.map(createContextTreeNode);
   }
 
-  if (contextsGroupBy === 'recent') {
+  if (contextsGroupBy === 'date') {
     return createContextGroupNodes(
-      createOrderedGroups(contexts, ['Today', 'This week', 'Older'], getRecentGroup),
+      groupByDate(contexts, (context) => context.updatedAt).map((group) => ({
+        label: group.label,
+        contexts: group.items,
+      })),
     );
   }
 
@@ -244,24 +256,6 @@ function markdownTooltipLine(label: string, value: string) {
 
 function escapeMarkdown(value: string) {
   return value.replace(/[\\`*_{}[\]()#+\-.!|>]/g, '\\$&');
-}
-
-function getRecentGroup(context: ContextViewItem) {
-  const updatedAt = context.updatedAt ? Date.parse(context.updatedAt) : Number.NaN;
-  if (Number.isNaN(updatedAt)) {
-    return 'Older';
-  }
-
-  const ageMs = Date.now() - updatedAt;
-  if (ageMs < 24 * 60 * 60 * 1000) {
-    return 'Today';
-  }
-
-  if (ageMs < 7 * 24 * 60 * 60 * 1000) {
-    return 'This week';
-  }
-
-  return 'Older';
 }
 
 function getSizeGroup(context: ContextViewItem) {

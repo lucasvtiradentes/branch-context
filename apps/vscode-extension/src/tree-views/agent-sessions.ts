@@ -3,6 +3,7 @@ import type { AgentSession } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { isAgentSessionActive } from '../core/active-agent-sessions';
 import { getBranchContextState } from '../core/state';
+import { groupByDate } from '../lib/date-groups';
 import { formatRelativeTime } from '../lib/format-relative-time';
 import {
   createInactiveAgentSessionResourceUri,
@@ -10,7 +11,7 @@ import {
   StateTreeProvider,
 } from './items';
 
-const agentSessionsGroupByValues = ['flat', 'provider', 'recent', 'size'] as const;
+const agentSessionsGroupByValues = ['flat', 'provider', 'date', 'size'] as const;
 const agentSessionTextModeValues = ['initial', 'last'] as const;
 const agentSessionsGroupByWorkspaceKey = 'agentSessions.groupBy';
 const agentSessionTextModeWorkspaceKey = 'agentSessions.textMode';
@@ -18,6 +19,7 @@ const MAX_SESSION_FILE_BYTES = 2 * 1024 * 1024;
 
 export type AgentSessionsGroupBy = (typeof agentSessionsGroupByValues)[number];
 type AgentSessionTextMode = (typeof agentSessionTextModeValues)[number];
+type SavedAgentSessionsGroupBy = AgentSessionsGroupBy | 'recent';
 
 type AgentSessionViewItem = {
   session: AgentSession;
@@ -42,7 +44,7 @@ let agentSessionTextMode: AgentSessionTextMode = 'initial';
 export function initializeAgentSessionsViewState(context: vscode.ExtensionContext): void {
   const savedGroupBy = context.workspaceState.get<unknown>(agentSessionsGroupByWorkspaceKey);
   if (isAgentSessionsGroupBy(savedGroupBy)) {
-    agentSessionsGroupBy = savedGroupBy;
+    agentSessionsGroupBy = normalizeAgentSessionsGroupBy(savedGroupBy);
   }
 
   const savedTextMode = context.workspaceState.get<unknown>(agentSessionTextModeWorkspaceKey);
@@ -157,13 +159,18 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
     return items.map((item) => createAgentSessionNode(item));
   }
 
-  if (agentSessionsGroupBy === 'recent') {
-    return createOrderedGroups(
-      items,
-      ['Today', 'This week', 'Older'],
-      getRecentGroup,
-      'history',
-    ).map((group) => createAgentSessionGroupNode(group, vscode.TreeItemCollapsibleState.Expanded));
+  if (agentSessionsGroupBy === 'date') {
+    return groupByDate(items, (item) => item.session.updatedAt ?? item.session.startedAt).map(
+      (group) =>
+        createAgentSessionGroupNode(
+          {
+            label: group.label,
+            sessions: group.items,
+            icon: new vscode.ThemeIcon('calendar'),
+          },
+          vscode.TreeItemCollapsibleState.Expanded,
+        ),
+    );
   }
 
   if (agentSessionsGroupBy === 'size') {
@@ -223,25 +230,6 @@ function createOrderedGroups(
       icon: new vscode.ThemeIcon(icon),
     }))
     .filter((group) => group.sessions.length > 0);
-}
-
-function getRecentGroup(item: AgentSessionViewItem) {
-  const timestamp = item.session.updatedAt ?? item.session.startedAt;
-  const updatedAt = timestamp ? Date.parse(timestamp) : Number.NaN;
-  if (Number.isNaN(updatedAt)) {
-    return 'Older';
-  }
-
-  const ageMs = Date.now() - updatedAt;
-  if (ageMs < 24 * 60 * 60 * 1000) {
-    return 'Today';
-  }
-
-  if (ageMs < 7 * 24 * 60 * 60 * 1000) {
-    return 'This week';
-  }
-
-  return 'Older';
 }
 
 function getSizeGroup(item: AgentSessionViewItem) {
@@ -395,10 +383,15 @@ function getSessionSize(path: string | null) {
   }
 }
 
-function isAgentSessionsGroupBy(value: unknown): value is AgentSessionsGroupBy {
+function isAgentSessionsGroupBy(value: unknown): value is SavedAgentSessionsGroupBy {
   return (
-    typeof value === 'string' && (agentSessionsGroupByValues as readonly string[]).includes(value)
+    typeof value === 'string' &&
+    (value === 'recent' || (agentSessionsGroupByValues as readonly string[]).includes(value))
   );
+}
+
+function normalizeAgentSessionsGroupBy(value: SavedAgentSessionsGroupBy): AgentSessionsGroupBy {
+  return value === 'recent' ? 'date' : value;
 }
 
 function isAgentSessionTextMode(value: unknown): value is AgentSessionTextMode {

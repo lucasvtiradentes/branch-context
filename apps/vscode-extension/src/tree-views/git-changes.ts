@@ -8,6 +8,7 @@ import type {
 import * as vscode from 'vscode';
 import { commandIds, contextKeys } from '../constants';
 import { type BranchContextExtensionState, getBranchContextState } from '../core/state';
+import { groupByDate } from '../lib/date-groups';
 import { formatRelativeTime } from '../lib/format-relative-time';
 import {
   type BranchContextTreeNode,
@@ -135,7 +136,9 @@ function createCommitNodes(gitSummary: BranchGitSummary | null) {
 
 function groupCommitNodes(commits: GitCommitSummary[]) {
   if (gitCommitsGroupBy === 'date') {
-    return createOrderedCommitGroups(commits, ['Today', 'This week', 'Older'], getCommitDateGroup);
+    return groupByDate(commits, (commit) => commit.authoredAt).map((group) =>
+      createGroupNode(group.label, group.items.map(createCommitNode), String(group.items.length)),
+    );
   }
 
   if (gitCommitsGroupBy === 'author') {
@@ -188,21 +191,6 @@ function createChangedFileGroup(
   );
 }
 
-function createOrderedCommitGroups(
-  commits: GitCommitSummary[],
-  labels: string[],
-  getLabel: (commit: GitCommitSummary) => string,
-) {
-  return labels
-    .map((label) =>
-      createGroupNode(
-        label,
-        commits.filter((commit) => getLabel(commit) === label).map(createCommitNode),
-      ),
-    )
-    .filter((group) => group.children?.().length);
-}
-
 function createSortedCommitGroups(
   commits: GitCommitSummary[],
   getLabel: (commit: GitCommitSummary) => string,
@@ -220,24 +208,6 @@ function createSortedCommitGroups(
     .map(([label, groupedCommits]) =>
       createGroupNode(label, groupedCommits.map(createCommitNode), String(groupedCommits.length)),
     );
-}
-
-function getCommitDateGroup(commit: GitCommitSummary) {
-  const authoredAt = Date.parse(commit.authoredAt);
-  if (Number.isNaN(authoredAt)) {
-    return 'Older';
-  }
-
-  const ageMs = Date.now() - authoredAt;
-  if (ageMs < 24 * 60 * 60 * 1000) {
-    return 'Today';
-  }
-
-  if (ageMs < 7 * 24 * 60 * 60 * 1000) {
-    return 'This week';
-  }
-
-  return 'Older';
 }
 
 type ChangedFileNodeOptions = {
