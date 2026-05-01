@@ -10,7 +10,7 @@ import { cmdSync } from './commands/sync';
 import { cmdTemplate } from './commands/template';
 import { cmdUninstall } from './commands/uninstall';
 
-export type CommandInfo = {
+type CommandInfo = {
   desc: string;
   args: string;
 };
@@ -27,9 +27,9 @@ export const COMMANDS: Record<string, CommandInfo> = {
   completion: { desc: 'Generate shell completion', args: '<shell>' },
 };
 
-export const INTERNAL_COMMANDS = new Set(['on-checkout', 'on-commit']);
+const INTERNAL_COMMANDS = new Set(['on-checkout', 'on-commit']);
 
-export type CommandHandler = (args: string[]) => number | Promise<number>;
+type CommandHandler = (args: string[]) => number | Promise<number>;
 
 const handlers: Record<string, CommandHandler> = {
   base: cmdBase,

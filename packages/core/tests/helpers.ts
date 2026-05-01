@@ -1,4 +1,3 @@
-import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -54,23 +53,6 @@ export function createWorkspaceNoTemplate() {
   mkdirSync(join(workspace, '.bctx', 'branches'), { recursive: true });
   new Config({ sound: false }).save(workspace);
   return workspace;
-}
-
-export function captureConsole() {
-  const lines: string[] = [];
-  const spy = vi.spyOn(console, 'log').mockImplementation((...args) => {
-    lines.push(args.join(' '));
-  });
-  return {
-    spy,
-    get output() {
-      return lines.join('\n');
-    },
-  };
-}
-
-export function git(args: string[], cwd: string) {
-  return spawnSync('git', args, { cwd, encoding: 'utf8' });
 }
 
 beforeEach(() => {

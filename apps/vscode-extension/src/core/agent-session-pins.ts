@@ -21,17 +21,6 @@ export function readAgentSessionPins(): AgentSessionPin[] {
   return readAgentSessionPinsFile(getAgentSessionPinsFilePath()).pins;
 }
 
-export function getAgentSessionPin(
-  provider: AgentSession['provider'],
-  sessionId: string,
-): AgentSessionPin | null {
-  return (
-    readAgentSessionPins().find(
-      (pin) => pin.provider === provider && pin.sessionId === sessionId,
-    ) ?? null
-  );
-}
-
 export function upsertAgentSessionPin(
   provider: AgentSession['provider'],
   sessionId: string,
