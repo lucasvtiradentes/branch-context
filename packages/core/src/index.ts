@@ -1,6 +1,7 @@
 export * from './cli';
 export * from './cmd-registry';
 export * from './commands/_branches';
+export * from './commands/agents';
 export * from './commands/base';
 export * from './commands/completion';
 export * from './commands/init';
@@ -12,6 +13,7 @@ export * from './commands/sync';
 export * from './commands/template';
 export * from './commands/uninstall';
 export * from './constants';
+export * from './core/codex-hooks';
 export * from './core/context-tags';
 export * from './core/hooks';
 export * from './core/sync';

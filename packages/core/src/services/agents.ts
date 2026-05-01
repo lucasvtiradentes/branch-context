@@ -1,9 +1,9 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { AGENTS_FILE_NAME, DEFAULT_SYMLINK } from '../constants';
+import { DEFAULT_SYMLINK } from '../constants';
 import { sanitizeBranchName } from '../core/sync';
-import type { AgentSession, AgentSessionInput } from '../data/agents';
+import type { AgentSession } from '../data/agents';
 import {
   createAgentSession,
   getCurrentAgentsFilePath,
