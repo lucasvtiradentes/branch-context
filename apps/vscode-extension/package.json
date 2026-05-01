@@ -12,11 +12,12 @@
     "directory": "apps/vscode-extension"
   },
   "scripts": {
-    "build": "pnpm run schema && tsup",
+    "build": "pnpm run schema && tsup && pnpm run resources",
     "dev": "tsup --watch",
+    "postbuild": "tsx scripts/install-local-vscode.ts",
     "install-local": "pnpm run build",
     "package": "vsce package --no-dependencies --out branch-context-vscode-extension-${npm_package_version}.vsix",
-    "postbuild": "tsx scripts/install-local-vscode.ts",
+    "resources": "tsx --conditions=development scripts/copy-core-resources.ts",
     "schema": "tsx --conditions=development scripts/generate-schema.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "vscode:prepublish": "pnpm run build"
