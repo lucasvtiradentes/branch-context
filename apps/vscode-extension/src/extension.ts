@@ -2,6 +2,7 @@ import type * as vscode from 'vscode';
 import { registerCommands } from './commands';
 import { registerInternalCommands } from './commands/internal';
 import { initializeContextFileUx } from './context-file-ux';
+import { initializeAgentIndexer } from './core/agent-indexer';
 import { initializeBranchContextState } from './core/state';
 import { initializeBranchContextWatcher } from './core/watcher';
 import { getLogFilePath, initializeLogging, logger } from './lib/logging';
@@ -26,6 +27,7 @@ function initializeUi(context: vscode.ExtensionContext): void {
 
 function initializeRuntime(context: vscode.ExtensionContext): void {
   initializeBranchContextWatcher(context);
+  initializeAgentIndexer(context);
 }
 
 export function activate(context: vscode.ExtensionContext): void {

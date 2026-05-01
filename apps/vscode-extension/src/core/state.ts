@@ -1,3 +1,4 @@
+import { type AgentSession, getAgentSessions } from '@branch-context/core/services/agents';
 import {
   type BranchContextArchivedContextSummary,
   type BranchContextContextSummary,
@@ -18,6 +19,7 @@ export type BranchContextExtensionState = {
   currentContextFile: string | null;
   recentContexts: BranchContextContextSummary[];
   archivedContexts: BranchContextArchivedContextSummary[];
+  agentSessions: AgentSession[];
   templates: string[];
   configPath: string | null;
 };
@@ -55,6 +57,7 @@ function readBranchContextState(): BranchContextExtensionState {
 
   try {
     const status = getStatus(workspace.workspaceRoot);
+    const agentSessions = readAgentSessions(workspace.workspaceRoot);
     return {
       workspaceRoot: workspace.workspaceRoot,
       initialized: status.initialized,
@@ -64,6 +67,7 @@ function readBranchContextState(): BranchContextExtensionState {
       currentContextFile: workspace.currentContextFile,
       recentContexts: status.recentContexts,
       archivedContexts: status.archivedContexts,
+      agentSessions,
       templates: status.templates,
       configPath: workspace.configPath,
     };
@@ -89,9 +93,15 @@ function createEmptyState(): BranchContextExtensionState {
     currentContextFile: null,
     recentContexts: [],
     archivedContexts: [],
+    agentSessions: [],
     templates: [],
     configPath: null,
   };
+}
+
+function readAgentSessions(workspaceRoot: string): AgentSession[] {
+  const result = getAgentSessions(workspaceRoot);
+  return result.ok ? result.sessions : [];
 }
 
 function formatStateRefresh(state: BranchContextExtensionState): string {
@@ -107,6 +117,7 @@ function formatStateRefresh(state: BranchContextExtensionState): string {
     `contextFile=${state.currentContextFile ?? 'none'}`,
     `recent=${recentCount}`,
     `archived=${archivedCount}`,
+    `agents=${state.agentSessions.length}`,
     `templates=${state.templates.length}`,
     `issues=${issueCount}`,
   ].join(' ');

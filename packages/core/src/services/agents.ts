@@ -15,6 +15,8 @@ import { configExists } from '../data/config';
 import { gitCurrentBranch, gitRoot } from '../utils/git';
 import { syncCurrentBranch } from './actions';
 
+export type { AgentSession };
+
 const DEFAULT_RECENT_DAYS = 2;
 const DEFAULT_MAX_FILES = 200;
 const DEFAULT_MAX_FILE_BYTES = 2 * 1024 * 1024;

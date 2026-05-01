@@ -35,6 +35,11 @@
       "types": "./dist/services/actions.d.ts",
       "development": "./src/services/actions.ts",
       "import": "./dist/services/actions.js"
+    },
+    "./services/agents": {
+      "types": "./dist/services/agents.d.ts",
+      "development": "./src/services/agents.ts",
+      "import": "./dist/services/agents.js"
     }
   },
   "files": [

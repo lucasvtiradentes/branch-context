@@ -8,6 +8,7 @@ export default defineConfig({
     'src/services/index.ts',
     'src/services/status.ts',
     'src/services/actions.ts',
+    'src/services/agents.ts',
   ],
   format: ['esm'],
   target: 'node22',
