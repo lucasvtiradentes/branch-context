@@ -15,6 +15,7 @@ export * from './constants';
 export * from './core/context-tags';
 export * from './core/hooks';
 export * from './core/sync';
+export * from './data/agents';
 export * from './data/branch-base';
 export * from './data/config';
 export * from './data/config-schema';

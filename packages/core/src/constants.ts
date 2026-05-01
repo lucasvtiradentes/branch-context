@@ -18,6 +18,7 @@ export const ARCHIVED_DIR = '_archived';
 
 export const DEFAULT_SYMLINK = '_branch';
 export const CONTEXT_FILE_NAME = 'context.md';
+export const AGENTS_FILE_NAME = 'agents.json';
 export const DEFAULT_TEMPLATE = '_default';
 export const DEFAULT_BASE_BRANCH = 'main';
 export const BASE_BRANCH_FILE = 'base_branch';
