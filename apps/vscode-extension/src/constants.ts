@@ -1,6 +1,10 @@
+import * as os from 'node:os';
+import * as path from 'node:path';
+
 export { CONTEXT_FILE_NAME } from '@branch-context/core/constants';
 
 const APP_ID = 'branch-context';
+const APP_LOG_FILENAME = 'extension.log';
 export const APP_NAME = 'Branch Context';
 export const STATUS_BAR_PRIORITY = 10;
 
@@ -19,6 +23,7 @@ export const commandIds = {
   archiveContext: `${APP_ID}.archiveContext`,
   restoreContext: `${APP_ID}.restoreContext`,
   deleteContext: `${APP_ID}.deleteContext`,
+  showLogs: `${APP_ID}.showLogs`,
   showStatusBarActions: `${APP_ID}.internal.showStatusBarActions`,
   showDetails: `${APP_ID}.internal.showDetails`,
 } as const;
@@ -39,3 +44,11 @@ export const codeLensTitles = {
   applyTemplate: 'Apply Template',
   openConfig: 'Open Config',
 } as const;
+
+function getAppLogDirname(appId = APP_ID): string {
+  return `.${appId}`;
+}
+
+export function getAppLogFilePath(tmpDir = os.tmpdir(), appId = APP_ID): string {
+  return path.join(tmpDir, getAppLogDirname(appId), APP_LOG_FILENAME);
+}

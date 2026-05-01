@@ -6,6 +6,7 @@ import {
 } from '@branch-context/core/services/status';
 import * as vscode from 'vscode';
 import { contextKeys } from '../constants';
+import { formatLogError, logger } from '../lib/logging';
 import { getWorkspaceInfo } from './workspace';
 
 export type BranchContextExtensionState = {
@@ -29,6 +30,7 @@ export const onDidChangeState = changeEmitter.event;
 
 export function initializeBranchContextState(context: vscode.ExtensionContext): void {
   context.subscriptions.push(changeEmitter);
+  logger.info('state initialized');
   refreshBranchContextState();
 }
 
@@ -41,6 +43,7 @@ export function refreshBranchContextState(): BranchContextExtensionState {
   currentState = nextState;
   void vscode.commands.executeCommand('setContext', contextKeys.initialized, nextState.initialized);
   changeEmitter.fire(currentState);
+  logger.debug(formatStateRefresh(currentState));
   return currentState;
 }
 
@@ -64,7 +67,10 @@ function readBranchContextState(): BranchContextExtensionState {
       templates: status.templates,
       configPath: workspace.configPath,
     };
-  } catch {
+  } catch (error) {
+    logger.error(
+      `state read failed: workspace=${workspace.workspaceRoot} error=${formatLogError(error)}`,
+    );
     return {
       ...createEmptyState(),
       workspaceRoot: workspace.workspaceRoot,
@@ -86,4 +92,22 @@ function createEmptyState(): BranchContextExtensionState {
     templates: [],
     configPath: null,
   };
+}
+
+function formatStateRefresh(state: BranchContextExtensionState): string {
+  const issueCount = state.status?.issues.length ?? 0;
+  const recentCount = state.recentContexts.length;
+  const archivedCount = state.archivedContexts.length;
+  return [
+    'state refreshed:',
+    `workspace=${state.workspaceRoot ?? 'none'}`,
+    `initialized=${state.initialized}`,
+    `branch=${state.currentBranch ?? 'none'}`,
+    `contextDir=${state.currentContextDir ?? 'none'}`,
+    `contextFile=${state.currentContextFile ?? 'none'}`,
+    `recent=${recentCount}`,
+    `archived=${archivedCount}`,
+    `templates=${state.templates.length}`,
+    `issues=${issueCount}`,
+  ].join(' ');
 }

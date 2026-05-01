@@ -200,3 +200,11 @@ export function gitDiff(path: string, args: string[]): string | null {
   }
   return result.stdout;
 }
+
+export function gitRefExists(path: string, ref: string): boolean {
+  const result = spawnSync('git', ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], {
+    cwd: path,
+    encoding: 'utf8',
+  });
+  return result.status === 0;
+}

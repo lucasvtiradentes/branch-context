@@ -6,6 +6,7 @@ import { registerOpenConfigCommand } from './open-config';
 import { registerOpenCurrentContextCommand } from './open-current-context';
 import { registerOpenCurrentContextFolderCommand } from './open-current-context-folder';
 import { registerSetBaseCommand } from './set-base';
+import { registerShowLogsCommand } from './show-logs';
 import { registerStatusCommand } from './status';
 import { registerSyncCommand } from './sync';
 
@@ -19,6 +20,7 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerOpenConfigCommand(),
     registerOpenCurrentContextFolderCommand(),
     registerGroupContextsCommand(context),
+    registerShowLogsCommand(),
     ...registerContextActionCommands(),
   );
 }

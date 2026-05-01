@@ -15,12 +15,14 @@ export type TemplateRule = {
 };
 
 export class Config {
+  defaultBaseBranch: string;
   sound: boolean;
   soundFile: string | null;
   commitDescription: boolean;
   templateRules: TemplateRule[];
 
   constructor(options: Partial<Config> = {}) {
+    this.defaultBaseBranch = options.defaultBaseBranch ?? defaultConfig.default_base_branch;
     this.sound = options.sound ?? defaultConfig.sound;
     this.soundFile = options.soundFile ?? null;
     this.commitDescription = options.commitDescription ?? defaultConfig.commit_description;
@@ -43,6 +45,10 @@ export class Config {
       const rawRules = Array.isArray(data.template_rules) ? data.template_rules : [];
 
       return new Config({
+        defaultBaseBranch:
+          typeof data.default_base_branch === 'string'
+            ? data.default_base_branch
+            : defaultConfig.default_base_branch,
         sound: typeof data.sound === 'boolean' ? data.sound : defaultConfig.sound,
         soundFile: typeof data.sound_file === 'string' ? data.sound_file : null,
         commitDescription:
@@ -68,6 +74,7 @@ export class Config {
     mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
 
     const data: Record<string, unknown> = {
+      default_base_branch: this.defaultBaseBranch,
       sound: this.sound,
       commit_description: this.commitDescription,
       template_rules: this.templateRules.map((rule) => ({

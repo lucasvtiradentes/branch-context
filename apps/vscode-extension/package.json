@@ -144,6 +144,11 @@
         "command": "branch-context.deleteContext",
         "title": "Branch Context: Delete Context",
         "icon": "$(trash)"
+      },
+      {
+        "command": "branch-context.showLogs",
+        "title": "Branch Context: Show Logs",
+        "icon": "$(output)"
       }
     ],
     "menus": {

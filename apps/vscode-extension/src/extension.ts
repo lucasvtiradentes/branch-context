@@ -4,11 +4,14 @@ import { registerInternalCommands } from './commands/internal';
 import { initializeContextFileUx } from './context-file-ux';
 import { initializeBranchContextState } from './core/state';
 import { initializeBranchContextWatcher } from './core/watcher';
+import { getLogFilePath, initializeLogging, logger } from './lib/logging';
 import { initializeStatusBar } from './status-bar';
 import { initializeTreeViews } from './tree-views';
 import { initializeContextsGroupBy } from './tree-views/contexts';
 
 function initializeCore(context: vscode.ExtensionContext): void {
+  initializeLogging();
+  logger.info(`extension activated; log file reset at ${getLogFilePath()}`);
   initializeBranchContextState(context);
   initializeContextsGroupBy(context);
 }
@@ -31,4 +34,6 @@ export function activate(context: vscode.ExtensionContext): void {
   initializeRuntime(context);
 }
 
-export function deactivate(): void {}
+export function deactivate(): void {
+  logger.info('extension deactivated');
+}

@@ -8,10 +8,12 @@ import {
   refreshBranchContextState,
 } from '../core/state';
 import { formatError } from '../lib/format-error';
+import { formatLogError, logger } from '../lib/logging';
 
 let item: vscode.StatusBarItem | undefined;
 
 export function initializeStatusBar(context: vscode.ExtensionContext): void {
+  logger.info('status bar initialized');
   item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, STATUS_BAR_PRIORITY);
   item.command = commandIds.showStatusBarActions;
   item.name = APP_NAME;
@@ -47,6 +49,9 @@ function updateStatusBar(state: BranchContextExtensionState): void {
 async function showStatusBarActions(): Promise<void> {
   try {
     const state = getBranchContextState();
+    logger.info(
+      `status bar clicked: workspace=${state.workspaceRoot ?? 'none'} initialized=${state.initialized} branch=${state.currentBranch ?? 'none'} contextFile=${state.currentContextFile ?? 'none'}`,
+    );
     if (!state.initialized) {
       await promptInitProject(state);
       return;
@@ -54,33 +59,50 @@ async function showStatusBarActions(): Promise<void> {
 
     await vscode.commands.executeCommand(commandIds.openCurrentContext);
   } catch (error) {
+    logger.error(`status bar action error: ${formatLogError(error)}`);
     await vscode.window.showErrorMessage(formatError(error));
   }
 }
 
 async function promptInitProject(state: BranchContextExtensionState): Promise<void> {
   if (!state.workspaceRoot) {
+    logger.warning('init prompt aborted: no workspace');
     return;
   }
 
+  logger.info(`init prompt shown: workspace=${state.workspaceRoot}`);
   const selected = await vscode.window.showInformationMessage(
     'Do you want to init bctx in the current project?',
     'Yes',
     'No',
   );
   if (selected !== 'Yes') {
+    logger.info(`init prompt dismissed: selected=${selected ?? 'none'}`);
     return;
   }
 
+  logger.info(`init project started: workspace=${state.workspaceRoot}`);
   const result = await initProject(state.workspaceRoot, async (question) => {
+    logger.warning(`init hook prompt shown: question=${question}`);
     const answer = await vscode.window.showWarningMessage(question, { modal: true }, 'Yes', 'No');
+    logger.warning(`init hook prompt answered: answer=${answer ?? 'none'}`);
     return answer === 'Yes';
   });
   if (!result.ok) {
+    logger.warning(`init project failed: reason=${result.reason} message=${result.message}`);
     await vscode.window.showErrorMessage(`${APP_NAME}: ${result.message}`);
     return;
   }
 
+  logger.info(
+    [
+      'init project result:',
+      `alreadyInitialized=${result.alreadyInitialized}`,
+      `checkoutHook=${result.checkoutHook}`,
+      `commitHook=${result.commitHook}`,
+      `syncOk=${result.syncResult.ok}`,
+    ].join(' '),
+  );
   refreshBranchContextState();
   await vscode.window.showInformationMessage(`${APP_NAME}: initialized`);
 }

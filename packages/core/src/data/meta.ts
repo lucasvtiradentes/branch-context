@@ -1,8 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { ARCHIVED_DIR, META_FILE } from '../constants';
-import { gitDiff, gitLog, gitUserName } from '../utils/git';
+import { gitDiff, gitLog, gitRefExists, gitUserName } from '../utils/git';
 import { getBranchesDir } from './config';
+
+export const BASE_BRANCH_NOT_FOUND_TEMPLATE = 'Base branch not found: {base_branch}';
 
 export type BranchMeta = {
   branch: string;
@@ -63,6 +65,10 @@ export function getCommitsSinceBase(
   baseBranch: string,
   includeDescription = false,
 ) {
+  if (!gitRefExists(workspace, baseBranch)) {
+    return formatMissingBaseBranch(baseBranch);
+  }
+
   if (!includeDescription) {
     return gitLog(workspace, [`${baseBranch}..HEAD`, '--oneline'])?.trim() ?? '';
   }
@@ -91,6 +97,10 @@ export function getCommitsSinceBase(
 }
 
 export function getChangedFiles(workspace: string, baseBranch: string) {
+  if (!gitRefExists(workspace, baseBranch)) {
+    return formatMissingBaseBranch(baseBranch);
+  }
+
   const statusOutput = gitDiff(workspace, ['--name-status', '-M100', `${baseBranch}...HEAD`]);
   const numstatOutput = gitDiff(workspace, ['--numstat', '-M100', `${baseBranch}...HEAD`]);
 
@@ -163,6 +173,10 @@ export function getChangedFiles(workspace: string, baseBranch: string) {
       return `${file.status}  ${paddedDisplay}  (+${file.added} -${file.removed})`;
     })
     .join('\n');
+}
+
+function formatMissingBaseBranch(baseBranch: string) {
+  return BASE_BRANCH_NOT_FOUND_TEMPLATE.replace('{base_branch}', baseBranch);
 }
 
 export function loadBranchMeta(workspace: string) {

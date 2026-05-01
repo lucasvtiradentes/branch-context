@@ -11,6 +11,7 @@ import * as vscode from 'vscode';
 import { APP_NAME, CONTEXT_FILE_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
+import { formatLogError, logger } from '../lib/logging';
 import type { BranchContextTreeNode } from '../tree-views/items';
 import { formatActionError, getInitializedState, openExternalFolder, openPath } from './helpers';
 
@@ -43,18 +44,24 @@ async function checkoutContextBranch(node: unknown): Promise<void> {
       return;
     }
     const { contextNode, workspaceRoot } = context;
+    logger.info(
+      `checkout context invoked: branch=${contextNode.branch} key=${contextNode.branchKey} workspace=${workspaceRoot}`,
+    );
 
     if (contextNode.archived) {
+      logger.warning(`checkout context aborted: archived branch=${contextNode.branch}`);
       await vscode.window.showErrorMessage(`${APP_NAME}: archived contexts cannot be checked out`);
       return;
     }
 
     if (contextNode.current) {
+      logger.info(`checkout context skipped: already current branch=${contextNode.branch}`);
       await vscode.window.showInformationMessage(`${APP_NAME}: '${contextNode.branch}' is current`);
       return;
     }
 
     if (!contextNode.local) {
+      logger.warning(`checkout context aborted: missing local branch=${contextNode.branch}`);
       await vscode.window.showErrorMessage(
         `${APP_NAME}: '${contextNode.branch}' is not a local branch`,
       );
@@ -66,6 +73,9 @@ async function checkoutContextBranch(node: unknown): Promise<void> {
       encoding: 'utf8',
     });
     if (result.status !== 0) {
+      logger.warning(
+        `checkout context failed: branch=${contextNode.branch} status=${result.status} stderr=${result.stderr.trim()} stdout=${result.stdout.trim()}`,
+      );
       await vscode.window.showErrorMessage(
         `${APP_NAME}: checkout failed: ${result.stderr.trim() || result.stdout.trim()}`,
       );
@@ -74,13 +84,27 @@ async function checkoutContextBranch(node: unknown): Promise<void> {
 
     const syncResult = syncCurrentBranch(workspaceRoot, { sound: false });
     if (!syncResult.ok) {
+      logger.warning(
+        `checkout context sync failed: reason=${syncResult.reason} branch=${syncResult.branch ?? 'none'} message=${syncResult.message}`,
+      );
       await vscode.window.showErrorMessage(formatActionError(syncResult));
       return;
     }
 
+    logger.info(
+      [
+        'checkout context synced:',
+        `branch=${syncResult.branch}`,
+        `base=${syncResult.baseBranch}`,
+        `create=${syncResult.createResult}`,
+        `symlink=${syncResult.symlinkResult}`,
+        `updates=${syncResult.updates.length}`,
+      ].join(' '),
+    );
     refreshBranchContextState();
     await vscode.window.showInformationMessage(`${APP_NAME}: checked out '${contextNode.branch}'`);
   } catch (error) {
+    logger.error(`checkout context error: ${formatLogError(error)}`);
     await vscode.window.showErrorMessage(formatError(error));
   }
 }

@@ -27,6 +27,7 @@ import {
   syncCurrentBranch,
   updateSymlink,
 } from '../src/index';
+import { gitAdd, gitCheckout, gitCommit } from '../src/utils/git';
 import {
   createGitRepo,
   createWorkspace,
@@ -252,7 +253,7 @@ describe('sync parity', () => {
     expect(result.branchKey).toBe('main');
     expect(result.createResult).toBe('created_from_template');
     expect(result.symlinkResult).toBe('updated');
-    expect(result.baseBranch).toBe('origin/main');
+    expect(result.baseBranch).toBe('main');
     expect(existsSync(join(repo, DEFAULT_SYMLINK))).toBe(true);
   });
 
@@ -270,6 +271,25 @@ describe('sync parity', () => {
     }
     expect(result.syncResult.createResult).toBe('created_from_template');
     expect(existsSync(join(repo, DEFAULT_SYMLINK, 'context.md'))).toBe(true);
+  });
+
+  it('falls back from missing origin main to local main default base', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    expect(gitCheckout(repo, 'feature/base-fallback', true).status).toBe(0);
+    writeFileSync(join(repo, 'base-fallback.txt'), 'changed');
+    expect(gitAdd(repo).status).toBe(0);
+    expect(gitCommit(repo, 'feat: base fallback').status).toBe(0);
+    const result = syncCurrentBranch(repo, { sound: false });
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.baseBranch).toBe('main');
+    expect(result.updates).toHaveLength(2);
+    const content = readFileSync(join(repo, DEFAULT_SYMLINK, 'context.md'), 'utf8');
+    expect(content).toContain('feat: base fallback');
+    expect(content).toContain('base-fallback.txt');
   });
 
   it('reports missing config through sync service', () => {
@@ -291,7 +311,7 @@ describe('sync parity', () => {
     if (!initial.ok) {
       return;
     }
-    expect(initial.baseBranch).toBe('origin/main');
+    expect(initial.baseBranch).toBe('main');
     const updated = setCurrentBase(repo, 'develop');
     expect(updated.ok).toBe(true);
     if (!updated.ok) {
