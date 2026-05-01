@@ -128,6 +128,21 @@
         "icon": "$(diff)"
       },
       {
+        "command": "branch-context.copyCommitHash",
+        "title": "Branch Context: Copy Commit Hash",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "branch-context.openCommitOnOrigin",
+        "title": "Branch Context: Open Commit on Origin",
+        "icon": "$(github)"
+      },
+      {
+        "command": "branch-context.resetFilesToCommit",
+        "title": "Branch Context: Reset Files To Commit",
+        "icon": "$(discard)"
+      },
+      {
         "command": "branch-context.toggleGitChangesMode",
         "title": "Branch Context: Toggle Git Changes Mode",
         "icon": "$(arrow-swap)"
@@ -269,6 +284,18 @@
         },
         {
           "command": "branch-context.reviewDiff",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.copyCommitHash",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.openCommitOnOrigin",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.resetFilesToCommit",
           "when": "false"
         },
         {
@@ -447,6 +474,21 @@
         {
           "command": "branch-context.deleteAgentSession",
           "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "group": "9_destructive@1"
+        },
+        {
+          "command": "branch-context.copyCommitHash",
+          "when": "view == branch-context.gitChanges && viewItem == branchContext.commit",
+          "group": "navigation@1"
+        },
+        {
+          "command": "branch-context.openCommitOnOrigin",
+          "when": "view == branch-context.gitChanges && viewItem == branchContext.commit",
+          "group": "navigation@2"
+        },
+        {
+          "command": "branch-context.resetFilesToCommit",
+          "when": "view == branch-context.gitChanges && viewItem == branchContext.commit",
           "group": "9_destructive@1"
         }
       ]

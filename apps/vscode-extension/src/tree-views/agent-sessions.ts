@@ -13,7 +13,7 @@ const agentSessionTextModeWorkspaceKey = 'agentSessions.textMode';
 const MAX_SESSION_FILE_BYTES = 2 * 1024 * 1024;
 
 export type AgentSessionsGroupBy = (typeof agentSessionsGroupByValues)[number];
-export type AgentSessionTextMode = (typeof agentSessionTextModeValues)[number];
+type AgentSessionTextMode = (typeof agentSessionTextModeValues)[number];
 
 type AgentSessionViewItem = {
   session: AgentSession;
@@ -49,10 +49,6 @@ export function initializeAgentSessionsViewState(context: vscode.ExtensionContex
 
 export function getAgentSessionsGroupBy(): AgentSessionsGroupBy {
   return agentSessionsGroupBy;
-}
-
-export function getAgentSessionTextMode(): AgentSessionTextMode {
-  return agentSessionTextMode;
 }
 
 export function getAgentSessionsViewDescription(): string {

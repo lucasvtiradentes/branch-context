@@ -1,6 +1,7 @@
 import type * as vscode from 'vscode';
 import { registerAgentSessionActionCommands } from './agent-session-actions';
 import { registerApplyTemplateCommand } from './apply-template';
+import { registerCommitActionCommands } from './commit-actions';
 import { registerContextActionCommands } from './context-actions';
 import { registerGroupAgentSessionsCommand } from './group-agent-sessions';
 import { registerGroupContextsCommand } from './group-contexts';
@@ -39,6 +40,7 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerGroupContextsCommand(context),
     registerShowLogsCommand(),
     ...registerAgentSessionActionCommands(),
+    ...registerCommitActionCommands(),
     ...registerContextActionCommands(),
   );
 }

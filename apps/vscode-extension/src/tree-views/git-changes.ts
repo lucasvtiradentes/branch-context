@@ -23,7 +23,7 @@ const gitChangesModeWorkspaceKey = 'gitChanges.mode';
 const gitChangedFilesGroupByWorkspaceKey = 'gitChanges.filesGroupBy';
 const gitCommitsGroupByWorkspaceKey = 'gitChanges.commitsGroupBy';
 
-export type GitChangesMode = (typeof gitChangesModeValues)[number];
+type GitChangesMode = (typeof gitChangesModeValues)[number];
 export type GitChangedFilesGroupBy = (typeof gitChangedFilesGroupByValues)[number];
 export type GitCommitsGroupBy = (typeof gitCommitsGroupByValues)[number];
 
@@ -50,10 +50,6 @@ export function initializeGitChangesMode(context: vscode.ExtensionContext): void
   }
 
   updateGitChangesModeContext();
-}
-
-export function getGitChangesMode(): GitChangesMode {
-  return gitChangesMode;
 }
 
 export function getGitChangesViewDescription(): string {
@@ -101,7 +97,7 @@ export function createGitChangesProvider(): StateTreeProvider {
       return [createMessageNode('No .bctx config')];
     }
 
-    return getGitChangesMode() === 'files'
+    return gitChangesMode === 'files'
       ? createChangedFileNodes(state)
       : createCommitNodes(state.gitSummary);
   });
@@ -292,6 +288,8 @@ function createCommitNode(commit: GitCommitSummary) {
     description: formatRelativeTime(commit.authoredAt),
     tooltip: createCommitTooltip(commit),
     icon: new vscode.ThemeIcon('git-commit'),
+    commit,
+    contextValue: 'branchContext.commit',
     command: {
       command: commandIds.openCommitDiff,
       title: 'Open Commit Diff',
