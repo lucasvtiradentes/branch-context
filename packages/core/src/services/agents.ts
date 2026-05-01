@@ -1,4 +1,12 @@
-import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import {
+  closeSync,
+  existsSync,
+  openSync,
+  readdirSync,
+  readSync,
+  realpathSync,
+  statSync,
+} from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { DEFAULT_SYMLINK } from '../constants';
@@ -16,8 +24,7 @@ import { syncCurrentBranch } from './actions';
 
 export type { AgentSession };
 
-const DEFAULT_RECENT_DAYS = 2;
-const DEFAULT_MAX_FILES = 200;
+const DEFAULT_MAX_FILES = 1000;
 const DEFAULT_MAX_FILE_BYTES = 2 * 1024 * 1024;
 
 export type AgentSessionScanOptions = {
@@ -27,7 +34,6 @@ export type AgentSessionScanOptions = {
   claudeProjectsRoot?: string;
   codexSessionsRoot?: string;
   now?: Date;
-  recentDays?: number;
   maxFiles?: number;
   maxFileBytes?: number;
 };
@@ -148,7 +154,7 @@ export function scanClaudeSessions(options: AgentSessionScanOptions): AgentSessi
   const files = listJsonlFiles(projectDir, options);
 
   return files
-    .map((file) => ({ file, session: parseClaudeSessionFile(file) }))
+    .map((file) => ({ file, session: parseClaudeSessionFile(file, options.maxFileBytes) }))
     .filter(
       (
         value,
@@ -178,10 +184,10 @@ export function scanClaudeSessions(options: AgentSessionScanOptions): AgentSessi
 }
 
 export function scanCodexSessions(options: AgentSessionScanOptions): AgentSession[] {
-  const files = getCodexDateDirs(options).flatMap((dir) => listJsonlFiles(dir, options));
+  const files = listCodexSessionFiles(options);
 
   return files
-    .map((file) => ({ file, session: parseCodexSessionFile(file) }))
+    .map((file) => ({ file, session: parseCodexSessionFile(file, options.maxFileBytes) }))
     .filter(({ session }) => Boolean(session.sessionId && session.cwd))
     .filter(({ session }) => matchesRepo(session.cwd, options.repoRoot))
     .map(({ file, session }) => codexSessionToAgent(file, session, options))
@@ -192,7 +198,10 @@ export function scanCodexSessions(options: AgentSessionScanOptions): AgentSessio
     .sort(compareSessions);
 }
 
-export function parseClaudeSessionFile(path: string): ParsedClaudeSession {
+export function parseClaudeSessionFile(
+  path: string,
+  maxBytes = DEFAULT_MAX_FILE_BYTES,
+): ParsedClaudeSession {
   const parsed: ParsedClaudeSession = {
     sessionId: null,
     cwd: null,
@@ -203,7 +212,7 @@ export function parseClaudeSessionFile(path: string): ParsedClaudeSession {
     updatedAt: getFileUpdatedAt(path),
   };
 
-  for (const line of readJsonLines(path)) {
+  for (const line of readJsonLines(path, maxBytes)) {
     const data = parseJsonObject(line);
     if (!data) {
       continue;
@@ -226,7 +235,10 @@ export function parseClaudeSessionFile(path: string): ParsedClaudeSession {
   return parsed;
 }
 
-export function parseCodexSessionFile(path: string): ParsedCodexSession {
+export function parseCodexSessionFile(
+  path: string,
+  maxBytes = DEFAULT_MAX_FILE_BYTES,
+): ParsedCodexSession {
   const parsed: ParsedCodexSession = {
     sessionId: null,
     cwd: null,
@@ -239,7 +251,7 @@ export function parseCodexSessionFile(path: string): ParsedCodexSession {
   };
   let responseItemTitle: string | null = null;
 
-  for (const line of readJsonLines(path)) {
+  for (const line of readJsonLines(path, maxBytes)) {
     const data = parseJsonObject(line);
     if (!data) {
       continue;
@@ -348,25 +360,46 @@ function getCodexSessionsRoot(options: AgentSessionScanOptions) {
   return options.codexSessionsRoot ?? join(options.homeDir ?? homedir(), '.codex', 'sessions');
 }
 
-function getCodexDateDirs(options: AgentSessionScanOptions) {
+function listCodexSessionFiles(options: AgentSessionScanOptions) {
   const root = getCodexSessionsRoot(options);
-  const now = options.now ?? new Date();
-  const recentDays = options.recentDays ?? DEFAULT_RECENT_DAYS;
-  const dirs: string[] = [];
-
-  for (let index = 0; index < recentDays; index++) {
-    const date = new Date(now.getTime() - index * 24 * 60 * 60 * 1000);
-    dirs.push(
-      join(
-        root,
-        String(date.getFullYear()),
-        String(date.getMonth() + 1).padStart(2, '0'),
-        String(date.getDate()).padStart(2, '0'),
-      ),
-    );
+  if (!existsSync(root)) {
+    return [];
   }
 
-  return dirs;
+  const maxFiles = options.maxFiles ?? DEFAULT_MAX_FILES;
+  const files: Array<{ path: string; mtimeMs: number }> = [];
+
+  for (const year of listDirectoryNames(root).sort().reverse()) {
+    for (const month of listDirectoryNames(join(root, year)).sort().reverse()) {
+      for (const day of listDirectoryNames(join(root, year, month))
+        .sort()
+        .reverse()) {
+        for (const file of listJsonlFiles(join(root, year, month, day), { ...options, maxFiles })) {
+          try {
+            const stat = statSync(file);
+            if (stat.isFile()) {
+              files.push({ path: file, mtimeMs: stat.mtimeMs });
+            }
+          } catch {}
+        }
+      }
+    }
+  }
+
+  return files
+    .sort((left, right) => right.mtimeMs - left.mtimeMs)
+    .slice(0, maxFiles)
+    .map((entry) => entry.path);
+}
+
+function listDirectoryNames(dir: string) {
+  try {
+    return readdirSync(dir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+  } catch {
+    return [];
+  }
 }
 
 function listJsonlFiles(dir: string, options: AgentSessionScanOptions) {
@@ -375,14 +408,13 @@ function listJsonlFiles(dir: string, options: AgentSessionScanOptions) {
   }
 
   const maxFiles = options.maxFiles ?? DEFAULT_MAX_FILES;
-  const maxFileBytes = options.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
 
   try {
     return readdirSync(dir)
       .filter((name) => name.endsWith('.jsonl'))
       .map((name) => join(dir, name))
       .map((path) => ({ path, stat: statSync(path) }))
-      .filter((entry) => entry.stat.isFile() && entry.stat.size <= maxFileBytes)
+      .filter((entry) => entry.stat.isFile())
       .sort((left, right) => right.stat.mtimeMs - left.stat.mtimeMs)
       .slice(0, maxFiles)
       .map((entry) => entry.path);
@@ -391,9 +423,16 @@ function listJsonlFiles(dir: string, options: AgentSessionScanOptions) {
   }
 }
 
-function readJsonLines(path: string) {
+function readJsonLines(path: string, maxBytes: number) {
   try {
-    return readFileSync(path, 'utf8').split(/\r?\n/).filter(Boolean);
+    const file = openSync(path, 'r');
+    try {
+      const buffer = Buffer.alloc(maxBytes);
+      const bytesRead = readSync(file, buffer, 0, maxBytes, 0);
+      return buffer.toString('utf8', 0, bytesRead).split(/\r?\n/).filter(Boolean);
+    } finally {
+      closeSync(file);
+    }
   } catch {
     return [];
   }

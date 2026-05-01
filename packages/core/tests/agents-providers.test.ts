@@ -90,12 +90,33 @@ describe('agent provider parsers', () => {
     expect(sessions[0]?.scope).toBe('branch');
   });
 
-  it('scans Codex sessions from bounded date buckets', () => {
+  it('scans Codex sessions from historical date buckets', () => {
     const root = createTempDir();
-    const dir = join(root, '2026', '05', '01');
-    mkdirSync(dir, { recursive: true });
-    cpSync(join(fixturesDir, 'codex-native.jsonl'), join(dir, 'codex-native.jsonl'));
-    cpSync(join(fixturesDir, 'codex-repo.jsonl'), join(dir, 'codex-repo.jsonl'));
+    const todayDir = join(root, '2026', '05', '01');
+    const oldDir = join(root, '2026', '04', '10');
+    mkdirSync(todayDir, { recursive: true });
+    mkdirSync(oldDir, { recursive: true });
+    cpSync(join(fixturesDir, 'codex-native.jsonl'), join(todayDir, 'codex-native.jsonl'));
+    cpSync(join(fixturesDir, 'codex-repo.jsonl'), join(todayDir, 'codex-repo.jsonl'));
+    writeFileSync(
+      join(oldDir, 'codex-old.jsonl'),
+      [
+        JSON.stringify({
+          type: 'session_meta',
+          payload: {
+            id: 'codex-old',
+            timestamp: '2026-04-10T14:21:16.417Z',
+            cwd: '/repo/project',
+            source: 'cli',
+            git: { branch: 'feature/test' },
+          },
+        }),
+        JSON.stringify({
+          type: 'event_msg',
+          payload: { type: 'user_message', message: 'old codex prompt' },
+        }),
+      ].join('\n'),
+    );
 
     const sessions = scanCodexSessions({
       repoRoot: '/repo/project',
@@ -107,6 +128,7 @@ describe('agent provider parsers', () => {
     expect(sessions.map((session) => [session.sessionId, session.scope]).sort()).toEqual([
       ['codex-1', 'branch'],
       ['codex-3', 'repo'],
+      ['codex-old', 'branch'],
     ]);
   });
 
