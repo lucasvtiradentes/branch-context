@@ -24,6 +24,8 @@ export const commandIds = {
   groupAgentSessionsBy: `${APP_ID}.groupAgentSessionsBy`,
   toggleAgentSessionText: `${APP_ID}.toggleAgentSessionText`,
   resumeAgentSession: `${APP_ID}.resumeAgentSession`,
+  copyAgentSessionId: `${APP_ID}.copyAgentSessionId`,
+  deleteAgentSession: `${APP_ID}.deleteAgentSession`,
   groupContextsBy: `${APP_ID}.groupContextsBy`,
   checkoutContextBranch: `${APP_ID}.checkoutContextBranch`,
   openContext: `${APP_ID}.openContext`,

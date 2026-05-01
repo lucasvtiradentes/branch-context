@@ -158,6 +158,16 @@
         "icon": "$(debug-continue)"
       },
       {
+        "command": "branch-context.copyAgentSessionId",
+        "title": "Branch Context: Copy Session ID",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "branch-context.deleteAgentSession",
+        "title": "Branch Context: Delete Session",
+        "icon": "$(trash)"
+      },
+      {
         "command": "branch-context.groupContextsBy",
         "title": "Branch Context: Group Other Branches By",
         "icon": "$(list-tree)"
@@ -283,6 +293,14 @@
         },
         {
           "command": "branch-context.resumeAgentSession",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.copyAgentSessionId",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.deleteAgentSession",
           "when": "false"
         },
         {
@@ -415,6 +433,21 @@
           "command": "branch-context.resumeAgentSession",
           "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
           "group": "inline@1"
+        },
+        {
+          "command": "branch-context.resumeAgentSession",
+          "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "branch-context.copyAgentSessionId",
+          "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "branch-context.deleteAgentSession",
+          "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "group": "9_destructive@1"
         }
       ]
     },

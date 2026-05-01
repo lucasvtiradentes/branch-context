@@ -1,4 +1,5 @@
 import type * as vscode from 'vscode';
+import { registerAgentSessionActionCommands } from './agent-session-actions';
 import { registerApplyTemplateCommand } from './apply-template';
 import { registerContextActionCommands } from './context-actions';
 import { registerGroupAgentSessionsCommand } from './group-agent-sessions';
@@ -37,6 +38,7 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerToggleAgentSessionTextCommand(context),
     registerGroupContextsCommand(context),
     registerShowLogsCommand(),
+    ...registerAgentSessionActionCommands(),
     ...registerContextActionCommands(),
   );
 }
