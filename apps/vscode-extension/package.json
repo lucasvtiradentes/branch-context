@@ -12,11 +12,12 @@
     "directory": "apps/vscode-extension"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "pnpm run schema && tsup",
     "dev": "tsup --watch",
     "install-local": "pnpm run build",
     "package": "vsce package --no-dependencies --out branch-context-vscode-extension-${npm_package_version}.vsix",
     "postbuild": "tsx scripts/install-local-vscode.ts",
+    "schema": "tsx --conditions=development scripts/generate-schema.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "vscode:prepublish": "pnpm run build"
   },
@@ -290,6 +291,12 @@
           "group": "9_destructive@1"
         }
       ]
-    }
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": "**/.bctx/config.json",
+        "url": "./resources/schema.json"
+      }
+    ]
   }
 }

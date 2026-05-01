@@ -3,8 +3,10 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   BRANCHES_DIR,
+  BranchContextConfigSchema,
   CONFIG_DIR,
   Config,
+  createBranchContextConfigJsonSchema,
   DEFAULT_TEMPLATE,
   getBranchesDir,
   getConfigDir,
@@ -119,5 +121,26 @@ describe('config', () => {
     );
     expect(existsSync(join(workspace, CONFIG_DIR, 'config.json'))).toBe(true);
     expect(Config.load(workspace).commitDescription).toBe(false);
+  });
+
+  it('validates config schema shape', () => {
+    const result = BranchContextConfigSchema.safeParse({
+      default_base_branch: 'main',
+      sound: false,
+      commit_description: true,
+      template_rules: [{ prefix: 'feature/', template: 'feature' }],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('generates JSON schema for config files', () => {
+    const schema = createBranchContextConfigJsonSchema();
+    expect(schema).toMatchObject({
+      type: 'object',
+      properties: {
+        default_base_branch: { type: 'string' },
+        template_rules: { type: 'array' },
+      },
+    });
   });
 });

@@ -18,6 +18,7 @@ export * from './core/hooks';
 export * from './core/sync';
 export * from './data/branch-base';
 export * from './data/config';
+export * from './data/config-schema';
 export * from './data/meta';
 export * from './services';
 export * from './utils/color';
