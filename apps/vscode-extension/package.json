@@ -150,7 +150,7 @@
       {
         "command": "branch-context.toggleAgentSessionText",
         "title": "Branch Context: Toggle Agent Session Text",
-        "icon": "$(symbol-string)"
+        "icon": "$(arrow-swap)"
       },
       {
         "command": "branch-context.resumeAgentSession",

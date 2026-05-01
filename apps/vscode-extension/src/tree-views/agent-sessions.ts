@@ -108,6 +108,7 @@ function createGroupNode(
   sessions: AgentSessionViewItem[],
   icon: vscode.TreeItem['iconPath'],
   collapsibleState?: vscode.TreeItemCollapsibleState,
+  showSessionIcons = true,
 ) {
   return {
     label,
@@ -115,11 +116,11 @@ function createGroupNode(
     description: String(sessions.length),
     icon,
     collapsibleState,
-    children: () => sessions.map(createAgentSessionNode),
+    children: () => sessions.map((session) => createAgentSessionNode(session, showSessionIcons)),
   };
 }
 
-function createAgentSessionNode(item: AgentSessionViewItem) {
+function createAgentSessionNode(item: AgentSessionViewItem, showIcon = true) {
   const session = item.session;
   const description = formatRelativeTime(session.updatedAt ?? session.startedAt);
   const path = session.path ?? undefined;
@@ -133,7 +134,8 @@ function createAgentSessionNode(item: AgentSessionViewItem) {
     sessionId: session.sessionId,
     description,
     tooltip: createAgentTooltip(item),
-    icon: getProviderIcon(session.provider, active),
+    icon: showIcon ? getProviderIcon(session.provider, active) : undefined,
+    useResourceUri: showIcon,
     contextValue: 'branchContext.agentSession resumable',
     command: path
       ? {
@@ -156,7 +158,7 @@ function createSessionViewItem(session: AgentSession): AgentSessionViewItem {
 
 function groupAgentSessions(items: AgentSessionViewItem[]) {
   if (agentSessionsGroupBy === 'flat') {
-    return items.map(createAgentSessionNode);
+    return items.map((item) => createAgentSessionNode(item));
   }
 
   if (agentSessionsGroupBy === 'recent') {
@@ -189,15 +191,27 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
       label: formatProviderName(provider),
       sessions,
       icon: getProviderIcon(provider, false),
+      showSessionIcons: false,
     }))
     .map((group) => createAgentSessionGroupNode(group, vscode.TreeItemCollapsibleState.Expanded));
 }
 
 function createAgentSessionGroupNode(
-  group: { label: string; sessions: AgentSessionViewItem[]; icon: vscode.TreeItem['iconPath'] },
+  group: {
+    label: string;
+    sessions: AgentSessionViewItem[];
+    icon: vscode.TreeItem['iconPath'];
+    showSessionIcons?: boolean;
+  },
   collapsibleState?: vscode.TreeItemCollapsibleState,
 ) {
-  return createGroupNode(group.label, group.sessions, group.icon, collapsibleState);
+  return createGroupNode(
+    group.label,
+    group.sessions,
+    group.icon,
+    collapsibleState,
+    group.showSessionIcons,
+  );
 }
 
 function createOrderedGroups(
