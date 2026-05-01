@@ -1,9 +1,19 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { AGENTS_FILE_NAME, DEFAULT_SYMLINK } from '../constants';
 import { sanitizeBranchName } from '../core/sync';
 import type { AgentSession, AgentSessionInput } from '../data/agents';
-import { createAgentSession } from '../data/agents';
+import {
+  createAgentSession,
+  getCurrentAgentsFilePath,
+  readAgentsFile,
+  upsertAgentSession,
+  writeAgentsFile,
+} from '../data/agents';
+import { configExists } from '../data/config';
+import { gitCurrentBranch, gitRoot } from '../utils/git';
+import { syncCurrentBranch } from './actions';
 
 const DEFAULT_RECENT_DAYS = 2;
 const DEFAULT_MAX_FILES = 200;
@@ -56,6 +66,179 @@ type BranchContextSessionMetadata = {
   source?: string;
   startedAt?: string;
 };
+
+export type AgentSessionsResult =
+  | {
+      ok: true;
+      repoRoot: string;
+      branch: string;
+      branchKey: string;
+      agentsFilePath: string | null;
+      sessions: AgentSession[];
+    }
+  | {
+      ok: false;
+      reason: 'no_current_branch';
+      message: string;
+      repoRoot: string;
+    };
+
+export type SyncAgentSessionsResult =
+  | (Extract<AgentSessionsResult, { ok: true }> & {
+      written: boolean;
+    })
+  | Extract<AgentSessionsResult, { ok: false }>;
+
+export type CodexHookInput = {
+  session_id?: string;
+  transcript_path?: string;
+  model?: string;
+  source?: unknown;
+  cwd?: string;
+  timestamp?: string;
+};
+
+export type CaptureCodexSessionResult = {
+  ok: true;
+  captured: boolean;
+  reason:
+    | 'captured'
+    | 'missing_session'
+    | 'no_git_repo'
+    | 'no_current_branch'
+    | 'not_initialized'
+    | 'missing_current_context';
+  metadata: BranchContextSessionMetadata | null;
+  agentsFilePath: string | null;
+};
+
+export function getAgentSessions(
+  repoRoot: string,
+  options: Omit<AgentSessionScanOptions, 'repoRoot'> = {},
+): AgentSessionsResult {
+  const branch = options.branch ?? gitCurrentBranch(repoRoot);
+  if (!branch) {
+    return {
+      ok: false,
+      reason: 'no_current_branch',
+      message: 'could not determine current branch',
+      repoRoot,
+    };
+  }
+
+  const branchKey = sanitizeBranchName(branch);
+  const agentsFilePath = getExistingAgentsFilePath(repoRoot);
+  const cachedSessions = agentsFilePath ? readAgentsFile(agentsFilePath).sessions : [];
+  const scannedSessions = scanAgentSessions({ ...options, repoRoot, branch });
+  const sessions = mergeSessions(cachedSessions, scannedSessions)
+    .filter((session) => session.scope === 'repo' || session.branch === branch)
+    .sort(compareSessions);
+
+  return {
+    ok: true,
+    repoRoot,
+    branch,
+    branchKey,
+    agentsFilePath,
+    sessions,
+  };
+}
+
+export function syncAgentSessions(
+  repoRoot: string,
+  options: Omit<AgentSessionScanOptions, 'repoRoot'> = {},
+): SyncAgentSessionsResult {
+  ensureCurrentContext(repoRoot);
+  const result = getAgentSessions(repoRoot, options);
+  if (!result.ok) {
+    return result;
+  }
+
+  const agentsFilePath = getExistingAgentsFilePath(repoRoot);
+  if (!agentsFilePath) {
+    return {
+      ...result,
+      agentsFilePath: null,
+      written: false,
+    };
+  }
+
+  const exactSessions = result.sessions.filter(
+    (session) => session.scope === 'branch' && session.branch === result.branch,
+  );
+  writeAgentsFile(agentsFilePath, { version: 1, sessions: exactSessions });
+
+  return {
+    ...result,
+    agentsFilePath,
+    sessions: exactSessions,
+    written: true,
+  };
+}
+
+export function captureCodexSession(
+  input: CodexHookInput,
+  options: { cwd?: string; now?: Date } = {},
+): CaptureCodexSessionResult {
+  const sessionId = input.session_id;
+  if (!sessionId) {
+    return createCaptureResult('missing_session', null, null);
+  }
+
+  const repoRoot = gitRoot(input.cwd ?? options.cwd ?? process.cwd());
+  if (!repoRoot) {
+    return createCaptureResult('no_git_repo', null, null);
+  }
+
+  const branch = gitCurrentBranch(repoRoot);
+  if (!branch) {
+    return createCaptureResult('no_current_branch', null, null);
+  }
+
+  const branchKey = sanitizeBranchName(branch);
+  const metadata: BranchContextSessionMetadata = {
+    version: 1,
+    provider: 'codex',
+    repoRoot,
+    branch,
+    branchKey,
+    sessionId,
+    path: input.transcript_path,
+    model: input.model,
+    source: formatSource(input.source) ?? undefined,
+    startedAt: input.timestamp ?? options.now?.toISOString() ?? new Date().toISOString(),
+  };
+
+  if (!configExists(repoRoot)) {
+    return createCaptureResult('not_initialized', metadata, null);
+  }
+
+  ensureCurrentContext(repoRoot);
+  const agentsFilePath = getExistingAgentsFilePath(repoRoot);
+  if (!agentsFilePath) {
+    return createCaptureResult('missing_current_context', metadata, null);
+  }
+
+  upsertAgentSession(
+    agentsFilePath,
+    createAgentSession({
+      provider: 'codex',
+      sessionId,
+      repoRoot,
+      branch,
+      branchKey,
+      scope: 'branch',
+      path: input.transcript_path ?? null,
+      model: input.model ?? null,
+      source: formatSource(input.source),
+      title: null,
+      startedAt: metadata.startedAt ?? null,
+      updatedAt: metadata.startedAt ?? null,
+    }),
+  );
+
+  return createCaptureResult('captured', metadata, agentsFilePath);
+}
 
 export function scanAgentSessions(options: AgentSessionScanOptions): AgentSession[] {
   return [...scanClaudeSessions(options), ...scanCodexSessions(options)].sort(compareSessions);
@@ -240,6 +423,52 @@ function codexSessionToAgent(
 
 function getClaudeProjectDir(options: AgentSessionScanOptions) {
   return join(getClaudeProjectsRoot(options), getClaudeProjectKey(options.repoRoot));
+}
+
+function ensureCurrentContext(repoRoot: string) {
+  if (!configExists(repoRoot)) {
+    return;
+  }
+
+  if (existsSync(join(repoRoot, DEFAULT_SYMLINK))) {
+    return;
+  }
+
+  syncCurrentBranch(repoRoot, { sound: false });
+}
+
+function getExistingAgentsFilePath(repoRoot: string) {
+  const currentContextPath = join(repoRoot, DEFAULT_SYMLINK);
+  if (!existsSync(currentContextPath)) {
+    return null;
+  }
+
+  return getCurrentAgentsFilePath(repoRoot);
+}
+
+function mergeSessions(...groups: AgentSession[][]) {
+  const sessions = new Map<string, AgentSession>();
+  for (const session of groups.flat()) {
+    sessions.set(`${session.provider}:${session.sessionId}`, {
+      ...sessions.get(`${session.provider}:${session.sessionId}`),
+      ...session,
+    });
+  }
+  return Array.from(sessions.values());
+}
+
+function createCaptureResult(
+  reason: CaptureCodexSessionResult['reason'],
+  metadata: BranchContextSessionMetadata | null,
+  agentsFilePath: string | null,
+): CaptureCodexSessionResult {
+  return {
+    ok: true,
+    captured: reason === 'captured',
+    reason,
+    metadata,
+    agentsFilePath,
+  };
 }
 
 function getClaudeProjectsRoot(options: AgentSessionScanOptions) {
