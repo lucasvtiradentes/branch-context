@@ -16,6 +16,7 @@ export const commandIds = {
   applyTemplate: `${APP_ID}.applyTemplate`,
   openConfig: `${APP_ID}.openConfig`,
   openCurrentContextFolder: `${APP_ID}.openCurrentContextFolder`,
+  reviewDiff: `${APP_ID}.reviewDiff`,
   groupContextsBy: `${APP_ID}.groupContextsBy`,
   checkoutContextBranch: `${APP_ID}.checkoutContextBranch`,
   openContext: `${APP_ID}.openContext`,

@@ -5,6 +5,7 @@ import { registerGroupContextsCommand } from './group-contexts';
 import { registerOpenConfigCommand } from './open-config';
 import { registerOpenCurrentContextCommand } from './open-current-context';
 import { registerOpenCurrentContextFolderCommand } from './open-current-context-folder';
+import { registerReviewDiffCommand } from './review-diff';
 import { registerSetBaseCommand } from './set-base';
 import { registerShowLogsCommand } from './show-logs';
 import { registerStatusCommand } from './status';
@@ -19,6 +20,7 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerApplyTemplateCommand(),
     registerOpenConfigCommand(),
     registerOpenCurrentContextFolderCommand(),
+    registerReviewDiffCommand(),
     registerGroupContextsCommand(context),
     registerShowLogsCommand(),
     ...registerContextActionCommands(),

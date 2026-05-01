@@ -40,6 +40,11 @@
       "types": "./dist/services/agents.d.ts",
       "development": "./src/services/agents.ts",
       "import": "./dist/services/agents.js"
+    },
+    "./services/git-summary": {
+      "types": "./dist/services/git-summary.d.ts",
+      "development": "./src/services/git-summary.ts",
+      "import": "./dist/services/git-summary.js"
     }
   },
   "files": [
