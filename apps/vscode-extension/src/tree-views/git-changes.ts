@@ -6,6 +6,7 @@ import type {
   GitCommitSummary,
 } from '@branch-context/core/services/git-summary';
 import * as vscode from 'vscode';
+import { commandIds } from '../constants';
 import { type BranchContextExtensionState, getBranchContextState } from '../core/state';
 import { formatRelativeTime } from '../lib/format-relative-time';
 import { type BranchContextTreeNode, createMessageNode, StateTreeProvider } from './items';
@@ -94,9 +95,14 @@ function createCommitNode(commit: GitCommitSummary) {
   return {
     label: commit.subject,
     kind: 'commit' as const,
-    description: `${commit.shortHash} | ${formatRelativeTime(commit.authoredAt)}`,
+    description: formatRelativeTime(commit.authoredAt),
     tooltip: createCommitTooltip(commit),
     icon: new vscode.ThemeIcon('git-commit'),
+    command: {
+      command: commandIds.openCommitDiff,
+      title: 'Open Commit Diff',
+      arguments: [commit],
+    },
   };
 }
 

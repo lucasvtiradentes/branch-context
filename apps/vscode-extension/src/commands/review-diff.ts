@@ -1,7 +1,7 @@
 import type { BranchGitSummary } from '@branch-context/core/services/git-summary';
-import { gitDiff } from '@branch-context/core/utils/git';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
+import { openBranchChanges } from '../core/git-diff';
 import { formatError } from '../lib/format-error';
 import { getInitializedState } from './helpers';
 
@@ -24,13 +24,14 @@ export function registerReviewDiffCommand(): vscode.Disposable {
         return;
       }
 
-      const diff = gitDiff(state.workspaceRoot, [`${baseBranch}...HEAD`])?.trim();
-      const content = diff || `No changes against ${baseBranch}\n`;
-      const document = await vscode.workspace.openTextDocument({
-        language: 'diff',
-        content,
-      });
-      await vscode.window.showTextDocument(document, { preview: false });
+      const opened = await openBranchChanges(
+        state.workspaceRoot,
+        baseBranch,
+        state.gitSummary?.changedFiles ?? [],
+      );
+      if (!opened) {
+        await vscode.window.showInformationMessage(`${APP_NAME}: no changes against ${baseBranch}`);
+      }
     } catch (error) {
       await vscode.window.showErrorMessage(formatError(error));
     }

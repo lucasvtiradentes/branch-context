@@ -216,9 +216,69 @@ export function gitDiff(path: string, args: string[]): string | null {
   return result.stdout;
 }
 
+export function gitShow(path: string, args: string[]): string | null {
+  const result = spawnSync('git', ['show', ...args], {
+    cwd: path,
+    encoding: 'utf8',
+    maxBuffer: 20 * 1024 * 1024,
+  });
+  if (result.status !== 0) {
+    return null;
+  }
+  return result.stdout;
+}
+
+export function gitFileContent(path: string, ref: string, filePath: string): string | null {
+  return gitShow(path, [`${ref}:${filePath}`]);
+}
+
+export function gitCommitParentRef(path: string, commitHash: string): string | null {
+  const result = spawnSync('git', ['rev-list', '--parents', '-n', '1', commitHash], {
+    cwd: path,
+    encoding: 'utf8',
+  });
+  if (result.status !== 0) {
+    return null;
+  }
+
+  const [, parent] = result.stdout.trim().split(/\s+/);
+  return parent ?? '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
+}
+
+export function gitMergeBase(path: string, leftRef: string, rightRef = 'HEAD'): string | null {
+  const result = spawnSync('git', ['merge-base', leftRef, rightRef], {
+    cwd: path,
+    encoding: 'utf8',
+  });
+  if (result.status !== 0) {
+    return null;
+  }
+  return result.stdout.trim() || null;
+}
+
 export function gitChangedFileSummaries(path: string, baseRef: string): GitChangedFileSummary[] {
   const statusOutput = gitDiff(path, ['--name-status', '-M100', `${baseRef}...HEAD`]);
   const numstatOutput = gitDiff(path, ['--numstat', '-M100', `${baseRef}...HEAD`]);
+
+  if (!statusOutput) {
+    return [];
+  }
+
+  const stats = parseNumstat(numstatOutput ?? '');
+  return statusOutput
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .flatMap((line) => parseNameStatusLine(line, stats));
+}
+
+export function gitChangedFileSummariesBetween(
+  path: string,
+  leftRef: string,
+  rightRef: string,
+): GitChangedFileSummary[] {
+  const statusOutput = gitDiff(path, ['--name-status', '-M100', leftRef, rightRef]);
+  const numstatOutput = gitDiff(path, ['--numstat', '-M100', leftRef, rightRef]);
 
   if (!statusOutput) {
     return [];

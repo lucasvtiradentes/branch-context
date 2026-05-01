@@ -17,6 +17,7 @@ export const commandIds = {
   openConfig: `${APP_ID}.openConfig`,
   openCurrentContextFolder: `${APP_ID}.openCurrentContextFolder`,
   reviewDiff: `${APP_ID}.reviewDiff`,
+  openCommitDiff: `${APP_ID}.internal.openCommitDiff`,
   toggleGitChangesMode: `${APP_ID}.toggleGitChangesMode`,
   groupAgentSessionsBy: `${APP_ID}.groupAgentSessionsBy`,
   toggleAgentSessionText: `${APP_ID}.toggleAgentSessionText`,
