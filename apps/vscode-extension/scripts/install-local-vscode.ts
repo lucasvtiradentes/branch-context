@@ -150,6 +150,10 @@ function patchExtensionId(value: string | undefined) {
     return `${DEV_APP_ID}${value.slice(APP_ID.length)}`;
   }
 
+  if (value === `workbench.view.extension.${APP_ID}`) {
+    return `workbench.view.extension.${DEV_APP_ID}`;
+  }
+
   return value;
 }
 
@@ -158,7 +162,7 @@ function patchWhenClause(value: string | undefined) {
     return value;
   }
 
-  return value.replaceAll(`view == ${APP_ID}.`, `view == ${DEV_APP_ID}.`);
+  return value.replaceAll(APP_ID, DEV_APP_ID);
 }
 
 function installIntoEditors() {

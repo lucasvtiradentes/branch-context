@@ -149,6 +149,54 @@
     "menus": {
       "commandPalette": [
         {
+          "command": "workbench.view.extension.branch-context",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.currentContext.focus",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.contexts.focus",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.templates.focus",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.openCurrentContext",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.sync",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.status",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.setBase",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.applyTemplate",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.openConfig",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.openCurrentContextFolder",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.groupContextsBy",
+          "when": "false"
+        },
+        {
           "command": "branch-context.checkoutContextBranch",
           "when": "false"
         },
@@ -176,32 +224,32 @@
       "view/title": [
         {
           "command": "branch-context.sync",
-          "when": "view == branch-context.currentContext",
+          "when": "view == branch-context.currentContext && branch-context.initialized",
           "group": "navigation@1"
         },
         {
           "command": "branch-context.setBase",
-          "when": "view == branch-context.currentContext",
+          "when": "view == branch-context.currentContext && branch-context.initialized",
           "group": "navigation@2"
         },
         {
           "command": "branch-context.applyTemplate",
-          "when": "view == branch-context.currentContext",
+          "when": "view == branch-context.currentContext && branch-context.initialized",
           "group": "navigation@3"
         },
         {
           "command": "branch-context.openCurrentContextFolder",
-          "when": "view == branch-context.currentContext",
+          "when": "view == branch-context.currentContext && branch-context.initialized",
           "group": "navigation@4"
         },
         {
           "command": "branch-context.groupContextsBy",
-          "when": "view == branch-context.contexts",
+          "when": "view == branch-context.contexts && branch-context.initialized",
           "group": "navigation@1"
         },
         {
           "command": "branch-context.openConfig",
-          "when": "view == branch-context.templates",
+          "when": "view == branch-context.templates && branch-context.initialized",
           "group": "navigation@1"
         }
       ],

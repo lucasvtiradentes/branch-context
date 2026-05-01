@@ -5,6 +5,7 @@ import {
   getStatus,
 } from '@branch-context/core/services/status';
 import * as vscode from 'vscode';
+import { contextKeys } from '../constants';
 import { getWorkspaceInfo } from './workspace';
 
 export type BranchContextExtensionState = {
@@ -38,6 +39,7 @@ export function getBranchContextState(): BranchContextExtensionState {
 export function refreshBranchContextState(): BranchContextExtensionState {
   const nextState = readBranchContextState();
   currentState = nextState;
+  void vscode.commands.executeCommand('setContext', contextKeys.initialized, nextState.initialized);
   changeEmitter.fire(currentState);
   return currentState;
 }

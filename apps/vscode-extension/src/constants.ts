@@ -29,6 +29,10 @@ export const viewIds = {
   templates: `${APP_ID}.templates`,
 } as const;
 
+export const contextKeys = {
+  initialized: `${APP_ID}.initialized`,
+} as const;
+
 export const codeLensTitles = {
   sync: 'Sync',
   setBase: 'Set Base',
