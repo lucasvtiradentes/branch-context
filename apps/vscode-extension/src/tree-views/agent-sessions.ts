@@ -7,7 +7,7 @@ import { formatRelativeTime } from '../lib/format-relative-time';
 import { createMessageNode, StateTreeProvider } from './items';
 
 const agentSessionsGroupByValues = ['flat', 'provider', 'recent', 'size'] as const;
-const agentSessionTextModeValues = ['initial', 'last', 'summary'] as const;
+const agentSessionTextModeValues = ['initial', 'last'] as const;
 const agentSessionsGroupByWorkspaceKey = 'agentSessions.groupBy';
 const agentSessionTextModeWorkspaceKey = 'agentSessions.textMode';
 const MAX_SESSION_FILE_BYTES = 2 * 1024 * 1024;
@@ -24,7 +24,6 @@ type AgentSessionViewItem = {
 type AgentSessionDetails = {
   initialMessage: string | null;
   lastMessage: string | null;
-  summary: string | null;
 };
 
 type UserMessageExtraction = {
@@ -59,10 +58,6 @@ export function getAgentSessionTextMode(): AgentSessionTextMode {
 export function getAgentSessionsViewDescription(): string {
   if (agentSessionTextMode === 'last') {
     return 'last message';
-  }
-
-  if (agentSessionTextMode === 'summary') {
-    return 'ai summary';
   }
 
   return 'initial message';
@@ -270,15 +265,6 @@ function getSessionDisplayText(item: AgentSessionViewItem) {
     );
   }
 
-  if (agentSessionTextMode === 'summary') {
-    return firstText(
-      item.details.summary,
-      item.details.initialMessage,
-      item.session.title,
-      isAgentSessionActive(item.session) ? 'Starting session' : null,
-    );
-  }
-
   return firstText(
     item.details.initialMessage,
     item.session.title,
@@ -295,7 +281,6 @@ function readSessionDetails(path: string | null): AgentSessionDetails {
   const details: AgentSessionDetails = {
     initialMessage: null,
     lastMessage: null,
-    summary: null,
   };
   let fallbackInitialMessage: string | null = null;
   let fallbackLastMessage: string | null = null;
@@ -320,11 +305,6 @@ function readSessionDetails(path: string | null): AgentSessionDetails {
           details.initialMessage ??= userMessage.text;
           details.lastMessage = userMessage.text;
         }
-      }
-
-      const summary = extractSummary(data);
-      if (summary) {
-        details.summary = summary;
       }
     }
   } catch {}
@@ -369,40 +349,6 @@ function toUserMessage(
 
 function isInternalUserMessage(text: string) {
   return text.startsWith('# AGENTS.md instructions for ');
-}
-
-function extractSummary(data: Record<string, unknown>) {
-  if (data.type === 'ai-title') {
-    return asString(data.aiTitle);
-  }
-
-  if (data.type === 'custom-title') {
-    return asString(data.customTitle);
-  }
-
-  const payload = asRecord(data.payload);
-  if (data.type === 'response_item' && payload?.type === 'reasoning') {
-    return extractSummaryContent(payload.summary);
-  }
-
-  return asString(data.summary);
-}
-
-function extractSummaryContent(summary: unknown) {
-  if (typeof summary === 'string') {
-    return cleanTitle(summary);
-  }
-
-  if (!Array.isArray(summary)) {
-    return null;
-  }
-
-  const text = summary
-    .map((item) => (typeof item === 'string' ? item : asString(asRecord(item)?.text)))
-    .filter(Boolean)
-    .join(' ');
-
-  return cleanTitle(text);
 }
 
 function extractContentTitle(content: unknown) {
