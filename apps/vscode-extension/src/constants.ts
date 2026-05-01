@@ -19,6 +19,7 @@ export const commandIds = {
   reviewDiff: `${APP_ID}.reviewDiff`,
   openCommitDiff: `${APP_ID}.internal.openCommitDiff`,
   toggleGitChangesMode: `${APP_ID}.toggleGitChangesMode`,
+  groupGitChangedFilesBy: `${APP_ID}.groupGitChangedFilesBy`,
   groupGitCommitsBy: `${APP_ID}.groupGitCommitsBy`,
   groupAgentSessionsBy: `${APP_ID}.groupAgentSessionsBy`,
   toggleAgentSessionText: `${APP_ID}.toggleAgentSessionText`,

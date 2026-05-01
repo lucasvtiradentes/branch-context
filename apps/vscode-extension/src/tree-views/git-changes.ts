@@ -17,20 +17,31 @@ import {
 } from './items';
 
 const gitChangesModeValues = ['files', 'commits'] as const;
+const gitChangedFilesGroupByValues = ['flat', 'changeType'] as const;
 const gitCommitsGroupByValues = ['flat', 'date', 'author'] as const;
 const gitChangesModeWorkspaceKey = 'gitChanges.mode';
+const gitChangedFilesGroupByWorkspaceKey = 'gitChanges.filesGroupBy';
 const gitCommitsGroupByWorkspaceKey = 'gitChanges.commitsGroupBy';
 
 export type GitChangesMode = (typeof gitChangesModeValues)[number];
+export type GitChangedFilesGroupBy = (typeof gitChangedFilesGroupByValues)[number];
 export type GitCommitsGroupBy = (typeof gitCommitsGroupByValues)[number];
 
 let gitChangesMode: GitChangesMode = 'files';
+let gitChangedFilesGroupBy: GitChangedFilesGroupBy = 'flat';
 let gitCommitsGroupBy: GitCommitsGroupBy = 'flat';
 
 export function initializeGitChangesMode(context: vscode.ExtensionContext): void {
   const savedMode = context.workspaceState.get<unknown>(gitChangesModeWorkspaceKey);
   if (isGitChangesMode(savedMode)) {
     gitChangesMode = savedMode;
+  }
+
+  const savedChangedFilesGroupBy = context.workspaceState.get<unknown>(
+    gitChangedFilesGroupByWorkspaceKey,
+  );
+  if (isGitChangedFilesGroupBy(savedChangedFilesGroupBy)) {
+    gitChangedFilesGroupBy = savedChangedFilesGroupBy;
   }
 
   const savedCommitsGroupBy = context.workspaceState.get<unknown>(gitCommitsGroupByWorkspaceKey);
@@ -49,8 +60,20 @@ export function getGitChangesViewDescription(): string {
   return gitChangesMode === 'files' ? 'changed files' : 'commits';
 }
 
+export function getGitChangedFilesGroupBy(): GitChangedFilesGroupBy {
+  return gitChangedFilesGroupBy;
+}
+
 export function getGitCommitsGroupBy(): GitCommitsGroupBy {
   return gitCommitsGroupBy;
+}
+
+export async function saveGitChangedFilesGroupBy(
+  context: vscode.ExtensionContext,
+  nextGroupBy: GitChangedFilesGroupBy,
+): Promise<void> {
+  gitChangedFilesGroupBy = nextGroupBy;
+  await context.workspaceState.update(gitChangedFilesGroupByWorkspaceKey, nextGroupBy);
 }
 
 export async function saveGitCommitsGroupBy(
@@ -88,6 +111,12 @@ function isGitChangesMode(value: unknown): value is GitChangesMode {
   return typeof value === 'string' && (gitChangesModeValues as readonly string[]).includes(value);
 }
 
+function isGitChangedFilesGroupBy(value: unknown): value is GitChangedFilesGroupBy {
+  return (
+    typeof value === 'string' && (gitChangedFilesGroupByValues as readonly string[]).includes(value)
+  );
+}
+
 function updateGitChangesModeContext(): void {
   void vscode.commands.executeCommand('setContext', contextKeys.gitChangesMode, gitChangesMode);
 }
@@ -100,7 +129,7 @@ function isGitCommitsGroupBy(value: unknown): value is GitCommitsGroupBy {
 
 function createChangedFileNodes(state: BranchContextExtensionState) {
   return getGitSummaryChildren(state.gitSummary, (summary) =>
-    summary.changedFiles.map((file) => createChangedFileNode(state.workspaceRoot, file)),
+    groupChangedFileNodes(state.workspaceRoot, summary.changedFiles),
   );
 }
 
@@ -118,6 +147,49 @@ function groupCommitNodes(commits: GitCommitSummary[]) {
   }
 
   return commits.map(createCommitNode);
+}
+
+function groupChangedFileNodes(workspaceRoot: string | null, files: GitChangedFileSummary[]) {
+  if (gitChangedFilesGroupBy !== 'changeType') {
+    return files.map((file) => createChangedFileNode(workspaceRoot, file));
+  }
+
+  return [
+    createChangedFileGroup(workspaceRoot, files, 'Added', ['A'], getChangedFileIcon('A')),
+    createChangedFileGroup(workspaceRoot, files, 'Modified', ['M'], getChangedFileIcon('M')),
+    createChangedFileGroup(workspaceRoot, files, 'Renamed', ['R'], getChangedFileIcon('R')),
+    createChangedFileGroup(workspaceRoot, files, 'Deleted', ['D'], getChangedFileIcon('D')),
+    createChangedFileGroup(workspaceRoot, files, 'Other', [], new vscode.ThemeIcon('diff')),
+  ].filter((group) => group.children?.().length);
+}
+
+function createChangedFileGroup(
+  workspaceRoot: string | null,
+  files: GitChangedFileSummary[],
+  label: string,
+  statuses: string[],
+  icon: vscode.TreeItem['iconPath'],
+) {
+  const groupedFiles = files.filter((file) =>
+    statuses.length > 0
+      ? statuses.includes(file.status)
+      : !['A', 'M', 'R', 'D'].includes(file.status),
+  );
+
+  return createGroupNode(
+    label,
+    groupedFiles.map((file) =>
+      createChangedFileNode(workspaceRoot, file, {
+        includeStatusInDescription: false,
+        showStatusIcon: false,
+      }),
+    ),
+    {
+      description: String(groupedFiles.length),
+      icon,
+      collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+    },
+  );
 }
 
 function createOrderedCommitGroups(
@@ -172,17 +244,28 @@ function getCommitDateGroup(commit: GitCommitSummary) {
   return 'Older';
 }
 
-function createChangedFileNode(workspaceRoot: string | null, file: GitChangedFileSummary) {
+type ChangedFileNodeOptions = {
+  includeStatusInDescription?: boolean;
+  showStatusIcon?: boolean;
+};
+
+function createChangedFileNode(
+  workspaceRoot: string | null,
+  file: GitChangedFileSummary,
+  options: ChangedFileNodeOptions = {},
+) {
   const filePath = workspaceRoot ? join(workspaceRoot, file.path) : undefined;
   const fileExists = filePath ? existsSync(filePath) : false;
+  const includeStatusInDescription = options.includeStatusInDescription ?? false;
+  const showStatusIcon = options.showStatusIcon ?? true;
 
   return {
     label: file.path,
     kind: 'file' as const,
     path: fileExists ? filePath : undefined,
-    description: `${file.status} | +${formatStat(file.additions)} -${formatStat(file.deletions)}`,
+    description: formatChangedFileDescription(file, includeStatusInDescription),
     tooltip: createChangedFileTooltip(file),
-    icon: new vscode.ThemeIcon(getChangedFileIcon(file.status)),
+    icon: showStatusIcon ? getChangedFileIcon(file.status) : undefined,
     command:
       fileExists && filePath
         ? {
@@ -192,6 +275,14 @@ function createChangedFileNode(workspaceRoot: string | null, file: GitChangedFil
           }
         : undefined,
   };
+}
+
+function formatChangedFileDescription(
+  file: GitChangedFileSummary,
+  includeStatusInDescription: boolean,
+) {
+  const stats = `+${formatStat(file.additions)} -${formatStat(file.deletions)}`;
+  return includeStatusInDescription ? `${file.status} | ${stats}` : stats;
 }
 
 function createCommitNode(commit: GitCommitSummary) {
@@ -234,19 +325,50 @@ function formatGitSummaryError(gitSummary: Extract<BranchGitSummary, { ok: false
 }
 
 function getChangedFileIcon(status: string) {
+  const icon = getChangedFileLetterIcon(status);
+  if (icon) {
+    return icon;
+  }
+
   if (status === 'A') {
-    return 'diff-added';
+    return new vscode.ThemeIcon('diff-added');
   }
 
   if (status === 'D') {
-    return 'diff-removed';
+    return new vscode.ThemeIcon('diff-removed');
   }
 
   if (status === 'R') {
-    return 'diff-renamed';
+    return new vscode.ThemeIcon('diff-renamed');
   }
 
-  return 'diff-modified';
+  return new vscode.ThemeIcon('diff-modified');
+}
+
+function getChangedFileLetterIcon(status: string) {
+  const normalizedStatus = status[0];
+  if (!normalizedStatus) {
+    return null;
+  }
+
+  const colorByStatus: Record<string, string> = {
+    A: '#3fb950',
+    M: '#d29922',
+    D: '#f85149',
+    R: '#58a6ff',
+  };
+  const color = colorByStatus[normalizedStatus];
+  if (!color) {
+    return null;
+  }
+
+  return vscode.Uri.parse(
+    `data:image/svg+xml;utf8,${encodeURIComponent(createLetterIconSvg(normalizedStatus, color))}`,
+  );
+}
+
+function createLetterIconSvg(letter: string, color: string) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><text x="8" y="12" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="${color}">${letter}</text></svg>`;
 }
 
 function formatStat(value: number | null) {

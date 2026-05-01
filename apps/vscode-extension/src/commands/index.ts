@@ -3,6 +3,7 @@ import { registerApplyTemplateCommand } from './apply-template';
 import { registerContextActionCommands } from './context-actions';
 import { registerGroupAgentSessionsCommand } from './group-agent-sessions';
 import { registerGroupContextsCommand } from './group-contexts';
+import { registerGroupGitChangedFilesCommand } from './group-git-changed-files';
 import { registerGroupGitCommitsCommand } from './group-git-commits';
 import { registerOpenCommitDiffCommand } from './open-commit-diff';
 import { registerOpenConfigCommand } from './open-config';
@@ -30,6 +31,7 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerResumeAgentSessionCommand(),
     registerReviewDiffCommand(),
     registerToggleGitChangesModeCommand(context),
+    registerGroupGitChangedFilesCommand(context),
     registerGroupGitCommitsCommand(context),
     registerGroupAgentSessionsCommand(context),
     registerToggleAgentSessionTextCommand(context),

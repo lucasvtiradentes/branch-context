@@ -130,7 +130,12 @@
       {
         "command": "branch-context.toggleGitChangesMode",
         "title": "Branch Context: Toggle Git Changes Mode",
-        "icon": "$(git-compare)"
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "branch-context.groupGitChangedFilesBy",
+        "title": "Branch Context: Group Changed Files By",
+        "icon": "$(list-tree)"
       },
       {
         "command": "branch-context.groupGitCommitsBy",
@@ -261,6 +266,10 @@
           "when": "false"
         },
         {
+          "command": "branch-context.groupGitChangedFilesBy",
+          "when": "false"
+        },
+        {
           "command": "branch-context.groupGitCommitsBy",
           "when": "false"
         },
@@ -333,17 +342,22 @@
         {
           "command": "branch-context.reviewDiff",
           "when": "view == branch-context.gitChanges && branch-context.initialized",
-          "group": "navigation@2"
+          "group": "navigation@1"
         },
         {
           "command": "branch-context.toggleGitChangesMode",
           "when": "view == branch-context.gitChanges && branch-context.initialized",
+          "group": "navigation@2"
+        },
+        {
+          "command": "branch-context.groupGitChangedFilesBy",
+          "when": "view == branch-context.gitChanges && branch-context.initialized && branch-context.gitChangesMode == files",
           "group": "navigation@3"
         },
         {
           "command": "branch-context.groupGitCommitsBy",
           "when": "view == branch-context.gitChanges && branch-context.initialized && branch-context.gitChangesMode == commits",
-          "group": "navigation@1"
+          "group": "navigation@3"
         },
         {
           "command": "branch-context.groupAgentSessionsBy",

@@ -33,7 +33,7 @@ export type BranchContextTreeNode = {
   contextValue?: string;
   description?: string;
   tooltip?: string | vscode.MarkdownString;
-  icon?: vscode.ThemeIcon;
+  icon?: vscode.TreeItem['iconPath'];
   command?: vscode.Command;
   resourceUri?: vscode.Uri;
   useResourceUri?: boolean;
@@ -144,7 +144,7 @@ export function createGroupNode(
 
 type GroupNodeOptions = {
   description?: string;
-  icon?: vscode.ThemeIcon;
+  icon?: vscode.TreeItem['iconPath'];
   collapsibleState?: vscode.TreeItemCollapsibleState;
 };
 
