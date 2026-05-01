@@ -1,12 +1,15 @@
-import { getGitRoot, green, red, yellow } from '@branch-context/core';
 import {
   CLI_NAME,
   DEFAULT_SYMLINK,
   DEFAULT_TEMPLATE,
+  getGitRoot,
+  getStatus,
+  green,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
-} from '@branch-context/core/constants';
-import { getStatus } from '@branch-context/core/services/status';
+  red,
+  yellow,
+} from '@branch-context/core';
 import { printTable } from './_branches';
 
 const STATUS_OK = green('[ok]');

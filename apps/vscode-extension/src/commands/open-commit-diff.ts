@@ -1,4 +1,4 @@
-import type { GitCommitSummary } from '@branch-context/core/services/git-summary';
+import type { GitCommitSummary } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { openCommitChanges } from '../core/git-diff';

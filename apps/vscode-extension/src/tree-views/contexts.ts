@@ -1,7 +1,7 @@
 import type {
   BranchContextArchivedContextSummary,
   BranchContextContextSummary,
-} from '@branch-context/core/services/status';
+} from '@branch-context/core';
 import * as vscode from 'vscode';
 import { getBranchContextState } from '../core/state';
 import { formatRelativeTime } from '../lib/format-relative-time';

@@ -1,5 +1,4 @@
-import { getGitRoot } from '@branch-context/core';
-import { getAgentSessions, syncAgentSessions } from '@branch-context/core/services/agents';
+import { getAgentSessions, getGitRoot, syncAgentSessions } from '@branch-context/core';
 
 export function cmdAgents(args: string[]): number {
   const [subcommand] = args;

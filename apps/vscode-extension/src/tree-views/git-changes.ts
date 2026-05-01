@@ -4,7 +4,7 @@ import type {
   BranchGitSummary,
   GitChangedFileSummary,
   GitCommitSummary,
-} from '@branch-context/core/services/git-summary';
+} from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds, contextKeys } from '../constants';
 import { type BranchContextExtensionState, getBranchContextState } from '../core/state';

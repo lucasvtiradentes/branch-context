@@ -1,6 +1,4 @@
-import { getGitRoot } from '@branch-context/core';
-import { CLI_NAME } from '@branch-context/core/constants';
-import { getCurrentBase, setCurrentBase } from '@branch-context/core/services/actions';
+import { CLI_NAME, getCurrentBase, getGitRoot, setCurrentBase } from '@branch-context/core';
 
 export function cmdBase(args: string[]) {
   const gitRoot = getGitRoot();

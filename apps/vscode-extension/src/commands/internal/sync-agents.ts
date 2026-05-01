@@ -1,4 +1,4 @@
-import { syncAgentSessions } from '@branch-context/core/services/agents';
+import { syncAgentSessions } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../../constants';
 import { getBranchContextState, refreshBranchContextState } from '../../core/state';

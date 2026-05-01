@@ -1,7 +1,7 @@
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-export { CONTEXT_FILE_NAME } from '@branch-context/core/constants';
+export { CONTEXT_FILE_NAME } from '@branch-context/core';
 
 const APP_ID = 'branch-context';
 const APP_LOG_FILENAME = 'extension.log';

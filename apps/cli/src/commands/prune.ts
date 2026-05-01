@@ -1,5 +1,6 @@
 import {
   archiveBranch,
+  CLI_NAME,
   collectBranchInfo,
   configExists,
   getCurrentBranch,
@@ -12,7 +13,6 @@ import {
   sanitizeBranchName,
   yellow,
 } from '@branch-context/core';
-import { CLI_NAME } from '@branch-context/core/constants';
 import { printTable } from './_branches';
 
 export async function cmdPrune(_args: string[]) {

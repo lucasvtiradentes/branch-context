@@ -1,10 +1,5 @@
 import { relative, sep } from 'node:path';
-import {
-  ARCHIVED_DIR,
-  BRANCHES_DIR,
-  CONFIG_DIR,
-  DEFAULT_SYMLINK,
-} from '@branch-context/core/constants';
+import { ARCHIVED_DIR, BRANCHES_DIR, CONFIG_DIR, DEFAULT_SYMLINK } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { CONTEXT_FILE_NAME } from '../constants';
 

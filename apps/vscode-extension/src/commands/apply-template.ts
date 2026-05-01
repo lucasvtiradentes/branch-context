@@ -1,7 +1,4 @@
-import {
-  applyTemplateToCurrentBranch,
-  listAvailableTemplates,
-} from '@branch-context/core/services/actions';
+import { applyTemplateToCurrentBranch, listAvailableTemplates } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';

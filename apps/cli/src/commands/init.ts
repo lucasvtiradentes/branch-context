@@ -1,24 +1,22 @@
 import { mkdirSync } from 'node:fs';
 import {
   addToGitignore,
+  CLI_NAME,
+  CONFIG_FILE,
   configExists,
   copyInitConfig,
   copyInitTemplates,
+  DEFAULT_SYMLINK,
   getBranchesDir,
   getConfigDir,
   getCurrentBranch,
   getGitRoot,
   getTemplatesDir,
+  HOOK_POST_CHECKOUT,
+  HOOK_POST_COMMIT,
   installHook,
   syncBranch,
 } from '@branch-context/core';
-import {
-  CLI_NAME,
-  CONFIG_FILE,
-  DEFAULT_SYMLINK,
-  HOOK_POST_CHECKOUT,
-  HOOK_POST_COMMIT,
-} from '@branch-context/core/constants';
 
 export async function cmdInit(_args: string[]) {
   const gitRoot = getGitRoot();

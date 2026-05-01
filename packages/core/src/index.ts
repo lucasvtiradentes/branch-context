@@ -9,8 +9,6 @@ export * from './data/config-schema';
 export * from './data/meta';
 export * from './resources';
 export * from './services';
-export * from './services/agents';
-export * from './services/branch-info';
 export * from './utils/color';
 export * from './utils/git';
 export * from './utils/prompt';

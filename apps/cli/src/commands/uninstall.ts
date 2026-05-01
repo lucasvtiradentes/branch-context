@@ -1,5 +1,11 @@
-import { getGitRoot, uninstallHook, unsetGlobalHooksPath } from '@branch-context/core';
-import { CLI_NAME, HOOK_POST_CHECKOUT, HOOK_POST_COMMIT } from '@branch-context/core/constants';
+import {
+  CLI_NAME,
+  getGitRoot,
+  HOOK_POST_CHECKOUT,
+  HOOK_POST_COMMIT,
+  uninstallHook,
+  unsetGlobalHooksPath,
+} from '@branch-context/core';
 
 export function cmdUninstall(args: string[]) {
   if (args.includes('--global')) {

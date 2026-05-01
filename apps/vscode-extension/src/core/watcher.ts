@@ -1,4 +1,4 @@
-import { CONFIG_DIR, DEFAULT_SYMLINK } from '@branch-context/core/constants';
+import { CONFIG_DIR, DEFAULT_SYMLINK } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { logger } from '../lib/logging';
 import { refreshBranchContextState } from './state';

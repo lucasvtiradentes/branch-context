@@ -1,14 +1,13 @@
-import { type AgentSession, getAgentSessions } from '@branch-context/core/services/agents';
 import {
-  type BranchGitSummary,
-  getGitBranchSummary,
-} from '@branch-context/core/services/git-summary';
-import {
+  type AgentSession,
   type BranchContextArchivedContextSummary,
   type BranchContextContextSummary,
   type BranchContextStatus,
+  type BranchGitSummary,
+  getAgentSessions,
+  getGitBranchSummary,
   getStatus,
-} from '@branch-context/core/services/status';
+} from '@branch-context/core';
 import * as vscode from 'vscode';
 import { contextKeys } from '../constants';
 import { formatLogError, logger } from '../lib/logging';

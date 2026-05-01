@@ -10,51 +10,6 @@
       "types": "./dist/index.d.ts",
       "development": "./src/index.ts",
       "import": "./dist/index.js"
-    },
-    "./constants": {
-      "types": "./dist/constants.d.ts",
-      "development": "./src/constants.ts",
-      "import": "./dist/constants.js"
-    },
-    "./config-schema": {
-      "types": "./dist/data/config-schema.d.ts",
-      "development": "./src/data/config-schema.ts",
-      "import": "./dist/data/config-schema.js"
-    },
-    "./services": {
-      "types": "./dist/services/index.d.ts",
-      "development": "./src/services/index.ts",
-      "import": "./dist/services/index.js"
-    },
-    "./services/status": {
-      "types": "./dist/services/status.d.ts",
-      "development": "./src/services/status.ts",
-      "import": "./dist/services/status.js"
-    },
-    "./services/actions": {
-      "types": "./dist/services/actions.d.ts",
-      "development": "./src/services/actions.ts",
-      "import": "./dist/services/actions.js"
-    },
-    "./services/agents": {
-      "types": "./dist/services/agents.d.ts",
-      "development": "./src/services/agents.ts",
-      "import": "./dist/services/agents.js"
-    },
-    "./services/branch-info": {
-      "types": "./dist/services/branch-info.d.ts",
-      "development": "./src/services/branch-info.ts",
-      "import": "./dist/services/branch-info.js"
-    },
-    "./services/git-summary": {
-      "types": "./dist/services/git-summary.d.ts",
-      "development": "./src/services/git-summary.ts",
-      "import": "./dist/services/git-summary.js"
-    },
-    "./utils/git": {
-      "types": "./dist/utils/git.d.ts",
-      "development": "./src/utils/git.ts",
-      "import": "./dist/utils/git.js"
     }
   },
   "files": [

@@ -1,11 +1,12 @@
 import { stdin as input } from 'node:process';
 import readline from 'node:readline/promises';
-import { getCurrentBranch, getGitRoot } from '@branch-context/core';
-import { CLI_NAME } from '@branch-context/core/constants';
 import {
   applyTemplateToCurrentBranch,
+  CLI_NAME,
+  getCurrentBranch,
+  getGitRoot,
   listAvailableTemplates,
-} from '@branch-context/core/services/actions';
+} from '@branch-context/core';
 
 async function selectTemplate(templates: string[]) {
   console.log('Templates:\n');

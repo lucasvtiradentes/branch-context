@@ -1,7 +1,7 @@
 import { type Dirent, existsSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { AGENTS_FILE_NAME } from '@branch-context/core/constants';
-import type { GitCommitSummary } from '@branch-context/core/services/git-summary';
+import type { GitCommitSummary } from '@branch-context/core';
+import { AGENTS_FILE_NAME } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { CONTEXT_FILE_NAME } from '../constants';
 import { onDidChangeState } from '../core/state';

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { DEFAULT_SYMLINK } from '@branch-context/core/constants';
+import { DEFAULT_SYMLINK } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
 import { addToGitignore, cmdInit } from '../src/index';
 import { createGitRepo, createTempDir } from './helpers';

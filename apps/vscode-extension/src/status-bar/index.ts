@@ -1,4 +1,4 @@
-import { initProject } from '@branch-context/core/services/actions';
+import { initProject } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds, STATUS_BAR_PRIORITY } from '../constants';
 import {

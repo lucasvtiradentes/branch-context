@@ -1,4 +1,4 @@
-import { CLI_NAME, DIST_NAME, VERSION } from '@branch-context/core/constants';
+import { CLI_NAME, DIST_NAME, VERSION } from '@branch-context/core';
 import { COMMANDS, getAllCommandNames, getCommandHandler } from './cmd-registry';
 
 export function printHelp() {

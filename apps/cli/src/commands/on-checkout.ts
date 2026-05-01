@@ -1,4 +1,5 @@
 import {
+  CLI_NAME,
   Config,
   configExists,
   getBaseBranch,
@@ -8,7 +9,6 @@ import {
   updateBranchMeta,
   updateContextTags,
 } from '@branch-context/core';
-import { CLI_NAME } from '@branch-context/core/constants';
 
 export function cmdOnCheckout(args: string[]) {
   if (args.length < 2) {

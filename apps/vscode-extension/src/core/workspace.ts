@@ -8,7 +8,7 @@ import {
   DEFAULT_SYMLINK,
   META_FILE,
   TEMPLATES_DIR,
-} from '@branch-context/core/constants';
+} from '@branch-context/core';
 import * as vscode from 'vscode';
 import { CONTEXT_FILE_NAME } from '../constants';
 

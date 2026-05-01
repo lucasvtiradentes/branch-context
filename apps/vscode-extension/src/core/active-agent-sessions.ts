@@ -1,4 +1,4 @@
-import type { AgentSession } from '@branch-context/core/services/agents';
+import type { AgentSession } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { logger } from '../lib/logging';
 import { getBranchContextState } from './state';

@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import type { AgentSession } from '@branch-context/core/services/agents';
+import type { AgentSession } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { isAgentSessionActive } from '../core/active-agent-sessions';
 import { getBranchContextState } from '../core/state';

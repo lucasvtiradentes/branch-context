@@ -6,7 +6,7 @@ import {
   deleteContextByKey,
   restoreContextByKey,
   syncCurrentBranch,
-} from '@branch-context/core/services/actions';
+} from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, CONTEXT_FILE_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';

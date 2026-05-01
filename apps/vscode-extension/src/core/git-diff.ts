@@ -1,14 +1,11 @@
 import { join } from 'node:path';
-import type {
-  GitChangedFileSummary,
-  GitCommitSummary,
-} from '@branch-context/core/services/git-summary';
+import type { GitChangedFileSummary, GitCommitSummary } from '@branch-context/core';
 import {
   gitChangedFileSummariesBetween,
   gitCommitParentRef,
   gitFileContent,
   gitMergeBase,
-} from '@branch-context/core/utils/git';
+} from '@branch-context/core';
 import * as vscode from 'vscode';
 
 const gitContentScheme = 'branch-context-git';

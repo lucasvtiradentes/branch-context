@@ -1,4 +1,4 @@
-import type { BranchContextActionError } from '@branch-context/core/services/actions';
+import type { BranchContextActionError } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME } from '../constants';
 import { type BranchContextExtensionState, getBranchContextState } from '../core/state';

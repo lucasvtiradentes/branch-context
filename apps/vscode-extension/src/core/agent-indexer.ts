@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { getClaudeProjectKey, syncAgentSessions } from '@branch-context/core/services/agents';
+import { getClaudeProjectKey, syncAgentSessions } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { markAgentSessionFileActive } from './active-agent-sessions';
 import {

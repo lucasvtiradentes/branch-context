@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import type { GitCommitSummary } from '@branch-context/core/services/git-summary';
+import type { GitCommitSummary } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
