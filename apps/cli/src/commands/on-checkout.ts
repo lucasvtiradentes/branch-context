@@ -1,10 +1,14 @@
-import { CLI_NAME } from '../constants';
-import { updateContextTags } from '../core/context-tags';
-import { getGitRoot } from '../core/hooks';
-import { sanitizeBranchName, syncBranch } from '../core/sync';
-import { getBaseBranch } from '../data/branch-base';
-import { Config, configExists } from '../data/config';
-import { updateBranchMeta } from '../data/meta';
+import {
+  Config,
+  configExists,
+  getBaseBranch,
+  getGitRoot,
+  sanitizeBranchName,
+  syncBranch,
+  updateBranchMeta,
+  updateContextTags,
+} from '@branch-context/core';
+import { CLI_NAME } from '@branch-context/core/constants';
 
 export function cmdOnCheckout(args: string[]) {
   if (args.length < 2) {

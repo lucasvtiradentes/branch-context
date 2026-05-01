@@ -9,6 +9,7 @@ export default defineConfig({
     'src/services/status.ts',
     'src/services/actions.ts',
     'src/services/agents.ts',
+    'src/services/branch-info.ts',
     'src/services/git-summary.ts',
     'src/utils/git.ts',
   ],

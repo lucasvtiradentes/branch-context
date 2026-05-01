@@ -1,9 +1,7 @@
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
 import {
   Config,
-  cmdStatus,
   createBranchContext,
   getBranchDir,
   getStatus,
@@ -11,7 +9,9 @@ import {
   HOOK_POST_COMMIT,
   installHook,
   syncBranch,
-} from '../src/index';
+} from '@branch-context/core';
+import { describe, expect, it } from 'vitest';
+import { cmdStatus } from '../src/index';
 import { captureConsole, createGitRepo, initBctxWorkspace } from './helpers';
 
 describe('status command', () => {

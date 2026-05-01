@@ -1,20 +1,20 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
 import {
   archiveBranch,
-  cmdOnCheckout,
-  cmdOnCommit,
-  cmdTemplate,
   DEFAULT_SYMLINK,
   getBranchMeta,
   getConfigDir,
+  gitAdd,
+  gitCheckout,
+  gitCommit,
   loadArchivedMeta,
   readAgentsFile,
   sanitizeBranchName,
   syncBranch,
-} from '../src/index';
-import { gitAdd, gitCheckout, gitCommit } from '../src/utils/git';
+} from '@branch-context/core';
+import { describe, expect, it } from 'vitest';
+import { cmdOnCheckout, cmdOnCommit, cmdTemplate } from '../src/index';
 import { createGitRepo, createTempDir, expectOk, initBctxWorkspace } from './helpers';
 
 function initMetaRepo() {

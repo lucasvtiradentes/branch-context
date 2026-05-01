@@ -1,11 +1,19 @@
-import { CLI_NAME } from '../constants';
-import { getCurrentBranch, getGitRoot } from '../core/hooks';
-import { archiveBranch, listArchivedBranches, sanitizeBranchName } from '../core/sync';
-import { configExists } from '../data/config';
-import { green, red, yellow } from '../utils/color';
-import { gitDeleteBranch } from '../utils/git';
-import { multiSelect } from '../utils/prompt';
-import { collectBranchInfo, printTable } from './_branches';
+import {
+  archiveBranch,
+  collectBranchInfo,
+  configExists,
+  getCurrentBranch,
+  getGitRoot,
+  gitDeleteBranch,
+  green,
+  listArchivedBranches,
+  multiSelect,
+  red,
+  sanitizeBranchName,
+  yellow,
+} from '@branch-context/core';
+import { CLI_NAME } from '@branch-context/core/constants';
+import { printTable } from './_branches';
 
 export async function cmdPrune(_args: string[]) {
   const gitRoot = getGitRoot();

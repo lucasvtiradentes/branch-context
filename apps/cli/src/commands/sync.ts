@@ -1,8 +1,6 @@
-import { CLI_NAME } from '../constants';
-import { getGitRoot } from '../core/hooks';
-import { playSound } from '../core/sync';
-import { Config } from '../data/config';
-import { syncCurrentBranch } from '../services/actions';
+import { Config, getGitRoot, playSound } from '@branch-context/core';
+import { CLI_NAME } from '@branch-context/core/constants';
+import { syncCurrentBranch } from '@branch-context/core/services/actions';
 
 export function cmdSync(_args: string[]) {
   const gitRoot = getGitRoot();

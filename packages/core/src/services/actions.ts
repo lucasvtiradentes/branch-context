@@ -162,6 +162,16 @@ export async function initProject(
   };
 }
 
+export function addToGitignore(gitRoot: string, value: string) {
+  const gitignoreFile = join(gitRoot, '.gitignore');
+  const existing = existsSync(gitignoreFile) ? readFileSync(gitignoreFile, 'utf8') : '';
+
+  if (!existing.split(/\r?\n/).includes(value)) {
+    const prefix = existing && !existing.endsWith('\n') ? '\n' : '';
+    writeFileSync(gitignoreFile, `${existing}${prefix}${value}\n`);
+  }
+}
+
 export function syncCurrentBranch(
   gitRoot: string,
   options: SyncCurrentBranchOptions = {},
@@ -410,16 +420,6 @@ function getExistingCurrentContext(gitRoot: string): ExistingCurrentContext {
     branch: current.branch,
     contextDir,
   };
-}
-
-function addToGitignore(gitRoot: string, value: string) {
-  const gitignoreFile = join(gitRoot, '.gitignore');
-  const existing = existsSync(gitignoreFile) ? readFileSync(gitignoreFile, 'utf8') : '';
-
-  if (!existing.split(/\r?\n/).includes(value)) {
-    const prefix = existing && !existing.endsWith('\n') ? '\n' : '';
-    writeFileSync(gitignoreFile, `${existing}${prefix}${value}\n`);
-  }
 }
 
 async function yes(): Promise<boolean> {

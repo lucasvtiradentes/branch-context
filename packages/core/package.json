@@ -41,6 +41,11 @@
       "development": "./src/services/agents.ts",
       "import": "./dist/services/agents.js"
     },
+    "./services/branch-info": {
+      "types": "./dist/services/branch-info.d.ts",
+      "development": "./src/services/branch-info.ts",
+      "import": "./dist/services/branch-info.js"
+    },
     "./services/git-summary": {
       "types": "./dist/services/git-summary.d.ts",
       "development": "./src/services/git-summary.ts",

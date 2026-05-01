@@ -1,8 +1,14 @@
 import { writeFileSync } from 'node:fs';
+import {
+  collectBranchInfo,
+  gitAdd,
+  gitCheckout,
+  gitCommit,
+  setMultiSelectOverride,
+  syncBranch,
+} from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { cmdPrune, cmdStatus, collectBranchInfo, syncBranch } from '../src/index';
-import { gitAdd, gitCheckout, gitCommit } from '../src/utils/git';
-import { setMultiSelectOverride } from '../src/utils/prompt';
+import { cmdPrune, cmdStatus } from '../src/index';
 import {
   captureConsole,
   createGitRepo,

@@ -1,6 +1,6 @@
 import { relative } from 'node:path';
-import { getGitRoot } from '../core/hooks';
-import { syncBranchAfterCommit } from '../services/commit-sync';
+import { getGitRoot } from '@branch-context/core';
+import { syncBranchAfterCommit } from '@branch-context/core/services';
 
 export function cmdOnCommit(_args: string[]) {
   const gitRoot = getGitRoot();

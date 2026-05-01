@@ -1,6 +1,5 @@
 import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs';
 import { join } from 'node:path';
-import { type BranchInfo, collectBranchInfo } from '../commands/_branches';
 import {
   CONTEXT_FILE_NAME,
   DEFAULT_SYMLINK,
@@ -20,6 +19,7 @@ import {
 } from '../data/config';
 import { loadArchivedMeta, loadBranchMeta } from '../data/meta';
 import { gitRefExists } from '../utils/git';
+import { type BranchInfo, collectBranchInfo } from './branch-info';
 
 export type BranchContextStatusIssue = {
   level: 'error' | 'warning';

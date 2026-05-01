@@ -1,5 +1,5 @@
+import { CLI_NAME, DIST_NAME, VERSION } from '@branch-context/core/constants';
 import { COMMANDS, getAllCommandNames, getCommandHandler } from './cmd-registry';
-import { CLI_NAME, DIST_NAME, VERSION } from './constants';
 
 export function printHelp() {
   const cmdLines = Object.entries(COMMANDS).map(([name, info]) => {
