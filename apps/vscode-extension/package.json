@@ -11,6 +11,23 @@
     "url": "https://github.com/lucasvtiradentes/branch-context.git",
     "directory": "apps/vscode-extension"
   },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "install-local": "pnpm run build",
+    "package": "vsce package --no-dependencies --out branch-context-vscode-extension-${npm_package_version}.vsix",
+    "postbuild": "tsx scripts/install-local-vscode.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "vscode:prepublish": "pnpm run build"
+  },
+  "devDependencies": {
+    "@branch-context/core": "workspace:*",
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.104.0",
+    "@vscode/vsce": "^3.6.1",
+    "tsx": "^4.21.0",
+    "tsup": "^8.5.1"
+  },
   "keywords": [
     "branch-context",
     "bctx",
@@ -25,19 +42,7 @@
     "Other"
   ],
   "activationEvents": [
-    "workspaceContains:.bctx/config.json",
-    "onCommand:branch-context.openCurrentContext",
-    "onCommand:branch-context.sync",
-    "onCommand:branch-context.status",
-    "onCommand:branch-context.setBase",
-    "onCommand:branch-context.applyTemplate",
-    "onCommand:branch-context.openConfig",
-    "onCommand:branch-context.refreshViews",
-    "onView:branch-context.currentContext",
-    "onView:branch-context.recentContexts",
-    "onView:branch-context.archivedContexts",
-    "onView:branch-context.templates",
-    "onView:branch-context.config"
+    "workspaceContains:.bctx/config.json"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -54,23 +59,28 @@
       "branch-context": [
         {
           "id": "branch-context.currentContext",
-          "name": "Current Context"
+          "name": "Current Context",
+          "icon": "resources/branch-context.svg"
         },
         {
           "id": "branch-context.recentContexts",
-          "name": "Recent Contexts"
+          "name": "Recent Contexts",
+          "icon": "resources/branch-context.svg"
         },
         {
           "id": "branch-context.archivedContexts",
-          "name": "Archived Contexts"
+          "name": "Archived Contexts",
+          "icon": "resources/branch-context.svg"
         },
         {
           "id": "branch-context.templates",
-          "name": "Templates"
+          "name": "Templates",
+          "icon": "resources/branch-context.svg"
         },
         {
           "id": "branch-context.config",
-          "name": "Config"
+          "name": "Config",
+          "icon": "resources/branch-context.svg"
         }
       ]
     },
@@ -133,21 +143,5 @@
         }
       ]
     }
-  },
-  "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "install-local": "pnpm run build && tsx scripts/install-local-vscode.ts",
-    "package": "vsce package --no-dependencies --out branch-context-vscode-extension-${npm_package_version}.vsix",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "vscode:prepublish": "pnpm run build"
-  },
-  "devDependencies": {
-    "@branch-context/core": "workspace:*",
-    "@types/node": "^22.0.0",
-    "@types/vscode": "^1.104.0",
-    "@vscode/vsce": "^3.6.1",
-    "tsx": "^4.21.0",
-    "tsup": "^8.5.1"
   }
 }

@@ -8,8 +8,16 @@ type PackageJson = {
   publisher?: string;
   displayName?: string;
   description?: string;
+  version?: string;
   repository?: unknown;
   keywords?: unknown;
+  activationEvents?: string[];
+  contributes?: {
+    commands?: Array<{ command?: string; title?: string }>;
+    viewsContainers?: Record<string, Array<{ id?: string; title?: string; icon?: string }>>;
+    views?: Record<string, Array<{ id?: string; name?: string; icon?: string }>>;
+    menus?: Record<string, Array<{ command?: string; when?: string; group?: string }>>;
+  };
 };
 
 const APP_ID = 'branch-context';
@@ -48,7 +56,7 @@ function copyBuildArtifacts() {
 function patchDevFiles() {
   const packageJsonPath = path.join(DIST_DIR, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as PackageJson;
-  const patchedPackageJson = JSON.parse(replaceAppId(JSON.stringify(packageJson))) as PackageJson;
+  const patchedPackageJson = JSON.parse(JSON.stringify(packageJson)) as PackageJson;
   patchedPackageJson.name = `${packageJson.name ?? APP_ID}-dev`;
   patchedPackageJson.displayName = `${packageJson.displayName ?? 'Branch Context'} [dev]`;
   if (packageJson.description) {
@@ -56,9 +64,105 @@ function patchDevFiles() {
   }
   patchedPackageJson.repository = packageJson.repository;
   patchedPackageJson.keywords = packageJson.keywords;
+  patchPackageContributions(patchedPackageJson);
+  patchActivationEvents(patchedPackageJson);
   fs.writeFileSync(packageJsonPath, `${JSON.stringify(patchedPackageJson, null, 2)}\n`);
   patchFile(DIST_JS_PATH);
   patchFile(DIST_MAP_PATH);
+}
+
+function patchPackageContributions(packageJson: PackageJson) {
+  if (packageJson.contributes?.commands) {
+    packageJson.contributes.commands = packageJson.contributes.commands.map((command) => ({
+      ...command,
+      command: patchExtensionId(command.command),
+      title: command.title ? `${command.title} [dev]` : command.title,
+    }));
+  }
+
+  if (packageJson.contributes?.viewsContainers) {
+    packageJson.contributes.viewsContainers = Object.fromEntries(
+      Object.entries(packageJson.contributes.viewsContainers).map(([location, containers]) => [
+        location,
+        containers.map((container) => ({
+          ...container,
+          id: patchExtensionId(container.id),
+          title: container.title ? `${container.title} [dev]` : container.title,
+        })),
+      ]),
+    );
+  }
+
+  if (packageJson.contributes?.views) {
+    packageJson.contributes.views = Object.fromEntries(
+      Object.entries(packageJson.contributes.views).map(([containerId, views]) => [
+        patchExtensionId(containerId),
+        views.map((view) => ({
+          ...view,
+          id: patchExtensionId(view.id),
+        })),
+      ]),
+    );
+  }
+
+  if (packageJson.contributes?.menus) {
+    packageJson.contributes.menus = Object.fromEntries(
+      Object.entries(packageJson.contributes.menus).map(([menuId, items]) => [
+        menuId,
+        items.map((item) => ({
+          ...item,
+          command: patchExtensionId(item.command),
+          when: patchWhenClause(item.when),
+        })),
+      ]),
+    );
+  }
+}
+
+function patchActivationEvents(packageJson: PackageJson) {
+  if (!packageJson.activationEvents) {
+    return;
+  }
+
+  packageJson.activationEvents = packageJson.activationEvents.map((event) => {
+    if (event.startsWith('onCommand:')) {
+      return `onCommand:${patchExtensionId(event.slice('onCommand:'.length))}`;
+    }
+
+    if (event.startsWith('onView:')) {
+      return `onView:${patchExtensionId(event.slice('onView:'.length))}`;
+    }
+
+    return event;
+  });
+}
+
+function patchExtensionId(value: string | undefined) {
+  if (!value) {
+    return value;
+  }
+
+  if (value === APP_ID) {
+    return DEV_APP_ID;
+  }
+
+  if (value.startsWith(`${APP_ID}.`)) {
+    return `${DEV_APP_ID}${value.slice(APP_ID.length)}`;
+  }
+
+  return value;
+}
+
+function patchWhenClause(value: string | undefined) {
+  if (!value) {
+    return value;
+  }
+
+  return value
+    .split(`view == ${APP_ID}.`)
+    .join(`view == ${DEV_APP_ID}.`)
+    .split(`view == ${APP_ID}`)
+    .join(`view == ${DEV_APP_ID}`);
 }
 
 function installIntoEditors() {
@@ -75,10 +179,116 @@ function installIntoEditors() {
     }
 
     fs.mkdirSync(extensionDir, { recursive: true });
+    removeStaleDevInstalls(extensionDir, publisher);
     const targetDir = path.join(extensionDir, extensionId);
     fs.rmSync(targetDir, { recursive: true, force: true });
     copyRecursive(DIST_DIR, targetDir);
+    syncExtensionRegistry(extensionDir, extensionId, targetDir, packageJson.version);
   }
+}
+
+function removeStaleDevInstalls(extensionDir: string, publisher: string) {
+  for (const staleId of [`${publisher}.${DEV_APP_ID}-vscode-extension-dev`]) {
+    fs.rmSync(path.join(extensionDir, staleId), { recursive: true, force: true });
+  }
+}
+
+function syncExtensionRegistry(
+  extensionDir: string,
+  extensionId: string,
+  targetDir: string,
+  version = '0.0.0',
+) {
+  const staleExtensionIds = [extensionId, `lucasvtiradentes.${DEV_APP_ID}-vscode-extension-dev`];
+  removeObsoleteEntries(extensionDir, staleExtensionIds);
+  upsertExtensionsJson(extensionDir, extensionId, targetDir, version, staleExtensionIds);
+}
+
+function removeObsoleteEntries(extensionDir: string, extensionIds: string[]) {
+  const obsoletePath = path.join(extensionDir, '.obsolete');
+  const obsolete = readJsonRecord(obsoletePath);
+
+  for (const key of Object.keys(obsolete)) {
+    if (extensionIds.some((extensionId) => key.startsWith(`${extensionId}-`))) {
+      delete obsolete[key];
+    }
+  }
+
+  writeJsonFile(obsoletePath, obsolete);
+}
+
+function upsertExtensionsJson(
+  extensionDir: string,
+  extensionId: string,
+  targetDir: string,
+  version: string,
+  staleExtensionIds: string[],
+) {
+  const extensionsJsonPath = path.join(extensionDir, 'extensions.json');
+  const entries = readJsonArray(extensionsJsonPath).filter((entry) => {
+    const id = getExtensionEntryId(entry);
+    return id ? !staleExtensionIds.includes(id) : true;
+  });
+
+  entries.push({
+    identifier: {
+      id: extensionId,
+    },
+    version,
+    location: {
+      $mid: 1,
+      path: targetDir,
+      scheme: 'file',
+    },
+    relativeLocation: path.basename(targetDir),
+  });
+
+  writeJsonFile(extensionsJsonPath, entries);
+}
+
+function getExtensionEntryId(entry: unknown) {
+  if (!entry || typeof entry !== 'object' || !('identifier' in entry)) {
+    return null;
+  }
+
+  const identifier = (entry as { identifier?: unknown }).identifier;
+  if (!identifier || typeof identifier !== 'object' || !('id' in identifier)) {
+    return null;
+  }
+
+  const id = (identifier as { id?: unknown }).id;
+  return typeof id === 'string' ? id : null;
+}
+
+function readJsonRecord(filePath: string): Record<string, unknown> {
+  const parsed = readJson(filePath, {});
+  return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+    ? (parsed as Record<string, unknown>)
+    : {};
+}
+
+function readJsonArray(filePath: string): unknown[] {
+  const parsed = readJson(filePath, []);
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+function readJson(filePath: string, fallback: unknown): unknown {
+  if (!fs.existsSync(filePath)) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8')) as unknown;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJsonFile(filePath: string, value: unknown) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const tempPath = `${filePath}.tmp`;
+  fs.writeFileSync(tempPath, `${JSON.stringify(value, null, 2)}\n`);
+  fs.renameSync(tempPath, filePath);
 }
 
 function getEditorExtensionDirs() {
