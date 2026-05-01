@@ -37,7 +37,7 @@ jobs:
 
       - name: Check extension version
         id: check
-        run: bash scripts/release/check-version-bump.sh
+        run: bash .github/scripts/check-version-bump.sh
 
   check:
     if: inputs.run_lint
