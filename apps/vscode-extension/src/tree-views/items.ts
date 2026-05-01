@@ -1,12 +1,21 @@
 import { type Dirent, existsSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
+import { AGENTS_FILE_NAME } from '@branch-context/core/constants';
 import * as vscode from 'vscode';
 import { CONTEXT_FILE_NAME } from '../constants';
 import { onDidChangeState } from '../core/state';
 
 const MAX_DIRECTORY_ITEMS = 200;
 
-type BranchContextTreeNodeKind = 'message' | 'file' | 'folder' | 'group' | 'context' | 'template';
+type BranchContextTreeNodeKind =
+  | 'message'
+  | 'file'
+  | 'folder'
+  | 'group'
+  | 'context'
+  | 'template'
+  | 'overview'
+  | 'agent';
 
 export type BranchContextTreeNode = {
   label: string;
@@ -23,6 +32,7 @@ export type BranchContextTreeNode = {
   tooltip?: string | vscode.MarkdownString;
   icon?: vscode.ThemeIcon;
   command?: vscode.Command;
+  collapsibleState?: vscode.TreeItemCollapsibleState;
   children?: () => BranchContextTreeNode[];
 };
 
@@ -40,7 +50,7 @@ export class StateTreeProvider
     const item = new vscode.TreeItem(
       node.label,
       node.children
-        ? vscode.TreeItemCollapsibleState.Collapsed
+        ? (node.collapsibleState ?? vscode.TreeItemCollapsibleState.Collapsed)
         : vscode.TreeItemCollapsibleState.None,
     );
 
@@ -82,16 +92,28 @@ export function createMessageNode(label: string): BranchContextTreeNode {
 export function createGroupNode(
   label: string,
   children: BranchContextTreeNode[],
-  description?: string,
+  descriptionOrOptions?: string | GroupNodeOptions,
 ): BranchContextTreeNode {
+  const options =
+    typeof descriptionOrOptions === 'string'
+      ? { description: descriptionOrOptions }
+      : (descriptionOrOptions ?? {});
+
   return {
     label,
     kind: 'group',
-    description,
-    icon: new vscode.ThemeIcon('folder'),
+    description: options.description,
+    icon: options.icon ?? new vscode.ThemeIcon('folder'),
+    collapsibleState: options.collapsibleState,
     children: () => children,
   };
 }
+
+type GroupNodeOptions = {
+  description?: string;
+  icon?: vscode.ThemeIcon;
+  collapsibleState?: vscode.TreeItemCollapsibleState;
+};
 
 type ContextNodeOptions = {
   description?: string;
@@ -200,6 +222,10 @@ function openFileCommand(path: string): vscode.Command {
 
 function isSensitiveFile(name: string): boolean {
   return (
-    name === '.env' || name.startsWith('.env.') || name.endsWith('.pem') || name.endsWith('.key')
+    name === AGENTS_FILE_NAME ||
+    name === '.env' ||
+    name.startsWith('.env.') ||
+    name.endsWith('.pem') ||
+    name.endsWith('.key')
   );
 }

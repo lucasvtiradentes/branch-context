@@ -61,7 +61,7 @@
       "branch-context": [
         {
           "id": "branch-context.currentContext",
-          "name": "Current Context",
+          "name": "Current Branch",
           "icon": "resources/branch-context.svg"
         },
         {
