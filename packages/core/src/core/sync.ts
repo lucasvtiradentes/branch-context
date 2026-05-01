@@ -54,18 +54,21 @@ export function playSound(soundFile?: string | null) {
     return;
   }
 
-  try {
-    if (process.platform === 'darwin') {
-      spawn('afplay', [file], { stdio: 'ignore', detached: true }).unref();
-    } else if (process.platform === 'linux') {
-      spawn('paplay', [file], { stdio: 'ignore', detached: true }).unref();
-    } else if (process.platform === 'win32') {
-      spawn('powershell', ['-c', `(New-Object Media.SoundPlayer '${file}').Play()`], {
-        stdio: 'ignore',
-        detached: true,
-      }).unref();
-    }
-  } catch {}
+  const spawnSilent = (cmd: string, args: string[]) => {
+    try {
+      const child = spawn(cmd, args, { stdio: 'ignore', detached: true });
+      child.on('error', () => {});
+      child.unref();
+    } catch {}
+  };
+
+  if (process.platform === 'darwin') {
+    spawnSilent('afplay', [file]);
+  } else if (process.platform === 'linux') {
+    spawnSilent('paplay', [file]);
+  } else if (process.platform === 'win32') {
+    spawnSilent('powershell', ['-c', `(New-Object Media.SoundPlayer '${file}').Play()`]);
+  }
 }
 
 export function sanitizeBranchName(branch: string) {
