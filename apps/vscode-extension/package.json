@@ -63,23 +63,13 @@
           "icon": "resources/branch-context.svg"
         },
         {
-          "id": "branch-context.recentContexts",
-          "name": "Recent Contexts",
-          "icon": "resources/branch-context.svg"
-        },
-        {
-          "id": "branch-context.archivedContexts",
-          "name": "Archived Contexts",
+          "id": "branch-context.contexts",
+          "name": "Contexts",
           "icon": "resources/branch-context.svg"
         },
         {
           "id": "branch-context.templates",
           "name": "Templates",
-          "icon": "resources/branch-context.svg"
-        },
-        {
-          "id": "branch-context.config",
-          "name": "Config",
           "icon": "resources/branch-context.svg"
         }
       ]
@@ -87,59 +77,164 @@
     "commands": [
       {
         "command": "branch-context.openCurrentContext",
-        "title": "Branch Context: Open Current Context"
+        "title": "Branch Context: Open Current Context",
+        "icon": "$(go-to-file)"
       },
       {
         "command": "branch-context.sync",
-        "title": "Branch Context: Sync"
+        "title": "Branch Context: Sync",
+        "icon": "$(sync)"
       },
       {
         "command": "branch-context.status",
-        "title": "Branch Context: Status"
+        "title": "Branch Context: Status",
+        "icon": "$(pulse)"
       },
       {
         "command": "branch-context.setBase",
-        "title": "Branch Context: Set Base"
+        "title": "Branch Context: Set Base",
+        "icon": "$(git-branch)"
       },
       {
         "command": "branch-context.applyTemplate",
-        "title": "Branch Context: Apply Template"
+        "title": "Branch Context: Apply Template",
+        "icon": "$(symbol-namespace)"
       },
       {
         "command": "branch-context.openConfig",
-        "title": "Branch Context: Open Config"
+        "title": "Branch Context: Open Config",
+        "icon": "$(settings-gear)"
       },
       {
-        "command": "branch-context.refreshViews",
-        "title": "Branch Context: Refresh Views"
+        "command": "branch-context.openCurrentContextFolder",
+        "title": "Branch Context: Open Current Context Folder",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "branch-context.groupContextsBy",
+        "title": "Branch Context: Group Contexts By",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "branch-context.checkoutContextBranch",
+        "title": "Branch Context: Checkout Branch",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "branch-context.openContext",
+        "title": "Branch Context: Open Context",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "branch-context.revealContextFolder",
+        "title": "Branch Context: Open Context Folder",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "branch-context.archiveContext",
+        "title": "Branch Context: Archive Context",
+        "icon": "$(archive)"
+      },
+      {
+        "command": "branch-context.restoreContext",
+        "title": "Branch Context: Restore Context",
+        "icon": "$(history)"
+      },
+      {
+        "command": "branch-context.deleteContext",
+        "title": "Branch Context: Delete Context",
+        "icon": "$(trash)"
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "branch-context.checkoutContextBranch",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.openContext",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.revealContextFolder",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.archiveContext",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.restoreContext",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.deleteContext",
+          "when": "false"
+        }
+      ],
       "view/title": [
         {
-          "command": "branch-context.refreshViews",
+          "command": "branch-context.sync",
           "when": "view == branch-context.currentContext",
-          "group": "navigation"
+          "group": "navigation@1"
         },
         {
-          "command": "branch-context.refreshViews",
-          "when": "view == branch-context.recentContexts",
-          "group": "navigation"
+          "command": "branch-context.setBase",
+          "when": "view == branch-context.currentContext",
+          "group": "navigation@2"
         },
         {
-          "command": "branch-context.refreshViews",
-          "when": "view == branch-context.archivedContexts",
-          "group": "navigation"
+          "command": "branch-context.applyTemplate",
+          "when": "view == branch-context.currentContext",
+          "group": "navigation@3"
         },
         {
-          "command": "branch-context.refreshViews",
+          "command": "branch-context.openCurrentContextFolder",
+          "when": "view == branch-context.currentContext",
+          "group": "navigation@4"
+        },
+        {
+          "command": "branch-context.groupContextsBy",
+          "when": "view == branch-context.contexts",
+          "group": "navigation@1"
+        },
+        {
+          "command": "branch-context.openConfig",
           "when": "view == branch-context.templates",
-          "group": "navigation"
+          "group": "navigation@1"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "branch-context.checkoutContextBranch",
+          "when": "view == branch-context.contexts && viewItem =~ /checkoutable/",
+          "group": "navigation@1"
         },
         {
-          "command": "branch-context.refreshViews",
-          "when": "view == branch-context.config",
-          "group": "navigation"
+          "command": "branch-context.openContext",
+          "when": "view == branch-context.contexts && viewItem =~ /branchContext\\.context/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "branch-context.revealContextFolder",
+          "when": "view == branch-context.contexts && viewItem =~ /branchContext\\.context/",
+          "group": "navigation@3"
+        },
+        {
+          "command": "branch-context.archiveContext",
+          "when": "view == branch-context.contexts && viewItem =~ /archivable/",
+          "group": "2_manage@1"
+        },
+        {
+          "command": "branch-context.restoreContext",
+          "when": "view == branch-context.contexts && viewItem =~ /restorable/",
+          "group": "2_manage@2"
+        },
+        {
+          "command": "branch-context.deleteContext",
+          "when": "view == branch-context.contexts && viewItem =~ /deletable/",
+          "group": "9_destructive@1"
         }
       ]
     }

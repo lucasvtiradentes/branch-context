@@ -1,11 +1,4 @@
-import {
-  BRANCHES_DIR,
-  CONFIG_DIR,
-  CONFIG_FILE,
-  DEFAULT_SYMLINK,
-  META_FILE,
-  TEMPLATES_DIR,
-} from '@branch-context/core/constants';
+import { CONFIG_DIR, DEFAULT_SYMLINK } from '@branch-context/core/constants';
 import * as vscode from 'vscode';
 import { refreshBranchContextState } from './state';
 import { getWorkspaceInfo } from './workspace';
@@ -47,12 +40,7 @@ function resetWatchers(): void {
 }
 
 function getWatchPatterns(): string[] {
-  return [
-    `${DEFAULT_SYMLINK}/**`,
-    `${CONFIG_DIR}/${BRANCHES_DIR}/${META_FILE}`,
-    `${CONFIG_DIR}/${CONFIG_FILE}`,
-    `${CONFIG_DIR}/${TEMPLATES_DIR}/**`,
-  ];
+  return [`${CONFIG_DIR}/**`, `${DEFAULT_SYMLINK}/**`];
 }
 
 function registerWatcher(workspaceRoot: string, pattern: string): void {

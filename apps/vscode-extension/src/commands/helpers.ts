@@ -23,6 +23,13 @@ export async function openPath(path: string): Promise<void> {
   await vscode.window.showTextDocument(document);
 }
 
+export async function openExternalFolder(path: string): Promise<void> {
+  const opened = await vscode.env.openExternal(vscode.Uri.file(path));
+  if (!opened) {
+    throw new Error(`${APP_NAME}: could not open folder`);
+  }
+}
+
 export function formatActionError(error: BranchContextActionError): string {
   if (error.reason === 'not_initialized') {
     return `${APP_NAME}: no .bctx config found`;

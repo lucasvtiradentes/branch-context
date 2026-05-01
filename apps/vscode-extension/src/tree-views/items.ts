@@ -6,14 +6,21 @@ import { onDidChangeState } from '../core/state';
 
 const MAX_DIRECTORY_ITEMS = 200;
 
-type BranchContextTreeNodeKind = 'message' | 'file' | 'folder' | 'context' | 'template' | 'config';
+type BranchContextTreeNodeKind = 'message' | 'file' | 'folder' | 'group' | 'context' | 'template';
 
-type BranchContextTreeNode = {
+export type BranchContextTreeNode = {
   label: string;
   kind: BranchContextTreeNodeKind;
   path?: string;
+  branch?: string;
+  branchKey?: string;
+  archived?: boolean;
+  current?: boolean;
+  local?: boolean;
+  remote?: boolean;
+  contextValue?: string;
   description?: string;
-  tooltip?: string;
+  tooltip?: string | vscode.MarkdownString;
   icon?: vscode.ThemeIcon;
   command?: vscode.Command;
   children?: () => BranchContextTreeNode[];
@@ -39,7 +46,7 @@ export class StateTreeProvider
 
     item.description = node.description;
     item.tooltip = node.tooltip ?? node.path;
-    item.contextValue = node.kind;
+    item.contextValue = node.contextValue ?? node.kind;
     item.iconPath = node.icon;
     item.command = node.command;
 
@@ -72,34 +79,60 @@ export function createMessageNode(label: string): BranchContextTreeNode {
   };
 }
 
+export function createGroupNode(
+  label: string,
+  children: BranchContextTreeNode[],
+  description?: string,
+): BranchContextTreeNode {
+  return {
+    label,
+    kind: 'group',
+    description,
+    icon: new vscode.ThemeIcon('folder'),
+    children: () => children,
+  };
+}
+
+type ContextNodeOptions = {
+  description?: string;
+  tooltip?: string | vscode.MarkdownString;
+  icon?: vscode.ThemeIcon;
+  branch?: string;
+  branchKey?: string;
+  archived?: boolean;
+  current?: boolean;
+  local?: boolean;
+  remote?: boolean;
+  contextValue?: string;
+};
+
 export function createContextNode(
   label: string,
   contextDir: string,
-  description?: string,
+  options?: ContextNodeOptions,
 ): BranchContextTreeNode {
-  const contextFile = join(contextDir, CONTEXT_FILE_NAME);
   return {
     label,
     kind: 'context',
     path: contextDir,
-    description,
-    tooltip: contextDir,
-    icon: new vscode.ThemeIcon('git-branch'),
-    command: existsSync(contextFile) ? openFileCommand(contextFile) : undefined,
+    ...options,
+    tooltip: options?.tooltip ?? contextDir,
+    icon: options?.icon ?? new vscode.ThemeIcon('git-branch'),
     children: () => readDirectoryNodes(contextDir),
   };
 }
 
 export function createTemplateNode(label: string, templateDir: string): BranchContextTreeNode {
   const contextFile = join(templateDir, CONTEXT_FILE_NAME);
+  const hasContextFile = existsSync(contextFile);
+  const path = hasContextFile ? contextFile : templateDir;
   return {
     label,
     kind: 'template',
-    path: templateDir,
-    tooltip: templateDir,
+    path,
+    tooltip: path,
     icon: new vscode.ThemeIcon('symbol-namespace'),
-    command: existsSync(contextFile) ? openFileCommand(contextFile) : undefined,
-    children: () => readDirectoryNodes(templateDir),
+    command: hasContextFile ? openFileCommand(contextFile) : undefined,
   };
 }
 
@@ -111,14 +144,6 @@ function createFileNode(path: string, label = basename(path)): BranchContextTree
     tooltip: path,
     icon: new vscode.ThemeIcon('file'),
     command: openFileCommand(path),
-  };
-}
-
-export function createConfigNode(path: string): BranchContextTreeNode {
-  return {
-    ...createFileNode(path, basename(path)),
-    kind: 'config',
-    icon: new vscode.ThemeIcon('settings-gear'),
   };
 }
 

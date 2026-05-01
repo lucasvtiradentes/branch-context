@@ -252,3 +252,11 @@ export function deleteBranchMeta(workspace: string, branchKey: string) {
     saveMeta(getMetaPath(workspace), meta);
   }
 }
+
+export function deleteArchivedBranchMeta(workspace: string, branchKey: string) {
+  const archived = loadArchivedMeta(workspace);
+  if (branchKey in archived) {
+    delete archived[branchKey];
+    saveMeta(getArchivedMetaPath(workspace), archived);
+  }
+}

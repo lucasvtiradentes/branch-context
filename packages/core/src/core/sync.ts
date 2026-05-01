@@ -8,6 +8,7 @@ import {
   readFileSync,
   readlinkSync,
   renameSync,
+  rmSync,
   symlinkSync,
   unlinkSync,
   writeFileSync,
@@ -23,7 +24,13 @@ import {
   TEMPLATE_FILE_EXTENSIONS,
 } from '../constants';
 import { Config, getBranchesDir, getDefaultTemplate, getTemplateDir } from '../data/config';
-import { archiveBranchMeta, createBranchMeta, unarchiveBranchMeta } from '../data/meta';
+import {
+  archiveBranchMeta,
+  createBranchMeta,
+  deleteArchivedBranchMeta,
+  deleteBranchMeta,
+  unarchiveBranchMeta,
+} from '../data/meta';
 import { getTemplateVariables, renderTemplateContent } from '../utils/template';
 
 export type CreateBranchContextResult =
@@ -275,6 +282,23 @@ export function unarchiveBranch(workspace: string, branchName: string) {
 
   renameSync(src, dst);
   unarchiveBranchMeta(workspace, branchName);
+  return true;
+}
+
+export function deleteBranchContext(workspace: string, branchName: string, archived = false) {
+  const rootDir = archived ? getArchivedDir(workspace) : getBranchesDir(workspace);
+  const contextDir = join(rootDir, branchName);
+
+  if (!existsSync(contextDir)) {
+    return false;
+  }
+
+  rmSync(contextDir, { recursive: true, force: true });
+  if (archived) {
+    deleteArchivedBranchMeta(workspace, branchName);
+  } else {
+    deleteBranchMeta(workspace, branchName);
+  }
   return true;
 }
 

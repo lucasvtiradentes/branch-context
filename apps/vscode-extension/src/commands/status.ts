@@ -15,8 +15,9 @@ export function registerStatusCommand(): vscode.Disposable {
 
       const errors = state.status.issues.filter((issue) => issue.level === 'error').length;
       const warnings = state.status.issues.filter((issue) => issue.level === 'warning').length;
+      const contextCount = state.recentContexts.length + state.archivedContexts.length;
       await vscode.window.showInformationMessage(
-        `${APP_NAME}: ${state.currentBranch ?? 'no branch'} | ${state.recentContexts.length} contexts | ${state.templates.length} templates | ${errors} errors | ${warnings} warnings`,
+        `${APP_NAME}: ${state.currentBranch ?? 'no branch'} | ${contextCount} contexts | ${state.templates.length} templates | ${errors} errors | ${warnings} warnings`,
       );
     } catch (error) {
       await vscode.window.showErrorMessage(formatError(error));

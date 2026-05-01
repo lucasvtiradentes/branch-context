@@ -14,6 +14,7 @@ import {
   Config,
   createBranchContext,
   DEFAULT_SYMLINK,
+  deleteBranchContext,
   getBranchDir,
   getBranchRelPath,
   getCurrentBase,
@@ -216,6 +217,18 @@ describe('sync parity', () => {
     archiveBranch(workspace, 'feature-archived');
     expect(syncBranch(workspace, 'feature/archived').create_result).toBe('restored_from_archive');
     expect(readFileSync(join(branchDir, 'context.md'), 'utf8')).toBe('RESTORE ME');
+  });
+
+  it('deletes active and archived branch contexts', () => {
+    const workspace = createWorkspace();
+    createBranchContext(workspace, 'feature/active');
+    createBranchContext(workspace, 'feature/archived');
+    archiveBranch(workspace, 'feature-archived');
+
+    expect(deleteBranchContext(workspace, 'feature-active')).toBe(true);
+    expect(deleteBranchContext(workspace, 'feature-archived', true)).toBe(true);
+    expect(branchContextExists(workspace, 'feature/active')).toBe(false);
+    expect(listArchivedBranches(workspace)).not.toContain('feature-archived');
   });
 
   it('syncs current branch through service', () => {

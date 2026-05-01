@@ -4,13 +4,16 @@ import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
 import { getCurrentBranch } from '../core/hooks';
 import {
+  archiveBranch,
   type CreateBranchContextResult,
   createBranchContext,
+  deleteBranchContext,
   getBranchDir,
   type ResetBranchContextResult,
   resetBranchContext,
   sanitizeBranchName,
   type UpdateSymlinkResult,
+  unarchiveBranch,
   updateSymlink,
 } from '../core/sync';
 import { getBaseBranch, saveBaseBranch } from '../data/branch-base';
@@ -86,6 +89,13 @@ export type ListAvailableTemplatesResult =
   | {
       ok: true;
       templates: string[];
+    }
+  | BranchContextActionError;
+
+export type ContextActionResult =
+  | {
+      ok: true;
+      branchKey: string;
     }
   | BranchContextActionError;
 
@@ -224,6 +234,55 @@ export function listAvailableTemplates(gitRoot: string): ListAvailableTemplatesR
   };
 }
 
+export function archiveContextByKey(gitRoot: string, branchKey: string): ContextActionResult {
+  if (!configExists(gitRoot)) {
+    return notInitialized();
+  }
+
+  if (!archiveBranch(gitRoot, branchKey)) {
+    return missingContext(branchKey);
+  }
+
+  return {
+    ok: true,
+    branchKey,
+  };
+}
+
+export function restoreContextByKey(gitRoot: string, branchKey: string): ContextActionResult {
+  if (!configExists(gitRoot)) {
+    return notInitialized();
+  }
+
+  if (!unarchiveBranch(gitRoot, branchKey)) {
+    return missingContext(branchKey);
+  }
+
+  return {
+    ok: true,
+    branchKey,
+  };
+}
+
+export function deleteContextByKey(
+  gitRoot: string,
+  branchKey: string,
+  archived = false,
+): ContextActionResult {
+  if (!configExists(gitRoot)) {
+    return notInitialized();
+  }
+
+  if (!deleteBranchContext(gitRoot, branchKey, archived)) {
+    return missingContext(branchKey);
+  }
+
+  return {
+    ok: true,
+    branchKey,
+  };
+}
+
 type InitializedCurrentBranch =
   | {
       ok: true;
@@ -287,5 +346,14 @@ function notInitialized(): BranchContextActionError {
     ok: false,
     reason: 'not_initialized',
     message: 'not initialized',
+  };
+}
+
+function missingContext(branchKey: string): BranchContextActionError {
+  return {
+    ok: false,
+    reason: 'missing_context',
+    message: `no context for '${branchKey}'`,
+    branch: branchKey,
   };
 }

@@ -158,11 +158,7 @@ function patchWhenClause(value: string | undefined) {
     return value;
   }
 
-  return value
-    .split(`view == ${APP_ID}.`)
-    .join(`view == ${DEV_APP_ID}.`)
-    .split(`view == ${APP_ID}`)
-    .join(`view == ${DEV_APP_ID}`);
+  return value.replaceAll(`view == ${APP_ID}.`, `view == ${DEV_APP_ID}.`);
 }
 
 function installIntoEditors() {

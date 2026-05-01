@@ -6,9 +6,11 @@ import { initializeBranchContextState } from './core/state';
 import { initializeBranchContextWatcher } from './core/watcher';
 import { initializeStatusBar } from './status-bar';
 import { initializeTreeViews } from './tree-views';
+import { initializeContextsGroupBy } from './tree-views/contexts';
 
 function initializeCore(context: vscode.ExtensionContext): void {
   initializeBranchContextState(context);
+  initializeContextsGroupBy(context);
 }
 
 function initializeUi(context: vscode.ExtensionContext): void {

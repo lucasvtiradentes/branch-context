@@ -1,6 +1,7 @@
+export { CONTEXT_FILE_NAME } from '@branch-context/core/constants';
+
 const APP_ID = 'branch-context';
 export const APP_NAME = 'Branch Context';
-export const CONTEXT_FILE_NAME = 'context.md';
 export const STATUS_BAR_PRIORITY = 100;
 export const STATUS_BAR_MAX_CONTEXT_LENGTH = 40;
 
@@ -11,16 +12,21 @@ export const commandIds = {
   setBase: `${APP_ID}.setBase`,
   applyTemplate: `${APP_ID}.applyTemplate`,
   openConfig: `${APP_ID}.openConfig`,
-  refreshViews: `${APP_ID}.refreshViews`,
+  openCurrentContextFolder: `${APP_ID}.openCurrentContextFolder`,
+  groupContextsBy: `${APP_ID}.groupContextsBy`,
+  checkoutContextBranch: `${APP_ID}.checkoutContextBranch`,
+  openContext: `${APP_ID}.openContext`,
+  revealContextFolder: `${APP_ID}.revealContextFolder`,
+  archiveContext: `${APP_ID}.archiveContext`,
+  restoreContext: `${APP_ID}.restoreContext`,
+  deleteContext: `${APP_ID}.deleteContext`,
   showDetails: `${APP_ID}.internal.showDetails`,
 } as const;
 
 export const viewIds = {
   currentContext: `${APP_ID}.currentContext`,
-  recentContexts: `${APP_ID}.recentContexts`,
-  archivedContexts: `${APP_ID}.archivedContexts`,
+  contexts: `${APP_ID}.contexts`,
   templates: `${APP_ID}.templates`,
-  config: `${APP_ID}.config`,
 } as const;
 
 export const codeLensTitles = {

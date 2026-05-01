@@ -1,7 +1,8 @@
-import { existsSync, lstatSync, readlinkSync } from 'node:fs';
+import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { type BranchInfo, collectBranchInfo } from '../commands/_branches';
 import {
+  CONTEXT_FILE_NAME,
   DEFAULT_SYMLINK,
   DEFAULT_TEMPLATE,
   HOOK_POST_CHECKOUT,
@@ -10,7 +11,13 @@ import {
 import { getCurrentBranch, isHookInstalled } from '../core/hooks';
 import { getArchivedDir, getBranchDir, getBranchRelPath, listArchivedBranches } from '../core/sync';
 import { getBaseBranch } from '../data/branch-base';
-import { configExists, getBranchesDir, getTemplatesDir, listTemplates } from '../data/config';
+import {
+  Config,
+  configExists,
+  getBranchesDir,
+  getTemplatesDir,
+  listTemplates,
+} from '../data/config';
 import { loadArchivedMeta, loadBranchMeta } from '../data/meta';
 
 export type BranchContextStatusIssue = {
@@ -34,6 +41,10 @@ export type BranchContextContextSummary = {
   branchKey: string;
   contextDir: string;
   updatedAt: string | null;
+  template: string;
+  commitCount: number;
+  changedFileCount: number;
+  sizeBytes: number;
   current: boolean;
   local: boolean;
   remote: boolean;
@@ -44,6 +55,10 @@ export type BranchContextArchivedContextSummary = {
   branchKey: string;
   contextDir: string;
   updatedAt: string | null;
+  template: string;
+  commitCount: number;
+  changedFileCount: number;
+  sizeBytes: number;
 };
 
 export type BranchContextStatus = {
@@ -145,16 +160,23 @@ function getContextSummaries(
   contexts: Map<string, BranchInfo>,
 ): BranchContextContextSummary[] {
   const meta = loadBranchMeta(gitRoot);
+  const config = Config.load(gitRoot);
+  const resolveTemplate = createContextTemplateResolver(gitRoot, config);
 
   return Array.from(contexts.entries())
     .filter(([, info]) => info.context)
     .map(([branch, info]) => {
       const branchMeta = meta[info.sanitized];
+      const contextDir = join(getBranchesDir(gitRoot), info.sanitized);
       return {
         branch,
         branchKey: info.sanitized,
-        contextDir: join(getBranchesDir(gitRoot), info.sanitized),
+        contextDir,
         updatedAt: branchMeta?.updated_at ?? null,
+        template: resolveTemplate(branch, contextDir),
+        commitCount: countMetaLines(branchMeta?.commits),
+        changedFileCount: countMetaLines(branchMeta?.changed_files),
+        sizeBytes: getDirectorySize(contextDir),
         current: branch === currentBranch,
         local: info.local,
         remote: info.remote,
@@ -166,18 +188,180 @@ function getContextSummaries(
 function getArchivedContextSummaries(gitRoot: string): BranchContextArchivedContextSummary[] {
   const archivedMeta = loadArchivedMeta(gitRoot);
   const archivedDir = getArchivedDir(gitRoot);
+  const config = Config.load(gitRoot);
+  const resolveTemplate = createContextTemplateResolver(gitRoot, config);
 
   return listArchivedBranches(gitRoot)
     .map((branchKey) => {
       const meta = archivedMeta[branchKey];
+      const branch = meta?.branch ?? branchKey;
+      const contextDir = join(archivedDir, branchKey);
       return {
-        branch: meta?.branch ?? branchKey,
+        branch,
         branchKey,
-        contextDir: join(archivedDir, branchKey),
+        contextDir,
         updatedAt: meta?.updated_at ?? null,
+        template: resolveTemplate(branch, contextDir),
+        commitCount: countMetaLines(meta?.commits),
+        changedFileCount: countMetaLines(meta?.changed_files),
+        sizeBytes: getDirectorySize(contextDir),
       };
     })
     .sort(compareArchivedContexts);
+}
+
+type ContentSignature = {
+  comment: string | null;
+  headings: string[];
+};
+
+type TemplateSignature = ContentSignature & {
+  name: string;
+};
+
+function createContextTemplateResolver(gitRoot: string, config: Config) {
+  const templates = listTemplates(gitRoot);
+  const templateSet = new Set(templates);
+  const templateSignatures = templates.flatMap((template) => {
+    const content = readTextFile(join(getTemplatesDir(gitRoot), template, CONTEXT_FILE_NAME));
+    return content ? [{ name: template, ...createContentSignature(content) }] : [];
+  });
+
+  return (branch: string, contextDir: string) => {
+    const fallback = config.getTemplateForBranch(branch);
+    const content = readTextFile(join(contextDir, CONTEXT_FILE_NAME));
+    if (!content) {
+      return fallback;
+    }
+
+    const frontmatterTemplate = getFrontmatterTemplate(content);
+    if (frontmatterTemplate && templateSet.has(frontmatterTemplate)) {
+      return frontmatterTemplate;
+    }
+
+    return inferTemplateFromContent(content, templateSignatures, fallback) ?? fallback;
+  };
+}
+
+function inferTemplateFromContent(
+  content: string,
+  templateSignatures: TemplateSignature[],
+  fallback: string,
+) {
+  const signature = createContentSignature(content);
+  const scores = templateSignatures
+    .map((template) => ({ name: template.name, score: scoreTemplate(signature, template) }))
+    .filter((template) => template.score > 0)
+    .sort((left, right) => right.score - left.score || left.name.localeCompare(right.name));
+
+  const best = scores[0];
+  if (!best) {
+    return null;
+  }
+
+  const tied = scores.filter((template) => template.score === best.score);
+  return tied.find((template) => template.name === fallback)?.name ?? best.name;
+}
+
+function scoreTemplate(context: ContentSignature, template: ContentSignature) {
+  let score = 0;
+
+  if (context.comment && template.comment) {
+    if (context.comment === template.comment) {
+      score += 1000;
+    } else if (
+      context.comment.includes(template.comment) ||
+      template.comment.includes(context.comment)
+    ) {
+      score += 200;
+    }
+  }
+
+  const contextHeadings = new Set(context.headings);
+  for (const heading of template.headings) {
+    if (contextHeadings.has(heading)) {
+      score += 10;
+    }
+  }
+
+  if (
+    template.headings.length > 0 &&
+    template.headings.every((heading) => contextHeadings.has(heading))
+  ) {
+    score += 50;
+  }
+
+  return score;
+}
+
+function createContentSignature(content: string): ContentSignature {
+  return {
+    comment: normalizeBlock(content.match(/<!--([\s\S]*?)-->/)?.[1] ?? null),
+    headings: Array.from(content.matchAll(/^##\s+(.+)$/gm)).map((match) =>
+      normalizeInline(match[1] ?? ''),
+    ),
+  };
+}
+
+function getFrontmatterTemplate(content: string) {
+  const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1];
+  if (!frontmatter) {
+    return null;
+  }
+
+  for (const line of frontmatter.split(/\r?\n/)) {
+    const match = line.trim().match(/^template:\s*['"]?([^'"]+)['"]?$/);
+    if (match?.[1]) {
+      return match[1].trim();
+    }
+  }
+
+  return null;
+}
+
+function normalizeBlock(value: string | null) {
+  return value
+    ? value
+        .replace(/\r\n/g, '\n')
+        .trim()
+        .replace(/[ \t]+$/gm, '')
+    : null;
+}
+
+function normalizeInline(value: string) {
+  return value.trim().replace(/\s+/g, ' ');
+}
+
+function readTextFile(path: string) {
+  try {
+    return readFileSync(path, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+function countMetaLines(value: string | null | undefined): number {
+  if (!value?.trim()) {
+    return 0;
+  }
+
+  return value.split('\n').filter((line) => line.trim()).length;
+}
+
+function getDirectorySize(path: string): number {
+  try {
+    const stats = lstatSync(path);
+    if (!stats.isDirectory()) {
+      return stats.size;
+    }
+
+    return readdirSync(path).reduce(
+      (total, entry) => total + getDirectorySize(join(path, entry)),
+      0,
+    );
+  } catch {
+    return 0;
+  }
 }
 
 function compareContexts(
