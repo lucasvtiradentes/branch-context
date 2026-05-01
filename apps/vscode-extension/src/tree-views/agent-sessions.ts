@@ -106,7 +106,7 @@ export function createAgentSessionsProvider(): StateTreeProvider {
 function createGroupNode(
   label: string,
   sessions: AgentSessionViewItem[],
-  icon: vscode.ThemeIcon,
+  icon: vscode.TreeItem['iconPath'],
   collapsibleState?: vscode.TreeItemCollapsibleState,
 ) {
   return {
@@ -133,10 +133,7 @@ function createAgentSessionNode(item: AgentSessionViewItem) {
     sessionId: session.sessionId,
     description,
     tooltip: createAgentTooltip(item),
-    icon: new vscode.ThemeIcon(
-      session.provider === 'codex' ? 'terminal' : 'sparkle',
-      active ? new vscode.ThemeColor('errorForeground') : undefined,
-    ),
+    icon: getProviderIcon(session.provider, active),
     contextValue: 'branchContext.agentSession resumable',
     command: path
       ? {
@@ -191,13 +188,13 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
     .map(([provider, sessions]) => ({
       label: formatProviderName(provider),
       sessions,
-      icon: new vscode.ThemeIcon(provider === 'codex' ? 'terminal' : 'sparkle'),
+      icon: getProviderIcon(provider, false),
     }))
     .map((group) => createAgentSessionGroupNode(group, vscode.TreeItemCollapsibleState.Expanded));
 }
 
 function createAgentSessionGroupNode(
-  group: { label: string; sessions: AgentSessionViewItem[]; icon: vscode.ThemeIcon },
+  group: { label: string; sessions: AgentSessionViewItem[]; icon: vscode.TreeItem['iconPath'] },
   collapsibleState?: vscode.TreeItemCollapsibleState,
 ) {
   return createGroupNode(group.label, group.sessions, group.icon, collapsibleState);
@@ -484,6 +481,41 @@ function formatProviderName(provider: AgentSession['provider']) {
   }
 
   return provider;
+}
+
+function getProviderIcon(provider: AgentSession['provider'], active: boolean) {
+  if (provider === 'codex') {
+    return createLetterIcon('CX', active);
+  }
+
+  if (provider === 'claude') {
+    return createLetterIcon('CC', active);
+  }
+
+  return new vscode.ThemeIcon('account');
+}
+
+function createLetterIcon(label: string, active: boolean) {
+  const color = getProviderIconColor(label, active);
+  return vscode.Uri.parse(
+    `data:image/svg+xml;utf8,${encodeURIComponent(createLetterIconSvg(label, color))}`,
+  );
+}
+
+function getProviderIconColor(label: string, active: boolean) {
+  if (label === 'CC') {
+    return active ? '#f0883e' : '#a3714d';
+  }
+
+  if (label === 'CX') {
+    return active ? '#58a6ff' : '#6e8fb8';
+  }
+
+  return active ? '#f0883e' : '#8b949e';
+}
+
+function createLetterIconSvg(label: string, color: string) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><text x="8" y="11.5" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="8.5" font-weight="700" fill="${color}">${label}</text></svg>`;
 }
 
 function createAgentTooltip(item: AgentSessionViewItem) {
