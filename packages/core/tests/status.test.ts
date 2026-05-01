@@ -173,6 +173,18 @@ author: {{author}}
     expect(capture.output).toContain('symlink valid');
   });
 
+  it('reports missing configured base ref', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    new Config({ defaultBaseBranch: 'origin/main', sound: false }).save(repo);
+    syncBranch(repo, 'main');
+    const status = getStatus(repo);
+    expect(status.issues).toContainEqual({
+      level: 'error',
+      message: 'base branch not found: origin/main',
+    });
+  });
+
   it('returns error when hook missing', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);

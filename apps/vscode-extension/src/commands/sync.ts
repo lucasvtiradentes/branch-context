@@ -24,6 +24,7 @@ export function registerSyncCommand(): vscode.Disposable {
         logger.warning(
           `sync command failed: reason=${result.reason} branch=${result.branch ?? 'none'} message=${result.message}`,
         );
+        refreshBranchContextState();
         await vscode.window.showErrorMessage(formatActionError(result));
         return;
       }

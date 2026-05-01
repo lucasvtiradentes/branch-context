@@ -71,7 +71,7 @@ describe('config', () => {
     const workspace = createTempDir();
     copyInitConfig(workspace);
     const loaded = Config.load(workspace);
-    expect(loaded.defaultBaseBranch).toBe('origin/main');
+    expect(loaded.defaultBaseBranch).toBe('main');
     expect(loaded.templateRules).toContainEqual({ prefix: 'feature/', template: 'feature' });
   });
 

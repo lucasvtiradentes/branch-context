@@ -273,23 +273,23 @@ describe('sync parity', () => {
     expect(existsSync(join(repo, DEFAULT_SYMLINK, 'context.md'))).toBe(true);
   });
 
-  it('falls back from missing origin main to local main default base', () => {
+  it('reports missing configured base through sync service', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
-    expect(gitCheckout(repo, 'feature/base-fallback', true).status).toBe(0);
-    writeFileSync(join(repo, 'base-fallback.txt'), 'changed');
+    new Config({ defaultBaseBranch: 'origin/main', sound: false }).save(repo);
+    expect(gitCheckout(repo, 'feature/missing-base', true).status).toBe(0);
+    writeFileSync(join(repo, 'missing-base.txt'), 'changed');
     expect(gitAdd(repo).status).toBe(0);
-    expect(gitCommit(repo, 'feat: base fallback').status).toBe(0);
+    expect(gitCommit(repo, 'feat: missing base').status).toBe(0);
     const result = syncCurrentBranch(repo, { sound: false });
-    expect(result.ok).toBe(true);
-    if (!result.ok) {
+    expect(result.ok).toBe(false);
+    if (result.ok) {
       return;
     }
-    expect(result.baseBranch).toBe('main');
-    expect(result.updates).toHaveLength(2);
-    const content = readFileSync(join(repo, DEFAULT_SYMLINK, 'context.md'), 'utf8');
-    expect(content).toContain('feat: base fallback');
-    expect(content).toContain('base-fallback.txt');
+    expect(result.reason).toBe('base_branch_not_found');
+    expect(result.baseBranch).toBe('origin/main');
+    expect(result.branch).toBe('feature/missing-base');
+    expect(existsSync(join(repo, DEFAULT_SYMLINK, 'context.md'))).toBe(true);
   });
 
   it('reports missing config through sync service', () => {

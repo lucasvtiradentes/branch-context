@@ -43,6 +43,10 @@ export function formatActionError(error: BranchContextActionError): string {
     return `${APP_NAME}: no context for '${error.branch ?? 'current branch'}'. Run sync first.`;
   }
 
+  if (error.reason === 'base_branch_not_found') {
+    return `${APP_NAME}: base branch not found: ${error.baseBranch ?? 'unknown'}`;
+  }
+
   if (error.reason === 'no_templates') {
     return `${APP_NAME}: no templates found`;
   }

@@ -178,8 +178,6 @@ function getTooltip(state: BranchContextExtensionState): vscode.MarkdownString {
   tooltip.supportThemeIcons = true;
   tooltip.appendMarkdown(
     [
-      '**Branch Context**',
-      '',
       tooltipLine('Status', getStatusLabel(status)),
       tooltipLine('Branch', state.currentBranch ?? 'n/a'),
       tooltipLine('Base', state.status?.baseBranch ?? 'n/a'),
@@ -187,10 +185,26 @@ function getTooltip(state: BranchContextExtensionState): vscode.MarkdownString {
       tooltipLine('Updated', currentContext?.updatedAt ?? 'n/a'),
       tooltipLine('Commits', String(currentContext?.commitCount ?? 0)),
       tooltipLine('Files', String(currentContext?.changedFileCount ?? 0)),
-      tooltipLine('Context', state.currentContextFile ?? state.currentContextDir ?? 'n/a'),
+      ...getIssueTooltipLines(state),
     ].join('\n\n'),
   );
   return tooltip;
+}
+
+function getIssueTooltipLines(state: BranchContextExtensionState): string[] {
+  const issues = state.status?.issues ?? [];
+  if (issues.length === 0) {
+    return [];
+  }
+
+  return [
+    '',
+    '**Issues:**',
+    ...issues.map(
+      (issue) =>
+        `${issue.level === 'error' ? '$(error)' : '$(warning)'} ${escapeMarkdown(issue.message)}`,
+    ),
+  ];
 }
 
 function tooltipLine(label: string, value: string): string {

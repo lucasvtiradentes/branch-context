@@ -29,12 +29,14 @@ import {
   listTemplates,
 } from '../data/config';
 import { updateBranchMeta } from '../data/meta';
+import { gitRefExists } from '../utils/git';
 import type { PromptYesNo } from '../utils/prompt';
 
 export type BranchContextActionErrorReason =
   | 'not_initialized'
   | 'no_current_branch'
   | 'missing_context'
+  | 'base_branch_not_found'
   | 'no_templates'
   | 'template_not_found';
 
@@ -43,6 +45,7 @@ export type BranchContextActionError = {
   reason: BranchContextActionErrorReason;
   message: string;
   branch?: string;
+  baseBranch?: string;
   templates?: string[];
 };
 
@@ -173,6 +176,10 @@ export function syncCurrentBranch(
   const symlinkResult = updateSymlink(gitRoot, current.branch);
   const contextDir = getBranchDir(gitRoot, current.branch);
   const baseBranch = getBaseBranch(gitRoot, contextDir);
+  const baseBranchError = validateBaseBranch(gitRoot, current.branch, baseBranch);
+  if (baseBranchError) {
+    return baseBranchError;
+  }
   const config = Config.load(gitRoot);
 
   updateBranchMeta(gitRoot, branchKey, baseBranch, config.commitDescription);
@@ -270,6 +277,10 @@ export function applyTemplateToCurrentBranch(
   const branchKey = sanitizeBranchName(current.branch);
   const contextDir = getBranchDir(gitRoot, current.branch);
   const baseBranch = getBaseBranch(gitRoot, contextDir);
+  const baseBranchError = validateBaseBranch(gitRoot, current.branch, baseBranch);
+  if (baseBranchError) {
+    return baseBranchError;
+  }
 
   return {
     ok: true,
@@ -413,6 +424,24 @@ function addToGitignore(gitRoot: string, value: string) {
 
 async function yes(): Promise<boolean> {
   return true;
+}
+
+function validateBaseBranch(
+  gitRoot: string,
+  branch: string,
+  baseBranch: string,
+): BranchContextActionError | null {
+  if (gitRefExists(gitRoot, baseBranch)) {
+    return null;
+  }
+
+  return {
+    ok: false,
+    reason: 'base_branch_not_found',
+    message: `base branch not found: ${baseBranch}`,
+    branch,
+    baseBranch,
+  };
 }
 
 function notInitialized(): BranchContextActionError {

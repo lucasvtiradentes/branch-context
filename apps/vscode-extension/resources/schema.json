@@ -37,7 +37,10 @@
             "description": "Template directory name to use when the branch prefix matches"
           }
         },
-        "required": ["prefix", "template"],
+        "required": [
+          "prefix",
+          "template"
+        ],
         "additionalProperties": false,
         "description": "Template selection rule"
       }

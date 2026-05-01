@@ -19,6 +19,7 @@ import {
   listTemplates,
 } from '../data/config';
 import { loadArchivedMeta, loadBranchMeta } from '../data/meta';
+import { gitRefExists } from '../utils/git';
 
 export type BranchContextStatusIssue = {
   level: 'error' | 'warning';
@@ -97,6 +98,7 @@ export function getStatus(gitRoot: string): BranchContextStatus {
   const recentContexts = initialized ? getContextSummaries(gitRoot, currentBranch, contexts) : [];
   const archivedContexts = initialized ? getArchivedContextSummaries(gitRoot) : [];
   const archivedCount = archivedContexts.length;
+  const baseBranch = currentContextDir ? getBaseBranch(gitRoot, currentContextDir) : null;
   const issues: BranchContextStatusIssue[] = [];
 
   if (!initialized) {
@@ -126,6 +128,10 @@ export function getStatus(gitRoot: string): BranchContextStatus {
       issues.push({ level: 'warning', message: 'symlink not set' });
     }
 
+    if (baseBranch && !gitRefExists(gitRoot, baseBranch)) {
+      issues.push({ level: 'error', message: `base branch not found: ${baseBranch}` });
+    }
+
     const orphanCount = Array.from(contexts.entries()).filter(
       ([, info]) => info.context && !info.local,
     ).length;
@@ -140,7 +146,7 @@ export function getStatus(gitRoot: string): BranchContextStatus {
     currentBranch,
     currentContextDir,
     currentContextRelPath,
-    baseBranch: currentContextDir ? getBaseBranch(gitRoot, currentContextDir) : null,
+    baseBranch,
     templates,
     templatesDirExists,
     defaultTemplateExists,
