@@ -45,6 +45,8 @@ export async function cmdInit(_args: string[]) {
   const checkoutResult = await installHook(gitRoot, HOOK_POST_CHECKOUT);
   if (checkoutResult === 'installed') {
     console.log(`Hook installed: ${HOOK_POST_CHECKOUT}`);
+  } else if (checkoutResult === 'updated') {
+    console.log(`Hook updated: ${HOOK_POST_CHECKOUT}`);
   } else if (checkoutResult === 'appended') {
     console.log(`Hook appended: ${HOOK_POST_CHECKOUT}`);
   } else if (checkoutResult === 'already_installed') {
@@ -58,6 +60,8 @@ export async function cmdInit(_args: string[]) {
   const commitResult = await installHook(gitRoot, HOOK_POST_COMMIT);
   if (commitResult === 'installed') {
     console.log(`Hook installed: ${HOOK_POST_COMMIT}`);
+  } else if (commitResult === 'updated') {
+    console.log(`Hook updated: ${HOOK_POST_COMMIT}`);
   } else if (commitResult === 'appended') {
     console.log(`Hook appended: ${HOOK_POST_COMMIT}`);
   } else if (commitResult === 'hook_exists') {

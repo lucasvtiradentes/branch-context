@@ -25,6 +25,7 @@ export type HookInstallResult =
   | 'already_installed'
   | 'hook_exists'
   | 'appended'
+  | 'updated'
   | 'skipped';
 export type HookUninstallResult = 'uninstalled' | 'not_installed' | 'not_managed';
 
@@ -129,6 +130,12 @@ function getHookTemplate(hookType: HookType) {
   return loadHookTemplateResource(hookType);
 }
 
+function getStandaloneHookContent(hookType: HookType) {
+  return getHookTemplate(hookType)
+    .replace('{marker}', HOOK_MARKER)
+    .replace('{callback}', getCallback(hookType));
+}
+
 const SNIPPET_END_MARKER = '# branch-ctx-end';
 
 function getAppendSnippet(hookType: HookType) {
@@ -147,6 +154,14 @@ ${HOOK_MARKER}
 ${callback}
 ${SNIPPET_END_MARKER}
 `;
+}
+
+function replaceBctxSnippet(content: string, hookType: HookType) {
+  const pattern = new RegExp(
+    `${escapeRegex(HOOK_MARKER)}.*?${escapeRegex(SNIPPET_END_MARKER)}`,
+    'gs',
+  );
+  return content.replace(pattern, getAppendSnippet(hookType).trim());
 }
 
 export async function installHook(
@@ -186,6 +201,14 @@ export async function installHook(
   if (existsSync(hookPath)) {
     const existing = readFileSync(hookPath, 'utf8');
     if (existing.includes(HOOK_MARKER)) {
+      const updated = isStandaloneBctxHook(existing)
+        ? getStandaloneHookContent(hookType)
+        : replaceBctxSnippet(existing, hookType);
+      if (updated !== existing) {
+        writeFileSync(hookPath, updated);
+        chmodSync(hookPath, statSync(hookPath).mode | 0o111);
+        return 'updated';
+      }
       return 'already_installed';
     }
 
@@ -203,11 +226,7 @@ export async function installHook(
     return 'appended';
   }
 
-  const content = getHookTemplate(hookType)
-    .replace('{marker}', HOOK_MARKER)
-    .replace('{callback}', getCallback(hookType));
-
-  writeFileSync(hookPath, content);
+  writeFileSync(hookPath, getStandaloneHookContent(hookType));
   chmodSync(hookPath, statSync(hookPath).mode | 0o111);
 
   if (useCustom && excludeConfirmed.get(gitRootPath)) {

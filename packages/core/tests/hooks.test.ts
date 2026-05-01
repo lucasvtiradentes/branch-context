@@ -28,6 +28,19 @@ describe('post-checkout hook', () => {
     expect(await installHook(repo, HOOK_POST_CHECKOUT)).toBe('already_installed');
   });
 
+  it('updates managed hook callback when stale', async () => {
+    const repo = createGitRepo();
+    const hookPath = getHookPath(repo, HOOK_POST_CHECKOUT);
+    writeFileSync(
+      hookPath,
+      '#!/bin/bash\n# branch-ctx-managed\n\n"/missing/bctx" on-checkout "$@"\n',
+    );
+    expect(await installHook(repo, HOOK_POST_CHECKOUT)).toBe('updated');
+    const content = readFileSync(hookPath, 'utf8');
+    expect(content).not.toContain('/missing/bctx');
+    expect(content).toContain('on-checkout');
+  });
+
   it('does not append unmanaged hook when declined', async () => {
     const repo = createGitRepo();
     writeFileSync(getHookPath(repo, HOOK_POST_CHECKOUT), "#!/bin/bash\necho 'existing hook'");
@@ -43,6 +56,20 @@ describe('post-checkout hook', () => {
     expect(content).toContain('existing hook');
     expect(content).toContain(HOOK_MARKER);
     expect(content).toContain('on-checkout');
+  });
+
+  it('updates appended managed snippet when stale', async () => {
+    const repo = createGitRepo();
+    const hookPath = getHookPath(repo, HOOK_POST_CHECKOUT);
+    writeFileSync(
+      hookPath,
+      '#!/bin/bash\necho \'existing hook\'\n# branch-ctx-managed\n"/missing/bctx" on-checkout\n# branch-ctx-end\n',
+    );
+    expect(await installHook(repo, HOOK_POST_CHECKOUT)).toBe('updated');
+    const content = readFileSync(hookPath, 'utf8');
+    expect(content).toContain('existing hook');
+    expect(content).not.toContain('/missing/bctx');
+    expect(content).toContain('# branch-ctx-end');
   });
 
   it('checks if hook is installed', async () => {
@@ -96,6 +123,16 @@ describe('post-commit hook', () => {
     expect(await installHook(repo, HOOK_POST_COMMIT)).toBe('already_installed');
   });
 
+  it('updates managed hook callback when stale', async () => {
+    const repo = createGitRepo();
+    const hookPath = getHookPath(repo, HOOK_POST_COMMIT);
+    writeFileSync(hookPath, '#!/bin/bash\n# branch-ctx-managed\n\n"/missing/bctx" on-commit\n');
+    expect(await installHook(repo, HOOK_POST_COMMIT)).toBe('updated');
+    const content = readFileSync(hookPath, 'utf8');
+    expect(content).not.toContain('/missing/bctx');
+    expect(content).toContain('on-commit');
+  });
+
   it('does not append unmanaged hook when declined', async () => {
     const repo = createGitRepo();
     writeFileSync(getHookPath(repo, HOOK_POST_COMMIT), "#!/bin/bash\necho 'existing hook'");
@@ -111,6 +148,20 @@ describe('post-commit hook', () => {
     expect(content).toContain('existing hook');
     expect(content).toContain(HOOK_MARKER);
     expect(content).toContain('on-commit');
+  });
+
+  it('updates appended managed snippet when stale', async () => {
+    const repo = createGitRepo();
+    const hookPath = getHookPath(repo, HOOK_POST_COMMIT);
+    writeFileSync(
+      hookPath,
+      '#!/bin/bash\necho \'existing hook\'\n# branch-ctx-managed\n"/missing/bctx" on-commit\n# branch-ctx-end\n',
+    );
+    expect(await installHook(repo, HOOK_POST_COMMIT)).toBe('updated');
+    const content = readFileSync(hookPath, 'utf8');
+    expect(content).toContain('existing hook');
+    expect(content).not.toContain('/missing/bctx');
+    expect(content).toContain('# branch-ctx-end');
   });
 
   it('checks if hook is installed', async () => {
