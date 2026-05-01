@@ -8,6 +8,7 @@ import {
   refreshBranchContextState,
 } from '../core/state';
 import { formatError } from '../lib/format-error';
+import { formatRelativeTime } from '../lib/format-relative-time';
 import { formatLogError, logger } from '../lib/logging';
 
 let item: vscode.StatusBarItem | undefined;
@@ -182,7 +183,7 @@ function getTooltip(state: BranchContextExtensionState): vscode.MarkdownString {
       tooltipLine('Branch', state.currentBranch ?? 'n/a'),
       tooltipLine('Base', state.status?.baseBranch ?? 'n/a'),
       tooltipLine('Template', currentContext?.template ?? 'n/a'),
-      tooltipLine('Updated', currentContext?.updatedAt ?? 'n/a'),
+      tooltipLine('Updated', formatRelativeTime(currentContext?.updatedAt ?? null)),
       tooltipLine('Commits', String(currentContext?.commitCount ?? 0)),
       tooltipLine('Files', String(currentContext?.changedFileCount ?? 0)),
       ...getIssueTooltipLines(state),
