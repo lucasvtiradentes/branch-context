@@ -8,6 +8,7 @@ import { onDidChangeState } from '../core/state';
 
 const MAX_DIRECTORY_ITEMS = 200;
 const archivedContextResourceScheme = 'branch-context-archived';
+const inactiveAgentSessionResourceScheme = 'branch-context-inactive-agent';
 
 type BranchContextTreeNodeKind =
   | 'message'
@@ -94,13 +95,18 @@ export function initializeTreeItemDecorations(context: vscode.ExtensionContext):
   context.subscriptions.push(
     vscode.window.registerFileDecorationProvider({
       provideFileDecoration(uri) {
-        if (uri.scheme !== archivedContextResourceScheme) {
+        if (
+          uri.scheme !== archivedContextResourceScheme &&
+          uri.scheme !== inactiveAgentSessionResourceScheme
+        ) {
           return undefined;
         }
 
         return new vscode.FileDecoration(
           undefined,
-          'Archived branch context',
+          uri.scheme === archivedContextResourceScheme
+            ? 'Archived branch context'
+            : 'Inactive agent session',
           new vscode.ThemeColor('disabledForeground'),
         );
       },
@@ -113,6 +119,14 @@ export function createArchivedContextResourceUri(branchKey: string): vscode.Uri 
     scheme: archivedContextResourceScheme,
     authority: 'branch',
     path: `/${branchKey}`,
+  });
+}
+
+export function createInactiveAgentSessionResourceUri(sessionId: string): vscode.Uri {
+  return vscode.Uri.from({
+    scheme: inactiveAgentSessionResourceScheme,
+    authority: 'session',
+    path: `/${sessionId}`,
   });
 }
 

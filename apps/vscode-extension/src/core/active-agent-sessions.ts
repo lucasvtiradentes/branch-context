@@ -1,3 +1,4 @@
+import { type ExecFileException, execFile } from 'node:child_process';
 import type { AgentSession } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { logger } from '../lib/logging';
@@ -6,6 +7,7 @@ import { getBranchContextState } from './state';
 const FILE_ACTIVITY_TTL_MS = 30_000;
 const CLOSED_FILE_ACTIVITY_SUPPRESS_MS = 5_000;
 const PENDING_TERMINAL_TTL_MS = 60_000;
+const PROCESS_ACTIVITY_POLL_MS = 2_000;
 
 type ActiveSessionRef = {
   key: string;
@@ -28,12 +30,17 @@ const terminalPaths = new Map<vscode.Terminal, string>();
 const executionSessions = new Map<vscode.TerminalShellExecution, ActiveSessionRef>();
 const executionPaths = new Map<vscode.TerminalShellExecution, string>();
 const pendingTerminals = new Map<vscode.TerminalShellExecution, PendingTerminalRef>();
+const activeProcessFilePaths = new Set<string>();
+let processActivityTimer: ReturnType<typeof setInterval> | undefined;
+let processActivityRefreshInFlight = false;
 
 export function initializeActiveAgentSessions(
   context: vscode.ExtensionContext,
   refreshTreeCallback: () => void,
 ): void {
   refreshTree = refreshTreeCallback;
+  refreshActiveProcessFiles();
+  processActivityTimer = setInterval(refreshActiveProcessFiles, PROCESS_ACTIVITY_POLL_MS);
 
   context.subscriptions.push(
     vscode.window.onDidCloseTerminal((terminal) => {
@@ -44,6 +51,7 @@ export function initializeActiveAgentSessions(
         if (path) {
           logger.debug(`[active-agent-sessions] terminal closed path=${path}`);
           clearActiveFilePath(path);
+          clearActiveProcessFilePath(path);
           suppressFileActivity(path);
           refreshTree?.();
           return;
@@ -85,6 +93,7 @@ export function initializeActiveAgentSessions(
           );
           terminalPaths.delete(event.terminal);
           clearActiveFilePath(path);
+          clearActiveProcessFilePath(path);
           suppressFileActivity(path);
           refreshTree?.();
         }
@@ -119,6 +128,11 @@ export function initializeActiveAgentSessions(
           clearTimeout(pending.timer);
         }
         pendingTerminals.clear();
+        if (processActivityTimer) {
+          clearInterval(processActivityTimer);
+          processActivityTimer = undefined;
+        }
+        activeProcessFilePaths.clear();
       },
     },
   );
@@ -130,6 +144,7 @@ export function isAgentSessionActive(session: AgentSession): boolean {
   return (
     activeTerminalKeys.has(key) ||
     activeFilePaths.has(path) ||
+    activeProcessFilePaths.has(path) ||
     Array.from(terminalPaths.values()).includes(path)
   );
 }
@@ -216,6 +231,7 @@ function clearActiveSession(session: ActiveSessionRef): void {
   activeTerminalKeys.delete(session.key);
   if (session.path) {
     clearActiveFilePath(session.path);
+    clearActiveProcessFilePath(session.path);
     suppressFileActivity(session.path);
   }
 }
@@ -228,6 +244,14 @@ function clearActiveFilePath(path: string): void {
   }
   logger.debug(`[active-agent-sessions] clear file active path=${path}`);
   activeFilePaths.delete(path);
+}
+
+function clearActiveProcessFilePath(path: string): void {
+  if (!activeProcessFilePaths.delete(path)) {
+    return;
+  }
+
+  logger.debug(`[active-agent-sessions] clear process active path=${path}`);
 }
 
 function suppressFileActivity(path: string): void {
@@ -267,6 +291,62 @@ function getActiveSessionRef(session: Pick<AgentSession, 'provider' | 'sessionId
 
 function getSessionKey(session: Pick<AgentSession, 'provider' | 'sessionId'>): string {
   return `${session.provider}:${session.sessionId}`;
+}
+
+function refreshActiveProcessFiles(): void {
+  if (processActivityRefreshInFlight) {
+    return;
+  }
+
+  processActivityRefreshInFlight = true;
+  execFile('lsof', ['-Fn', '-c', 'codex', '-c', 'claude'], { timeout: 2_000 }, (error, stdout) => {
+    processActivityRefreshInFlight = false;
+    if (error && !stdout && isProcessLookupTimeout(error)) {
+      return;
+    }
+
+    if (error && !stdout && activeProcessFilePaths.size === 0) {
+      return;
+    }
+
+    const nextPaths = new Set(
+      stdout
+        .split(/\r?\n/)
+        .filter((line) => line.startsWith('n') && line.endsWith('.jsonl'))
+        .map((line) => line.slice(1)),
+    );
+    if (sameSet(activeProcessFilePaths, nextPaths)) {
+      if (activeProcessFilePaths.size > 0) {
+        refreshTree?.();
+      }
+      return;
+    }
+
+    activeProcessFilePaths.clear();
+    for (const path of nextPaths) {
+      activeProcessFilePaths.add(path);
+    }
+    logger.debug(`[active-agent-sessions] process active files=${activeProcessFilePaths.size}`);
+    refreshTree?.();
+  });
+}
+
+function isProcessLookupTimeout(error: ExecFileException): boolean {
+  return error.killed === true;
+}
+
+function sameSet(left: Set<string>, right: Set<string>): boolean {
+  if (left.size !== right.size) {
+    return false;
+  }
+
+  for (const value of left) {
+    if (!right.has(value)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function formatCommandLine(commandLine: string): string {

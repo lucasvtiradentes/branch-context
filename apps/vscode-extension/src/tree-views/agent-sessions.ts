@@ -4,7 +4,11 @@ import * as vscode from 'vscode';
 import { isAgentSessionActive } from '../core/active-agent-sessions';
 import { getBranchContextState } from '../core/state';
 import { formatRelativeTime } from '../lib/format-relative-time';
-import { createMessageNode, StateTreeProvider } from './items';
+import {
+  createInactiveAgentSessionResourceUri,
+  createMessageNode,
+  StateTreeProvider,
+} from './items';
 
 const agentSessionsGroupByValues = ['flat', 'provider', 'recent', 'size'] as const;
 const agentSessionTextModeValues = ['initial', 'last'] as const;
@@ -126,6 +130,7 @@ function createAgentSessionNode(item: AgentSessionViewItem, showIcon = true) {
     description,
     tooltip: createAgentTooltip(item),
     icon: showIcon ? getProviderIcon(session.provider, active) : undefined,
+    resourceUri: active ? undefined : createInactiveAgentSessionResourceUri(session.sessionId),
     useResourceUri: showIcon,
     contextValue: 'branchContext.agentSession resumable',
     command: path
@@ -294,7 +299,13 @@ function readSessionDetails(path: string | null): AgentSessionDetails {
 
       const userMessage = extractUserMessage(data);
       if (userMessage) {
-        if (userMessage.fallback) {
+        if (userMessage.lastOnly) {
+          if (userMessage.fallback) {
+            fallbackLastMessage = userMessage.text;
+          } else {
+            details.lastMessage = userMessage.text;
+          }
+        } else if (userMessage.fallback) {
           fallbackInitialMessage ??= userMessage.text;
           fallbackLastMessage = userMessage.text;
         } else {
