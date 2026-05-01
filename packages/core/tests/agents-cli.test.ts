@@ -1,8 +1,6 @@
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { cmdAgents, formatCodexHookOutput, runCli } from '../src/index';
-import { captureConsole, createTempDir } from './helpers';
+import { cmdAgents, runCli } from '../src/index';
+import { captureConsole, createGitRepo, initBctxWorkspace } from './helpers';
 
 describe('agents command', () => {
   it('prints help for invalid usage', async () => {
@@ -12,39 +10,24 @@ describe('agents command', () => {
     expect(capture.output).toContain('bctx agents status');
   });
 
-  it('installs codex hook through cli dispatch', async () => {
-    const root = createTempDir();
-    process.env.BCTX_CODEX_HOOKS_PATH = join(root, 'hooks.json');
-    process.env.BCTX_CODEX_CONFIG_PATH = join(root, 'config.toml');
+  it('shows agent status through cli dispatch', async () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    process.chdir(repo);
+    const capture = captureConsole();
 
-    try {
-      expect(await runCli(['agents', 'install', 'codex'])).toBe(0);
-      expect(existsSync(process.env.BCTX_CODEX_HOOKS_PATH)).toBe(true);
-      expect(existsSync(process.env.BCTX_CODEX_CONFIG_PATH)).toBe(true);
-    } finally {
-      delete process.env.BCTX_CODEX_HOOKS_PATH;
-      delete process.env.BCTX_CODEX_CONFIG_PATH;
-    }
+    expect(await runCli(['agents', 'status'])).toBe(0);
+    expect(capture.output).toContain('Branch:');
+    expect(capture.output).toContain('Providers:    none');
   });
 
-  it('formats codex hook output', () => {
-    const output = formatCodexHookOutput({
-      ok: true,
-      captured: false,
-      reason: 'not_initialized',
-      agentsFilePath: null,
-      metadata: {
-        version: 1,
-        provider: 'codex',
-        repoRoot: '/repo',
-        branch: 'main',
-        branchKey: 'main',
-        sessionId: 'codex-1',
-      },
-    });
+  it('syncs agents through cli dispatch', async () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    process.chdir(repo);
+    const capture = captureConsole();
 
-    expect(JSON.parse(output).hookSpecificOutput.additionalContext).toContain(
-      'BCTX_SESSION_METADATA',
-    );
+    expect(await runCli(['agents', 'sync'])).toBe(0);
+    expect(capture.output).toContain('Synced agents: 0');
   });
 });

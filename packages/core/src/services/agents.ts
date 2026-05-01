@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { DEFAULT_SYMLINK } from '../constants';
@@ -8,11 +8,10 @@ import {
   createAgentSession,
   getCurrentAgentsFilePath,
   readAgentsFile,
-  upsertAgentSession,
   writeAgentsFile,
 } from '../data/agents';
 import { configExists } from '../data/config';
-import { gitCurrentBranch, gitRoot } from '../utils/git';
+import { gitCurrentBranch } from '../utils/git';
 import { syncCurrentBranch } from './actions';
 
 export type { AgentSession };
@@ -20,7 +19,6 @@ export type { AgentSession };
 const DEFAULT_RECENT_DAYS = 2;
 const DEFAULT_MAX_FILES = 200;
 const DEFAULT_MAX_FILE_BYTES = 2 * 1024 * 1024;
-const BCTX_METADATA_MARKER = 'BCTX_SESSION_METADATA:';
 
 export type AgentSessionScanOptions = {
   repoRoot: string;
@@ -53,20 +51,6 @@ type ParsedCodexSession = {
   title: string | null;
   startedAt: string | null;
   updatedAt: string | null;
-  metadata: BranchContextSessionMetadata | null;
-};
-
-type BranchContextSessionMetadata = {
-  version: 1;
-  provider: 'codex';
-  repoRoot: string;
-  branch: string;
-  branchKey?: string;
-  sessionId: string;
-  path?: string;
-  model?: string;
-  source?: string;
-  startedAt?: string;
 };
 
 export type AgentSessionsResult =
@@ -90,29 +74,6 @@ export type SyncAgentSessionsResult =
       written: boolean;
     })
   | Extract<AgentSessionsResult, { ok: false }>;
-
-export type CodexHookInput = {
-  session_id?: string;
-  transcript_path?: string;
-  model?: string;
-  source?: unknown;
-  cwd?: string;
-  timestamp?: string;
-};
-
-export type CaptureCodexSessionResult = {
-  ok: true;
-  captured: boolean;
-  reason:
-    | 'captured'
-    | 'missing_session'
-    | 'no_git_repo'
-    | 'no_current_branch'
-    | 'not_initialized'
-    | 'missing_current_context';
-  metadata: BranchContextSessionMetadata | null;
-  agentsFilePath: string | null;
-};
 
 export function getAgentSessions(
   repoRoot: string,
@@ -176,70 +137,6 @@ export function syncAgentSessions(
     sessions: exactSessions,
     written: true,
   };
-}
-
-export function captureCodexSession(
-  input: CodexHookInput,
-  options: { cwd?: string; now?: Date } = {},
-): CaptureCodexSessionResult {
-  const sessionId = input.session_id;
-  if (!sessionId) {
-    return createCaptureResult('missing_session', null, null);
-  }
-
-  const repoRoot = gitRoot(input.cwd ?? options.cwd ?? process.cwd());
-  if (!repoRoot) {
-    return createCaptureResult('no_git_repo', null, null);
-  }
-
-  const branch = gitCurrentBranch(repoRoot);
-  if (!branch) {
-    return createCaptureResult('no_current_branch', null, null);
-  }
-
-  const branchKey = sanitizeBranchName(branch);
-  const metadata: BranchContextSessionMetadata = {
-    version: 1,
-    provider: 'codex',
-    repoRoot,
-    branch,
-    branchKey,
-    sessionId,
-    path: input.transcript_path,
-    model: input.model,
-    source: formatSource(input.source) ?? undefined,
-    startedAt: input.timestamp ?? options.now?.toISOString() ?? new Date().toISOString(),
-  };
-
-  if (!configExists(repoRoot)) {
-    return createCaptureResult('not_initialized', metadata, null);
-  }
-
-  ensureCurrentContext(repoRoot);
-  const agentsFilePath = getExistingAgentsFilePath(repoRoot);
-  if (!agentsFilePath) {
-    return createCaptureResult('missing_current_context', metadata, null);
-  }
-
-  upsertAgentSession(
-    agentsFilePath,
-    createAgentSession({
-      provider: 'codex',
-      sessionId,
-      repoRoot,
-      branch,
-      branchKey,
-      scope: 'branch',
-      path: input.transcript_path ?? null,
-      model: input.model ?? null,
-      source: formatSource(input.source),
-      title: null,
-      startedAt: metadata.startedAt ?? null,
-      updatedAt: metadata.startedAt ?? null,
-    }),
-  );
-
-  return createCaptureResult('captured', metadata, agentsFilePath);
 }
 
 export function scanAgentSessions(options: AgentSessionScanOptions): AgentSession[] {
@@ -339,18 +236,12 @@ export function parseCodexSessionFile(path: string): ParsedCodexSession {
     title: null,
     startedAt: null,
     updatedAt: getFileUpdatedAt(path),
-    metadata: null,
   };
 
   for (const line of readJsonLines(path)) {
     const data = parseJsonObject(line);
     if (!data) {
       continue;
-    }
-
-    const metadata = extractBranchContextMetadata(data);
-    if (metadata) {
-      parsed.metadata = metadata;
     }
 
     const payload = asRecord(data.payload);
@@ -370,18 +261,6 @@ export function parseCodexSessionFile(path: string): ParsedCodexSession {
     }
   }
 
-  if (!parsed.branch && parsed.metadata) {
-    parsed.branch = parsed.metadata.branch;
-  }
-
-  if (!parsed.model && parsed.metadata?.model) {
-    parsed.model = parsed.metadata.model;
-  }
-
-  if (!parsed.startedAt && parsed.metadata?.startedAt) {
-    parsed.startedAt = parsed.metadata.startedAt;
-  }
-
   return parsed;
 }
 
@@ -398,8 +277,7 @@ function codexSessionToAgent(
     return null;
   }
 
-  const metadata = session.metadata;
-  const exactBranch = session.branch ?? metadata?.branch ?? null;
+  const exactBranch = session.branch;
   const branch = exactBranch ?? options.branch ?? '';
   const branchKey = exactBranch
     ? sanitizeBranchName(exactBranch)
@@ -410,11 +288,11 @@ function codexSessionToAgent(
   return createAgentSession({
     provider: 'codex',
     sessionId: session.sessionId,
-    repoRoot: metadata?.repoRoot ?? options.repoRoot,
+    repoRoot: options.repoRoot,
     branch,
-    branchKey: metadata?.branchKey ?? branchKey,
+    branchKey,
     scope: exactBranch ? 'branch' : 'repo',
-    path: metadata?.path ?? file,
+    path: file,
     model: session.model,
     source: session.source,
     title: session.title,
@@ -457,20 +335,6 @@ function mergeSessions(...groups: AgentSession[][]) {
     });
   }
   return Array.from(sessions.values());
-}
-
-function createCaptureResult(
-  reason: CaptureCodexSessionResult['reason'],
-  metadata: BranchContextSessionMetadata | null,
-  agentsFilePath: string | null,
-): CaptureCodexSessionResult {
-  return {
-    ok: true,
-    captured: reason === 'captured',
-    reason,
-    metadata,
-    agentsFilePath,
-  };
 }
 
 function getClaudeProjectsRoot(options: AgentSessionScanOptions) {
@@ -560,7 +424,12 @@ function matchesRepo(cwd: string | null, repoRoot: string) {
 }
 
 function normalizePath(path: string) {
-  return resolve(path).replaceAll('\\', '/');
+  const resolved = resolve(path);
+  try {
+    return realpathSync.native(resolved).replaceAll('\\', '/');
+  } catch {
+    return resolved.replaceAll('\\', '/');
+  }
 }
 
 function extractMessageTitle(message: unknown) {
@@ -594,58 +463,6 @@ function cleanTitle(value: string | null) {
     return null;
   }
   return title.length > 120 ? `${title.slice(0, 117)}...` : title;
-}
-
-function extractBranchContextMetadata(data: Record<string, unknown>) {
-  for (const text of collectStrings(data)) {
-    const markerIndex = text.indexOf(BCTX_METADATA_MARKER);
-    if (markerIndex === -1) {
-      continue;
-    }
-
-    const jsonText = text.slice(markerIndex + BCTX_METADATA_MARKER.length).trim();
-    const start = jsonText.indexOf('{');
-    const end = jsonText.lastIndexOf('}');
-    if (start === -1 || end === -1 || end <= start) {
-      continue;
-    }
-
-    const parsed = parseJsonObject(jsonText.slice(start, end + 1));
-    if (isBranchContextSessionMetadata(parsed)) {
-      return parsed;
-    }
-  }
-
-  return null;
-}
-
-function collectStrings(value: unknown): string[] {
-  if (typeof value === 'string') {
-    return [value];
-  }
-
-  if (Array.isArray(value)) {
-    return value.flatMap(collectStrings);
-  }
-
-  const record = asRecord(value);
-  if (!record) {
-    return [];
-  }
-
-  return Object.values(record).flatMap(collectStrings);
-}
-
-function isBranchContextSessionMetadata(
-  value: Record<string, unknown> | null,
-): value is BranchContextSessionMetadata {
-  return (
-    value?.version === 1 &&
-    value.provider === 'codex' &&
-    typeof value.repoRoot === 'string' &&
-    typeof value.branch === 'string' &&
-    typeof value.sessionId === 'string'
-  );
 }
 
 function formatSource(value: unknown) {

@@ -7,6 +7,7 @@ import { sanitizeBranchName } from '../core/sync';
 import { getBaseBranch } from '../data/branch-base';
 import { Config, configExists } from '../data/config';
 import { updateBranchMeta } from '../data/meta';
+import { syncAgentSessions } from '../services/agents';
 
 export function cmdOnCommit(_args: string[]) {
   const gitRoot = getGitRoot();
@@ -32,6 +33,7 @@ export function cmdOnCommit(_args: string[]) {
   const baseBranch = getBaseBranch(gitRoot, contextDir);
   const config = Config.load(gitRoot);
   updateBranchMeta(gitRoot, branchKey, baseBranch, config.commitDescription);
+  syncAgentSessions(gitRoot);
 
   const updates = updateContextTags(gitRoot, contextDir, branchKey, baseBranch);
   if (updates.length > 0) {

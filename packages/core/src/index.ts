@@ -13,7 +13,6 @@ export * from './commands/sync';
 export * from './commands/template';
 export * from './commands/uninstall';
 export * from './constants';
-export * from './core/codex-hooks';
 export * from './core/context-tags';
 export * from './core/hooks';
 export * from './core/sync';

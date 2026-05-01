@@ -2,7 +2,6 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-  captureCodexSession,
   getAgentSessions,
   getClaudeProjectKey,
   readAgentsFile,
@@ -103,49 +102,24 @@ describe('agent session service', () => {
     expect(readAgentsFile(result.agentsFilePath ?? '').sessions).toEqual([]);
   });
 
-  it('captures Codex sessions safely outside git repos', () => {
-    const dir = createTempDir();
-    const result = captureCodexSession({ session_id: 'codex-1' }, { cwd: dir });
-
-    expect(result.captured).toBe(false);
-    expect(result.reason).toBe('no_git_repo');
-  });
-
-  it('injects metadata without writing when repo is not initialized', () => {
-    const repo = createGitRepo();
-    const result = captureCodexSession(
-      {
-        session_id: 'codex-1',
-        transcript_path: '~/.codex/sessions/session.jsonl',
-        model: 'gpt-5.5',
-        source: 'cli',
-      },
-      { cwd: repo, now: new Date('2026-05-01T14:21:16.417Z') },
-    );
-
-    expect(result.captured).toBe(false);
-    expect(result.reason).toBe('not_initialized');
-    expect(result.metadata?.branch).toBe('main');
-    expect(result.agentsFilePath).toBeNull();
-  });
-
-  it('captures Codex sessions into initialized current context', () => {
+  it('syncs native Codex sessions into initialized current context', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
+    expectOk(gitCheckout(repo, 'feature/test', true));
+    const codexRoot = createTempDir();
+    copyCodexFixture(codexRoot, repo);
 
-    const result = captureCodexSession(
-      {
-        session_id: 'codex-1',
-        transcript_path: '~/.codex/sessions/session.jsonl',
-        model: 'gpt-5.5',
-        source: 'cli',
-      },
-      { cwd: repo, now: new Date('2026-05-01T14:21:16.417Z') },
-    );
+    const result = syncAgentSessions(repo, {
+      branch: 'feature/test',
+      codexSessionsRoot: codexRoot,
+      now: new Date('2026-05-01T15:00:00.000Z'),
+    });
 
-    expect(result.captured).toBe(true);
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
     expect(result.agentsFilePath).toBeTruthy();
-    const content = readFileSync(result.agentsFilePath ?? '', 'utf8');
-    expect(content).toContain('codex-1');
+    expect(readAgentsFile(result.agentsFilePath ?? '').sessions[0]?.sessionId).toBe('codex-1');
   });
 });

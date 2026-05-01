@@ -35,14 +35,6 @@ describe('agent provider parsers', () => {
     expect(session.title).toBe('testando codex');
   });
 
-  it('parses Codex Branch Context metadata fallback', () => {
-    const session = parseCodexSessionFile(join(fixturesDir, 'codex-metadata.jsonl'));
-
-    expect(session.sessionId).toBe('codex-2');
-    expect(session.branch).toBe('feature/test');
-    expect(session.metadata?.branchKey).toBe('feature-test');
-  });
-
   it('scans Claude sessions from the repo-specific directory', () => {
     const root = createTempDir();
     const repoRoot = '/repo/project';
