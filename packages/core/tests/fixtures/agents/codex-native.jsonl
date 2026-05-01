@@ -1,0 +1,3 @@
+{"type":"session_meta","payload":{"id":"codex-1","timestamp":"2026-05-01T14:21:16.417Z","cwd":"/repo/project","source":"cli","git":{"commit_hash":"14366ff04d89398b3d95339d5f2c4e2582074b4f","branch":"feature/test","repository_url":"https://example.com/repo.git"}}}
+{"type":"turn_context","payload":{"cwd":"/repo/project","model":"gpt-5.5","timezone":"America/Belem","current_date":"2026-05-01"}}
+{"type":"event_msg","payload":{"type":"user_message","message":"testando codex"}}

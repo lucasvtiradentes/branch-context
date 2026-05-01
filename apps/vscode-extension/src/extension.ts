@@ -2,6 +2,8 @@ import type * as vscode from 'vscode';
 import { registerCommands } from './commands';
 import { registerInternalCommands } from './commands/internal';
 import { initializeContextFileUx } from './context-file-ux';
+import { initializeAgentIndexer } from './core/agent-indexer';
+import { initializeGitDiffProvider } from './core/git-diff';
 import { initializeBranchContextState } from './core/state';
 import { initializeBranchContextWatcher } from './core/watcher';
 import { getLogFilePath, initializeLogging, logger } from './lib/logging';
@@ -17,6 +19,7 @@ function initializeCore(context: vscode.ExtensionContext): void {
 }
 
 function initializeUi(context: vscode.ExtensionContext): void {
+  initializeGitDiffProvider(context);
   initializeContextFileUx(context);
   initializeStatusBar(context);
   initializeTreeViews(context);
@@ -26,6 +29,7 @@ function initializeUi(context: vscode.ExtensionContext): void {
 
 function initializeRuntime(context: vscode.ExtensionContext): void {
   initializeBranchContextWatcher(context);
+  initializeAgentIndexer(context);
 }
 
 export function activate(context: vscode.ExtensionContext): void {

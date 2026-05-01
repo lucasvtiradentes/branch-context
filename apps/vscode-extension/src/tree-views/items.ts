@@ -1,12 +1,23 @@
 import { type Dirent, existsSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
+import { AGENTS_FILE_NAME } from '@branch-context/core/constants';
+import type { GitCommitSummary } from '@branch-context/core/services/git-summary';
 import * as vscode from 'vscode';
 import { CONTEXT_FILE_NAME } from '../constants';
 import { onDidChangeState } from '../core/state';
 
 const MAX_DIRECTORY_ITEMS = 200;
+const archivedContextResourceScheme = 'branch-context-archived';
 
-type BranchContextTreeNodeKind = 'message' | 'file' | 'folder' | 'group' | 'context' | 'template';
+type BranchContextTreeNodeKind =
+  | 'message'
+  | 'file'
+  | 'folder'
+  | 'group'
+  | 'context'
+  | 'template'
+  | 'commit'
+  | 'agent';
 
 export type BranchContextTreeNode = {
   label: string;
@@ -18,11 +29,17 @@ export type BranchContextTreeNode = {
   current?: boolean;
   local?: boolean;
   remote?: boolean;
+  agentProvider?: 'claude' | 'codex';
+  sessionId?: string;
+  commit?: GitCommitSummary;
   contextValue?: string;
   description?: string;
   tooltip?: string | vscode.MarkdownString;
-  icon?: vscode.ThemeIcon;
+  icon?: vscode.TreeItem['iconPath'];
   command?: vscode.Command;
+  resourceUri?: vscode.Uri;
+  useResourceUri?: boolean;
+  collapsibleState?: vscode.TreeItemCollapsibleState;
   children?: () => BranchContextTreeNode[];
 };
 
@@ -40,7 +57,7 @@ export class StateTreeProvider
     const item = new vscode.TreeItem(
       node.label,
       node.children
-        ? vscode.TreeItemCollapsibleState.Collapsed
+        ? (node.collapsibleState ?? vscode.TreeItemCollapsibleState.Collapsed)
         : vscode.TreeItemCollapsibleState.None,
     );
 
@@ -50,7 +67,9 @@ export class StateTreeProvider
     item.iconPath = node.icon;
     item.command = node.command;
 
-    if (node.path) {
+    if (node.resourceUri) {
+      item.resourceUri = node.resourceUri;
+    } else if (node.path && node.useResourceUri !== false) {
       item.resourceUri = vscode.Uri.file(node.path);
     }
 
@@ -71,6 +90,32 @@ export class StateTreeProvider
   }
 }
 
+export function initializeTreeItemDecorations(context: vscode.ExtensionContext): void {
+  context.subscriptions.push(
+    vscode.window.registerFileDecorationProvider({
+      provideFileDecoration(uri) {
+        if (uri.scheme !== archivedContextResourceScheme) {
+          return undefined;
+        }
+
+        return new vscode.FileDecoration(
+          undefined,
+          'Archived branch context',
+          new vscode.ThemeColor('disabledForeground'),
+        );
+      },
+    }),
+  );
+}
+
+export function createArchivedContextResourceUri(branchKey: string): vscode.Uri {
+  return vscode.Uri.from({
+    scheme: archivedContextResourceScheme,
+    authority: 'branch',
+    path: `/${branchKey}`,
+  });
+}
+
 export function createMessageNode(label: string): BranchContextTreeNode {
   return {
     label,
@@ -82,16 +127,28 @@ export function createMessageNode(label: string): BranchContextTreeNode {
 export function createGroupNode(
   label: string,
   children: BranchContextTreeNode[],
-  description?: string,
+  descriptionOrOptions?: string | GroupNodeOptions,
 ): BranchContextTreeNode {
+  const options =
+    typeof descriptionOrOptions === 'string'
+      ? { description: descriptionOrOptions }
+      : (descriptionOrOptions ?? {});
+
   return {
     label,
     kind: 'group',
-    description,
-    icon: new vscode.ThemeIcon('folder'),
+    description: options.description,
+    icon: options.icon ?? new vscode.ThemeIcon('folder'),
+    collapsibleState: options.collapsibleState,
     children: () => children,
   };
 }
+
+type GroupNodeOptions = {
+  description?: string;
+  icon?: vscode.TreeItem['iconPath'];
+  collapsibleState?: vscode.TreeItemCollapsibleState;
+};
 
 type ContextNodeOptions = {
   description?: string;
@@ -104,6 +161,8 @@ type ContextNodeOptions = {
   local?: boolean;
   remote?: boolean;
   contextValue?: string;
+  resourceUri?: vscode.Uri;
+  useResourceUri?: boolean;
 };
 
 export function createContextNode(
@@ -200,6 +259,10 @@ function openFileCommand(path: string): vscode.Command {
 
 function isSensitiveFile(name: string): boolean {
   return (
-    name === '.env' || name.startsWith('.env.') || name.endsWith('.pem') || name.endsWith('.key')
+    name === AGENTS_FILE_NAME ||
+    name === '.env' ||
+    name.startsWith('.env.') ||
+    name.endsWith('.pem') ||
+    name.endsWith('.key')
   );
 }

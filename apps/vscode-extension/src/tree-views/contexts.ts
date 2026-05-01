@@ -5,9 +5,15 @@ import type {
 import * as vscode from 'vscode';
 import { getBranchContextState } from '../core/state';
 import { formatRelativeTime } from '../lib/format-relative-time';
-import { createContextNode, createGroupNode, createMessageNode, StateTreeProvider } from './items';
+import {
+  createArchivedContextResourceUri,
+  createContextNode,
+  createGroupNode,
+  createMessageNode,
+  StateTreeProvider,
+} from './items';
 
-const contextsGroupByValues = ['status', 'recent', 'size', 'template'] as const;
+const contextsGroupByValues = ['flat', 'status', 'recent', 'size', 'template'] as const;
 export type ContextsGroupBy = (typeof contextsGroupByValues)[number];
 
 type ContextViewItem = {
@@ -61,19 +67,15 @@ export function createContextsProvider(): StateTreeProvider {
     const contexts = [
       ...state.recentContexts.map(toActiveContext),
       ...state.archivedContexts.map(toArchivedContext),
-    ].sort(compareByUpdatedAt);
+    ]
+      .filter((context) => !isCurrentContext(context, state.currentBranch))
+      .sort(compareByUpdatedAt);
 
     if (contexts.length === 0) {
-      return [createMessageNode('No contexts')];
+      return [createMessageNode('No other branches')];
     }
 
-    return groupContexts(contexts).map((group) =>
-      createGroupNode(
-        group.label,
-        group.contexts.map(createContextTreeNode),
-        `${group.contexts.length}`,
-      ),
-    );
+    return groupContexts(contexts);
   });
 }
 
@@ -96,20 +98,42 @@ function toArchivedContext(context: BranchContextArchivedContextSummary): Contex
 }
 
 function groupContexts(contexts: ContextViewItem[]) {
+  if (contextsGroupBy === 'flat') {
+    return contexts.map(createContextTreeNode);
+  }
+
   if (contextsGroupBy === 'recent') {
-    return createOrderedGroups(contexts, ['Today', 'This week', 'Older'], getRecentGroup);
+    return createContextGroupNodes(
+      createOrderedGroups(contexts, ['Today', 'This week', 'Older'], getRecentGroup),
+    );
   }
 
   if (contextsGroupBy === 'size') {
-    return createOrderedGroups(contexts, ['Small', 'Medium', 'Large'], getSizeGroup);
+    return createContextGroupNodes(
+      createOrderedGroups(contexts, ['Small', 'Medium', 'Large'], getSizeGroup),
+    );
   }
 
   if (contextsGroupBy === 'template') {
-    return createSortedGroups(contexts, (context) => context.template || 'Unknown');
+    return createContextGroupNodes(
+      createSortedGroups(contexts, (context) => context.template || 'Unknown'),
+    );
   }
 
-  return createOrderedGroups(contexts, ['Active', 'Archived'], (context) =>
-    context.archived ? 'Archived' : 'Active',
+  return createContextGroupNodes(
+    createOrderedGroups(contexts, ['Active', 'Archived'], (context) =>
+      context.archived ? 'Archived' : 'Active',
+    ),
+  );
+}
+
+function createContextGroupNodes(groups: Array<{ label: string; contexts: ContextViewItem[] }>) {
+  return groups.map((group) =>
+    createGroupNode(
+      group.label,
+      group.contexts.map(createContextTreeNode),
+      `${group.contexts.length}`,
+    ),
   );
 }
 
@@ -151,6 +175,8 @@ function createSortedGroups(
 
 function createContextTreeNode(context: ContextViewItem) {
   return createContextNode(context.branch, context.contextDir, {
+    resourceUri: context.archived ? createArchivedContextResourceUri(context.branchKey) : undefined,
+    useResourceUri: false,
     branch: context.branch,
     branchKey: context.branchKey,
     archived: context.archived,
@@ -166,6 +192,10 @@ function createContextTreeNode(context: ContextViewItem) {
         ? new vscode.ThemeIcon('star-full')
         : new vscode.ThemeIcon('git-branch'),
   });
+}
+
+function isCurrentContext(context: ContextViewItem, currentBranch: string | null) {
+  return context.current || (!!currentBranch && context.branch === currentBranch);
 }
 
 function createContextValue(context: ContextViewItem) {
@@ -191,12 +221,7 @@ function createContextValue(context: ContextViewItem) {
 }
 
 function createContextDescription(context: ContextViewItem) {
-  return [
-    formatRelativeTime(context.updatedAt),
-    formatCount(context.commitCount, 'commit'),
-    formatCount(context.changedFileCount, 'file'),
-    getSizeBadge(context.sizeBytes),
-  ].join(' | ');
+  return formatRelativeTime(context.updatedAt);
 }
 
 function createContextTooltip(context: ContextViewItem) {
@@ -249,15 +274,6 @@ function getSizeGroup(context: ContextViewItem) {
   }
 
   return 'Large';
-}
-
-function getSizeBadge(sizeBytes: number) {
-  const group = sizeBytes < 64 * 1024 ? 'Small' : sizeBytes < 1024 * 1024 ? 'Medium' : 'Large';
-  return `[${group[0]}]`;
-}
-
-function formatCount(count: number, label: string) {
-  return `${count} ${label}${count === 1 ? '' : 's'}`;
 }
 
 function formatBytes(bytes: number) {

@@ -16,6 +16,19 @@ export const commandIds = {
   applyTemplate: `${APP_ID}.applyTemplate`,
   openConfig: `${APP_ID}.openConfig`,
   openCurrentContextFolder: `${APP_ID}.openCurrentContextFolder`,
+  reviewDiff: `${APP_ID}.reviewDiff`,
+  openCommitDiff: `${APP_ID}.internal.openCommitDiff`,
+  copyCommitHash: `${APP_ID}.copyCommitHash`,
+  openCommitOnOrigin: `${APP_ID}.openCommitOnOrigin`,
+  resetFilesToCommit: `${APP_ID}.resetFilesToCommit`,
+  toggleGitChangesMode: `${APP_ID}.toggleGitChangesMode`,
+  groupGitChangedFilesBy: `${APP_ID}.groupGitChangedFilesBy`,
+  groupGitCommitsBy: `${APP_ID}.groupGitCommitsBy`,
+  groupAgentSessionsBy: `${APP_ID}.groupAgentSessionsBy`,
+  toggleAgentSessionText: `${APP_ID}.toggleAgentSessionText`,
+  resumeAgentSession: `${APP_ID}.resumeAgentSession`,
+  copyAgentSessionId: `${APP_ID}.copyAgentSessionId`,
+  deleteAgentSession: `${APP_ID}.deleteAgentSession`,
   groupContextsBy: `${APP_ID}.groupContextsBy`,
   checkoutContextBranch: `${APP_ID}.checkoutContextBranch`,
   openContext: `${APP_ID}.openContext`,
@@ -24,18 +37,22 @@ export const commandIds = {
   restoreContext: `${APP_ID}.restoreContext`,
   deleteContext: `${APP_ID}.deleteContext`,
   showLogs: `${APP_ID}.showLogs`,
+  syncAgents: `${APP_ID}.internal.syncAgents`,
   showStatusBarActions: `${APP_ID}.internal.showStatusBarActions`,
   showDetails: `${APP_ID}.internal.showDetails`,
 } as const;
 
 export const viewIds = {
   currentContext: `${APP_ID}.currentContext`,
+  agentSessions: `${APP_ID}.agentSessions`,
+  gitChanges: `${APP_ID}.gitChanges`,
   contexts: `${APP_ID}.contexts`,
   templates: `${APP_ID}.templates`,
 } as const;
 
 export const contextKeys = {
   initialized: `${APP_ID}.initialized`,
+  gitChangesMode: `${APP_ID}.gitChangesMode`,
 } as const;
 
 export const codeLensTitles = {

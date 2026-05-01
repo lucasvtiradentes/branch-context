@@ -61,17 +61,27 @@
       "branch-context": [
         {
           "id": "branch-context.currentContext",
-          "name": "Current Context",
+          "name": "Branch Context",
+          "icon": "resources/branch-context.svg"
+        },
+        {
+          "id": "branch-context.agentSessions",
+          "name": "Branch AI Sessions",
+          "icon": "resources/branch-context.svg"
+        },
+        {
+          "id": "branch-context.gitChanges",
+          "name": "Branch Git Changes",
           "icon": "resources/branch-context.svg"
         },
         {
           "id": "branch-context.contexts",
-          "name": "Contexts",
+          "name": "Other Branches",
           "icon": "resources/branch-context.svg"
         },
         {
           "id": "branch-context.templates",
-          "name": "Templates",
+          "name": "Config",
           "icon": "resources/branch-context.svg"
         }
       ]
@@ -113,8 +123,68 @@
         "icon": "$(folder-opened)"
       },
       {
+        "command": "branch-context.reviewDiff",
+        "title": "Branch Context: Branch Git Diff",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "branch-context.copyCommitHash",
+        "title": "Branch Context: Copy Commit Hash",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "branch-context.openCommitOnOrigin",
+        "title": "Branch Context: Open Commit on Origin",
+        "icon": "$(github)"
+      },
+      {
+        "command": "branch-context.resetFilesToCommit",
+        "title": "Branch Context: Reset Files To Commit",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "branch-context.toggleGitChangesMode",
+        "title": "Branch Context: Toggle Git Changes Mode",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "branch-context.groupGitChangedFilesBy",
+        "title": "Branch Context: Group Changed Files By",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "branch-context.groupGitCommitsBy",
+        "title": "Branch Context: Group Git Commits By",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "branch-context.groupAgentSessionsBy",
+        "title": "Branch Context: Group Agent Sessions By",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "branch-context.toggleAgentSessionText",
+        "title": "Branch Context: Toggle Agent Session Text",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "branch-context.resumeAgentSession",
+        "title": "Branch Context: Resume Agent Session",
+        "icon": "$(debug-continue)"
+      },
+      {
+        "command": "branch-context.copyAgentSessionId",
+        "title": "Branch Context: Copy Session ID",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "branch-context.deleteAgentSession",
+        "title": "Branch Context: Delete Session",
+        "icon": "$(trash)"
+      },
+      {
         "command": "branch-context.groupContextsBy",
-        "title": "Branch Context: Group Contexts By",
+        "title": "Branch Context: Group Other Branches By",
         "icon": "$(list-tree)"
       },
       {
@@ -151,6 +221,11 @@
         "command": "branch-context.showLogs",
         "title": "Branch Context: Show Logs",
         "icon": "$(output)"
+      },
+      {
+        "command": "branch-context.internal.syncAgents",
+        "title": "Branch Context: Sync Agents",
+        "icon": "$(sync)"
       }
     ],
     "menus": {
@@ -161,6 +236,14 @@
         },
         {
           "command": "branch-context.currentContext.focus",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.agentSessions.focus",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.gitChanges.focus",
           "when": "false"
         },
         {
@@ -200,6 +283,54 @@
           "when": "false"
         },
         {
+          "command": "branch-context.reviewDiff",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.copyCommitHash",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.openCommitOnOrigin",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.resetFilesToCommit",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.toggleGitChangesMode",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.groupGitChangedFilesBy",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.groupGitCommitsBy",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.groupAgentSessionsBy",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.toggleAgentSessionText",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.resumeAgentSession",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.copyAgentSessionId",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.deleteAgentSession",
+          "when": "false"
+        },
+        {
           "command": "branch-context.groupContextsBy",
           "when": "false"
         },
@@ -226,6 +357,10 @@
         {
           "command": "branch-context.deleteContext",
           "when": "false"
+        },
+        {
+          "command": "branch-context.internal.syncAgents",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -237,17 +372,47 @@
         {
           "command": "branch-context.setBase",
           "when": "view == branch-context.currentContext && branch-context.initialized",
-          "group": "navigation@2"
+          "group": "navigation@3"
         },
         {
           "command": "branch-context.applyTemplate",
           "when": "view == branch-context.currentContext && branch-context.initialized",
-          "group": "navigation@3"
+          "group": "navigation@4"
         },
         {
           "command": "branch-context.openCurrentContextFolder",
           "when": "view == branch-context.currentContext && branch-context.initialized",
-          "group": "navigation@4"
+          "group": "navigation@5"
+        },
+        {
+          "command": "branch-context.reviewDiff",
+          "when": "view == branch-context.gitChanges && branch-context.initialized",
+          "group": "navigation@1"
+        },
+        {
+          "command": "branch-context.toggleGitChangesMode",
+          "when": "view == branch-context.gitChanges && branch-context.initialized",
+          "group": "navigation@2"
+        },
+        {
+          "command": "branch-context.groupGitChangedFilesBy",
+          "when": "view == branch-context.gitChanges && branch-context.initialized && branch-context.gitChangesMode == files",
+          "group": "navigation@3"
+        },
+        {
+          "command": "branch-context.groupGitCommitsBy",
+          "when": "view == branch-context.gitChanges && branch-context.initialized && branch-context.gitChangesMode == commits",
+          "group": "navigation@3"
+        },
+        {
+          "command": "branch-context.groupAgentSessionsBy",
+          "when": "view == branch-context.agentSessions && branch-context.initialized",
+          "group": "navigation@2"
+        },
+        {
+          "command": "branch-context.toggleAgentSessionText",
+          "when": "view == branch-context.agentSessions && branch-context.initialized",
+          "group": "navigation@1"
         },
         {
           "command": "branch-context.groupContextsBy",
@@ -289,6 +454,41 @@
         {
           "command": "branch-context.deleteContext",
           "when": "view == branch-context.contexts && viewItem =~ /deletable/",
+          "group": "9_destructive@1"
+        },
+        {
+          "command": "branch-context.resumeAgentSession",
+          "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "group": "inline@1"
+        },
+        {
+          "command": "branch-context.resumeAgentSession",
+          "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "branch-context.copyAgentSessionId",
+          "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "branch-context.deleteAgentSession",
+          "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "group": "9_destructive@1"
+        },
+        {
+          "command": "branch-context.copyCommitHash",
+          "when": "view == branch-context.gitChanges && viewItem == branchContext.commit",
+          "group": "navigation@1"
+        },
+        {
+          "command": "branch-context.openCommitOnOrigin",
+          "when": "view == branch-context.gitChanges && viewItem == branchContext.commit",
+          "group": "navigation@2"
+        },
+        {
+          "command": "branch-context.resetFilesToCommit",
+          "when": "view == branch-context.gitChanges && viewItem == branchContext.commit",
           "group": "9_destructive@1"
         }
       ]

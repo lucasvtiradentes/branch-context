@@ -20,6 +20,7 @@ Options:
 Examples:
   ${CLI_NAME} init                             # initialize + install hook
   ${CLI_NAME} status                           # show status, health, and branches
+  ${CLI_NAME} agents status                    # show agent integration status
   ${CLI_NAME} prune                            # archive orphan contexts + delete branches
   ${CLI_NAME} template                         # select template interactively
   ${CLI_NAME} template feature                 # apply feature template

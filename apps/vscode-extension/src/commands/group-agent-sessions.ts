@@ -3,28 +3,29 @@ import { APP_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
 import {
-  type ContextsGroupBy,
-  getContextsGroupBy,
-  saveContextsGroupBy,
-} from '../tree-views/contexts';
+  type AgentSessionsGroupBy,
+  getAgentSessionsGroupBy,
+  saveAgentSessionsGroupBy,
+} from '../tree-views/agent-sessions';
 
 type GroupByOption = {
   label: string;
-  value: ContextsGroupBy;
+  value: AgentSessionsGroupBy;
 };
 
 const groupByOptions: GroupByOption[] = [
   { label: 'Flat', value: 'flat' },
-  { label: 'Status', value: 'status' },
+  { label: 'Provider', value: 'provider' },
   { label: 'Recent', value: 'recent' },
   { label: 'Size', value: 'size' },
-  { label: 'Template', value: 'template' },
 ];
 
-export function registerGroupContextsCommand(context: vscode.ExtensionContext): vscode.Disposable {
-  return vscode.commands.registerCommand(commandIds.groupContextsBy, async () => {
+export function registerGroupAgentSessionsCommand(
+  context: vscode.ExtensionContext,
+): vscode.Disposable {
+  return vscode.commands.registerCommand(commandIds.groupAgentSessionsBy, async () => {
     try {
-      const current = getContextsGroupBy();
+      const current = getAgentSessionsGroupBy();
       const selected = await vscode.window.showQuickPick(
         groupByOptions.map((option) => ({
           label: option.label,
@@ -32,7 +33,7 @@ export function registerGroupContextsCommand(context: vscode.ExtensionContext): 
           value: option.value,
         })),
         {
-          placeHolder: 'Group other branches by',
+          placeHolder: 'Group agent sessions by',
         },
       );
 
@@ -40,10 +41,10 @@ export function registerGroupContextsCommand(context: vscode.ExtensionContext): 
         return;
       }
 
-      await saveContextsGroupBy(context, selected.value);
+      await saveAgentSessionsGroupBy(context, selected.value);
       refreshBranchContextState();
       await vscode.window.showInformationMessage(
-        `${APP_NAME}: grouped other branches by ${selected.label}`,
+        `${APP_NAME}: grouped agent sessions by ${selected.label}`,
       );
     } catch (error) {
       await vscode.window.showErrorMessage(formatError(error));

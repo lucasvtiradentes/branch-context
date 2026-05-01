@@ -10,11 +10,12 @@ import {
   getBranchMeta,
   getConfigDir,
   loadArchivedMeta,
+  readAgentsFile,
   sanitizeBranchName,
   syncBranch,
 } from '../src/index';
 import { gitAdd, gitCheckout, gitCommit } from '../src/utils/git';
-import { createGitRepo, expectOk, initBctxWorkspace } from './helpers';
+import { createGitRepo, createTempDir, expectOk, initBctxWorkspace } from './helpers';
 
 function initMetaRepo() {
   const repo = createGitRepo();
@@ -68,6 +69,31 @@ describe('meta e2e', () => {
     expect(content).toContain('test.py');
   });
 
+  it('on-commit syncs agent sessions', () => {
+    const repo = initMetaRepo();
+    syncBranch(repo, 'main');
+    expectOk(gitCheckout(repo, 'feature/test', true));
+    syncBranch(repo, 'feature/test');
+    cmdOnCheckout(['main', 'feature/test']);
+
+    const homeDir = initCodexHome(repo);
+    const originalHome = process.env.HOME;
+    process.env.HOME = homeDir;
+
+    try {
+      cmdOnCommit([]);
+    } finally {
+      if (originalHome === undefined) {
+        delete process.env.HOME;
+      } else {
+        process.env.HOME = originalHome;
+      }
+    }
+
+    const sessions = readAgentsFile(join(repo, DEFAULT_SYMLINK, 'agents.json')).sessions;
+    expect(sessions.map((session) => session.sessionId)).toEqual(['codex-1']);
+  });
+
   it('template preserves meta data', async () => {
     const repo = initMetaRepo();
     syncBranch(repo, 'main');
@@ -102,3 +128,37 @@ describe('meta e2e', () => {
     expect(loadArchivedMeta(repo)[branchKey]?.branch).toBe('feature/to-prune');
   });
 });
+
+function initCodexHome(repo: string) {
+  const homeDir = createTempDir();
+  const now = new Date();
+  const sessionDir = join(
+    homeDir,
+    '.codex',
+    'sessions',
+    String(now.getFullYear()),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  );
+  mkdirSync(sessionDir, { recursive: true });
+  writeFileSync(
+    join(sessionDir, 'codex.jsonl'),
+    [
+      JSON.stringify({
+        type: 'session_meta',
+        payload: {
+          id: 'codex-1',
+          timestamp: now.toISOString(),
+          cwd: repo,
+          source: 'cli',
+          git: { branch: 'feature/test' },
+        },
+      }),
+      JSON.stringify({
+        type: 'turn_context',
+        payload: { cwd: repo, model: 'gpt-5.5' },
+      }),
+    ].join('\n'),
+  );
+  return homeDir;
+}

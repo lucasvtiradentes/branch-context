@@ -1,3 +1,8 @@
+import { type AgentSession, getAgentSessions } from '@branch-context/core/services/agents';
+import {
+  type BranchGitSummary,
+  getGitBranchSummary,
+} from '@branch-context/core/services/git-summary';
 import {
   type BranchContextArchivedContextSummary,
   type BranchContextContextSummary,
@@ -18,6 +23,8 @@ export type BranchContextExtensionState = {
   currentContextFile: string | null;
   recentContexts: BranchContextContextSummary[];
   archivedContexts: BranchContextArchivedContextSummary[];
+  agentSessions: AgentSession[];
+  gitSummary: BranchGitSummary | null;
   templates: string[];
   configPath: string | null;
 };
@@ -55,6 +62,10 @@ function readBranchContextState(): BranchContextExtensionState {
 
   try {
     const status = getStatus(workspace.workspaceRoot);
+    const agentSessions = readAgentSessions(workspace.workspaceRoot);
+    const gitSummary = status.initialized
+      ? getGitBranchSummary(workspace.workspaceRoot, status.baseBranch)
+      : null;
     return {
       workspaceRoot: workspace.workspaceRoot,
       initialized: status.initialized,
@@ -64,6 +75,8 @@ function readBranchContextState(): BranchContextExtensionState {
       currentContextFile: workspace.currentContextFile,
       recentContexts: status.recentContexts,
       archivedContexts: status.archivedContexts,
+      agentSessions,
+      gitSummary,
       templates: status.templates,
       configPath: workspace.configPath,
     };
@@ -89,15 +102,24 @@ function createEmptyState(): BranchContextExtensionState {
     currentContextFile: null,
     recentContexts: [],
     archivedContexts: [],
+    agentSessions: [],
+    gitSummary: null,
     templates: [],
     configPath: null,
   };
+}
+
+function readAgentSessions(workspaceRoot: string): AgentSession[] {
+  const result = getAgentSessions(workspaceRoot);
+  return result.ok ? result.sessions : [];
 }
 
 function formatStateRefresh(state: BranchContextExtensionState): string {
   const issueCount = state.status?.issues.length ?? 0;
   const recentCount = state.recentContexts.length;
   const archivedCount = state.archivedContexts.length;
+  const commitCount = state.gitSummary?.ok ? state.gitSummary.commits.length : 0;
+  const changedFileCount = state.gitSummary?.ok ? state.gitSummary.changedFiles.length : 0;
   return [
     'state refreshed:',
     `workspace=${state.workspaceRoot ?? 'none'}`,
@@ -107,6 +129,9 @@ function formatStateRefresh(state: BranchContextExtensionState): string {
     `contextFile=${state.currentContextFile ?? 'none'}`,
     `recent=${recentCount}`,
     `archived=${archivedCount}`,
+    `agents=${state.agentSessions.length}`,
+    `commits=${commitCount}`,
+    `changedFiles=${changedFileCount}`,
     `templates=${state.templates.length}`,
     `issues=${issueCount}`,
   ].join(' ');

@@ -2,6 +2,22 @@ import { execFileSync, type SpawnSyncReturns, spawnSync } from 'node:child_proce
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+export type GitChangedFileSummary = {
+  status: string;
+  path: string;
+  oldPath: string | null;
+  additions: number | null;
+  deletions: number | null;
+};
+
+export type GitCommitSummary = {
+  shortHash: string;
+  hash: string;
+  subject: string;
+  authoredAt: string;
+  authorName: string;
+};
+
 export function gitInit(path: string, branch?: string): SpawnSyncReturns<string> {
   const args = ['init'];
   if (branch) {
@@ -201,10 +217,167 @@ export function gitDiff(path: string, args: string[]): string | null {
   return result.stdout;
 }
 
+export function gitShow(path: string, args: string[]): string | null {
+  const result = spawnSync('git', ['show', ...args], {
+    cwd: path,
+    encoding: 'utf8',
+    maxBuffer: 20 * 1024 * 1024,
+  });
+  if (result.status !== 0) {
+    return null;
+  }
+  return result.stdout;
+}
+
+export function gitFileContent(path: string, ref: string, filePath: string): string | null {
+  return gitShow(path, [`${ref}:${filePath}`]);
+}
+
+export function gitCommitParentRef(path: string, commitHash: string): string | null {
+  const result = spawnSync('git', ['rev-list', '--parents', '-n', '1', commitHash], {
+    cwd: path,
+    encoding: 'utf8',
+  });
+  if (result.status !== 0) {
+    return null;
+  }
+
+  const [, parent] = result.stdout.trim().split(/\s+/);
+  return parent ?? '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
+}
+
+export function gitMergeBase(path: string, leftRef: string, rightRef = 'HEAD'): string | null {
+  const result = spawnSync('git', ['merge-base', leftRef, rightRef], {
+    cwd: path,
+    encoding: 'utf8',
+  });
+  if (result.status !== 0) {
+    return null;
+  }
+  return result.stdout.trim() || null;
+}
+
+export function gitChangedFileSummaries(path: string, baseRef: string): GitChangedFileSummary[] {
+  const statusOutput = gitDiff(path, ['--name-status', '-M100', `${baseRef}...HEAD`]);
+  const numstatOutput = gitDiff(path, ['--numstat', '-M100', `${baseRef}...HEAD`]);
+
+  if (!statusOutput) {
+    return [];
+  }
+
+  const stats = parseNumstat(numstatOutput ?? '');
+  return statusOutput
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .flatMap((line) => parseNameStatusLine(line, stats));
+}
+
+export function gitChangedFileSummariesBetween(
+  path: string,
+  leftRef: string,
+  rightRef: string,
+): GitChangedFileSummary[] {
+  const statusOutput = gitDiff(path, ['--name-status', '-M100', leftRef, rightRef]);
+  const numstatOutput = gitDiff(path, ['--numstat', '-M100', leftRef, rightRef]);
+
+  if (!statusOutput) {
+    return [];
+  }
+
+  const stats = parseNumstat(numstatOutput ?? '');
+  return statusOutput
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .flatMap((line) => parseNameStatusLine(line, stats));
+}
+
+export function gitCommitSummaries(path: string, baseRef: string, limit = 50): GitCommitSummary[] {
+  const output = gitLog(path, [
+    `${baseRef}..HEAD`,
+    `--max-count=${limit}`,
+    '--format=%h%x1f%H%x1f%s%x1f%aI%x1f%an',
+  ]);
+
+  if (!output) {
+    return [];
+  }
+
+  return output
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .flatMap((line) => {
+      const [shortHash, hash, subject, authoredAt, authorName] = line.split('\x1f');
+      if (!shortHash || !hash || !subject || !authoredAt || !authorName) {
+        return [];
+      }
+      return [{ shortHash, hash, subject, authoredAt, authorName }];
+    });
+}
+
 export function gitRefExists(path: string, ref: string): boolean {
   const result = spawnSync('git', ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], {
     cwd: path,
     encoding: 'utf8',
   });
   return result.status === 0;
+}
+
+function parseNumstat(output: string) {
+  const stats = new Map<string, Pick<GitChangedFileSummary, 'additions' | 'deletions'>>();
+
+  for (const line of output.trim().split('\n').filter(Boolean)) {
+    const parts = line.split('\t');
+    const filePath = parts.length === 3 ? parts[2] : parts[3];
+    if (!filePath) {
+      continue;
+    }
+
+    stats.set(filePath, {
+      additions: parseStatCount(parts[0]),
+      deletions: parseStatCount(parts[1]),
+    });
+  }
+
+  return stats;
+}
+
+function parseNameStatusLine(
+  line: string,
+  stats: Map<string, Pick<GitChangedFileSummary, 'additions' | 'deletions'>>,
+): GitChangedFileSummary[] {
+  const parts = line.split('\t');
+  const status = parts[0]?.[0];
+  if (!status) {
+    return [];
+  }
+
+  if (status === 'R' && parts.length >= 3) {
+    const oldPath = parts[1];
+    const newPath = parts[2];
+    if (!oldPath || !newPath) {
+      return [];
+    }
+    const stat = stats.get(newPath) ?? { additions: null, deletions: null };
+    return [{ status, path: newPath, oldPath, ...stat }];
+  }
+
+  const filePath = parts.at(-1);
+  if (!filePath) {
+    return [];
+  }
+
+  const stat = stats.get(filePath) ?? { additions: null, deletions: null };
+  return [{ status, path: filePath, oldPath: null, ...stat }];
+}
+
+function parseStatCount(value: string | undefined) {
+  if (!value || value === '-') {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? null : parsed;
 }

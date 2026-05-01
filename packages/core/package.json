@@ -35,6 +35,21 @@
       "types": "./dist/services/actions.d.ts",
       "development": "./src/services/actions.ts",
       "import": "./dist/services/actions.js"
+    },
+    "./services/agents": {
+      "types": "./dist/services/agents.d.ts",
+      "development": "./src/services/agents.ts",
+      "import": "./dist/services/agents.js"
+    },
+    "./services/git-summary": {
+      "types": "./dist/services/git-summary.d.ts",
+      "development": "./src/services/git-summary.ts",
+      "import": "./dist/services/git-summary.js"
+    },
+    "./utils/git": {
+      "types": "./dist/utils/git.d.ts",
+      "development": "./src/utils/git.ts",
+      "import": "./dist/utils/git.js"
     }
   },
   "files": [

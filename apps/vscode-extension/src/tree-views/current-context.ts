@@ -20,6 +20,10 @@ export function createCurrentContextProvider(): StateTreeProvider {
   });
 }
 
+export function getCurrentContextViewDescription(): string | undefined {
+  return getBranchContextState().currentBranch ?? undefined;
+}
+
 function getCurrentContextRoot(state: BranchContextExtensionState): string | null {
   if (!state.workspaceRoot) {
     return null;

@@ -7,7 +7,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { basename, dirname, isAbsolute, join, relative } from 'node:path';
+import { basename, delimiter, dirname, isAbsolute, join, relative } from 'node:path';
 import { CLI_NAME, GIT_DIR, HOOK_MARKER, HOOK_POST_CHECKOUT } from '../constants';
 import { loadHookTemplateResource } from '../resources';
 import {
@@ -39,7 +39,7 @@ export function resetConfirmationState() {
 }
 
 function findOnPath(name: string) {
-  for (const dir of (process.env.PATH ?? '').split(':')) {
+  for (const dir of (process.env.PATH ?? '').split(delimiter)) {
     const candidate = join(dir, name);
     if (existsSync(candidate)) {
       return candidate;
@@ -49,7 +49,8 @@ function findOnPath(name: string) {
 }
 
 export function getBranchctxPath() {
-  return findOnPath(CLI_NAME) ?? CLI_NAME;
+  const progName = process.env.BCTX_PROG_NAME ?? CLI_NAME;
+  return findOnPath(progName) ?? progName;
 }
 
 export function getCallback(hookType: HookType) {
