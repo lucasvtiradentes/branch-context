@@ -119,7 +119,7 @@ export type InitProjectResult =
       alreadyInitialized: boolean;
       checkoutHook: Awaited<ReturnType<typeof installHook>>;
       commitHook: Awaited<ReturnType<typeof installHook>>;
-      syncResult: SyncCurrentBranchResult | null;
+      syncResult: SyncCurrentBranchResult;
     }
   | BranchContextActionError;
 

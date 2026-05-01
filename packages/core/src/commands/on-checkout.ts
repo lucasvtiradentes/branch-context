@@ -37,9 +37,11 @@ export function cmdOnCheckout(args: string[]) {
   const status =
     createResult === 'restored_from_archive'
       ? 'restored'
-      : createResult !== 'exists'
-        ? 'new'
-        : 'synced';
+      : createResult === 'repaired_from_template'
+        ? 'repaired'
+        : createResult !== 'exists'
+          ? 'new'
+          : 'synced';
   console.log(`Branch: ${oldBranch} -> ${newBranch} (${status})`);
   return 0;
 }

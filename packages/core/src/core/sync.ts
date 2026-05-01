@@ -19,6 +19,7 @@ import {
   ARCHIVED_DIR,
   BRANCHES_DIR,
   CONFIG_DIR,
+  CONTEXT_FILE_NAME,
   DEFAULT_SOUND_FILE,
   DEFAULT_SYMLINK,
   TEMPLATE_FILE_EXTENSIONS,
@@ -35,6 +36,7 @@ import { getTemplateVariables, renderTemplateContent } from '../utils/template';
 
 export type CreateBranchContextResult =
   | 'exists'
+  | 'repaired_from_template'
   | 'restored_from_archive'
   | 'created_from_template'
   | 'created_empty';
@@ -135,6 +137,14 @@ export function createBranchContext(
   const branchKey = sanitizeBranchName(branch);
 
   if (existsSync(branchDir)) {
+    createBranchMeta(workspace, branchKey, branch);
+    if (!existsSync(join(branchDir, CONTEXT_FILE_NAME))) {
+      const templateDir = resolveTemplateDir(workspace, branch, template);
+      if (templateDir) {
+        copyTemplateToBranch(templateDir, branchDir, branch);
+        return 'repaired_from_template';
+      }
+    }
     return 'exists';
   }
 

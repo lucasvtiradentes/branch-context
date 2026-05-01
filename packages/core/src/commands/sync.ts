@@ -34,6 +34,8 @@ export function cmdSync(_args: string[]) {
 
   if (result.createResult === 'created_from_template') {
     console.log('Status:  created from template');
+  } else if (result.createResult === 'repaired_from_template') {
+    console.log('Status:  repaired from template');
   } else if (result.createResult === 'created_empty') {
     console.log('Status:  created (no template)');
   } else {

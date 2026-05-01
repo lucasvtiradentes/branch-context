@@ -18,6 +18,7 @@ import {
   getBranchDir,
   getBranchRelPath,
   getCurrentBase,
+  initProject,
   listArchivedBranches,
   listBranches,
   resetBranchContext,
@@ -49,6 +50,14 @@ describe('sync parity', () => {
     const workspace = createWorkspace();
     createBranchContext(workspace, 'main');
     expect(createBranchContext(workspace, 'main')).toBe('exists');
+  });
+
+  it('repairs existing branch context missing context file', () => {
+    const workspace = createWorkspace();
+    const branchDir = getBranchDir(workspace, 'main');
+    mkdirSync(branchDir, { recursive: true });
+    expect(createBranchContext(workspace, 'main')).toBe('repaired_from_template');
+    expect(existsSync(join(branchDir, 'context.md'))).toBe(true);
   });
 
   it('checks branch context existence', () => {
@@ -245,6 +254,22 @@ describe('sync parity', () => {
     expect(result.symlinkResult).toBe('updated');
     expect(result.baseBranch).toBe('origin/main');
     expect(existsSync(join(repo, DEFAULT_SYMLINK))).toBe(true);
+  });
+
+  it('initializes project and creates current context from template', async () => {
+    const repo = createGitRepo();
+    const result = await initProject(repo);
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.alreadyInitialized).toBe(false);
+    expect(result.syncResult.ok).toBe(true);
+    if (!result.syncResult.ok) {
+      return;
+    }
+    expect(result.syncResult.createResult).toBe('created_from_template');
+    expect(existsSync(join(repo, DEFAULT_SYMLINK, 'context.md'))).toBe(true);
   });
 
   it('reports missing config through sync service', () => {
