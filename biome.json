@@ -11,6 +11,12 @@
     "indentWidth": 2,
     "lineWidth": 100
   },
+  "overrides": [
+    {
+      "includes": ["apps/vscode-extension/resources/schema.json"],
+      "formatter": { "enabled": false }
+    }
+  ],
   "linter": {
     "enabled": true,
     "rules": { "recommended": true }

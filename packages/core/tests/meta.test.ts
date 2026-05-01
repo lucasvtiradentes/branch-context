@@ -56,6 +56,13 @@ describe('meta', () => {
     expect(meta?.changed_files).toContain('new_file.py');
   });
 
+  it('reports missing base ref for commits and files', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    expect(getCommitsSinceBase(repo, 'origin/main')).toBe('Base branch not found: origin/main');
+    expect(getChangedFiles(repo, 'origin/main')).toBe('Base branch not found: origin/main');
+  });
+
   it('archives branch meta', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);

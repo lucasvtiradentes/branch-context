@@ -3,8 +3,11 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   BRANCHES_DIR,
+  BranchContextConfigSchema,
   CONFIG_DIR,
   Config,
+  copyInitConfig,
+  createBranchContextConfigJsonSchema,
   DEFAULT_TEMPLATE,
   getBranchesDir,
   getConfigDir,
@@ -64,6 +67,14 @@ describe('config', () => {
     expect(Config.load(workspace).sound).toBe(true);
   });
 
+  it('copies init config from resources', () => {
+    const workspace = createTempDir();
+    copyInitConfig(workspace);
+    const loaded = Config.load(workspace);
+    expect(loaded.defaultBaseBranch).toBe('main');
+    expect(loaded.templateRules).toContainEqual({ prefix: 'feature/', template: 'feature' });
+  });
+
   it('loads defaults when config file is missing', () => {
     const workspace = createTempDir();
     mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
@@ -119,5 +130,26 @@ describe('config', () => {
     );
     expect(existsSync(join(workspace, CONFIG_DIR, 'config.json'))).toBe(true);
     expect(Config.load(workspace).commitDescription).toBe(false);
+  });
+
+  it('validates config schema shape', () => {
+    const result = BranchContextConfigSchema.safeParse({
+      default_base_branch: 'main',
+      sound: false,
+      commit_description: true,
+      template_rules: [{ prefix: 'feature/', template: 'feature' }],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('generates JSON schema for config files', () => {
+    const schema = createBranchContextConfigJsonSchema();
+    expect(schema).toMatchObject({
+      type: 'object',
+      properties: {
+        default_base_branch: { type: 'string' },
+        template_rules: { type: 'array' },
+      },
+    });
   });
 });

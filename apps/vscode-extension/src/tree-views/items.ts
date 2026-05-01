@@ -1,0 +1,205 @@
+import { type Dirent, existsSync, readdirSync } from 'node:fs';
+import { basename, join } from 'node:path';
+import * as vscode from 'vscode';
+import { CONTEXT_FILE_NAME } from '../constants';
+import { onDidChangeState } from '../core/state';
+
+const MAX_DIRECTORY_ITEMS = 200;
+
+type BranchContextTreeNodeKind = 'message' | 'file' | 'folder' | 'group' | 'context' | 'template';
+
+export type BranchContextTreeNode = {
+  label: string;
+  kind: BranchContextTreeNodeKind;
+  path?: string;
+  branch?: string;
+  branchKey?: string;
+  archived?: boolean;
+  current?: boolean;
+  local?: boolean;
+  remote?: boolean;
+  contextValue?: string;
+  description?: string;
+  tooltip?: string | vscode.MarkdownString;
+  icon?: vscode.ThemeIcon;
+  command?: vscode.Command;
+  children?: () => BranchContextTreeNode[];
+};
+
+export class StateTreeProvider
+  implements vscode.TreeDataProvider<BranchContextTreeNode>, vscode.Disposable
+{
+  private readonly changeEmitter = new vscode.EventEmitter<BranchContextTreeNode | undefined>();
+  private readonly stateDisposable = onDidChangeState(() => this.refresh());
+
+  readonly onDidChangeTreeData = this.changeEmitter.event;
+
+  constructor(private readonly getRootNodes: () => BranchContextTreeNode[]) {}
+
+  getTreeItem(node: BranchContextTreeNode): vscode.TreeItem {
+    const item = new vscode.TreeItem(
+      node.label,
+      node.children
+        ? vscode.TreeItemCollapsibleState.Collapsed
+        : vscode.TreeItemCollapsibleState.None,
+    );
+
+    item.description = node.description;
+    item.tooltip = node.tooltip ?? node.path;
+    item.contextValue = node.contextValue ?? node.kind;
+    item.iconPath = node.icon;
+    item.command = node.command;
+
+    if (node.path) {
+      item.resourceUri = vscode.Uri.file(node.path);
+    }
+
+    return item;
+  }
+
+  getChildren(node?: BranchContextTreeNode): BranchContextTreeNode[] {
+    return node?.children?.() ?? this.getRootNodes();
+  }
+
+  refresh(): void {
+    this.changeEmitter.fire(undefined);
+  }
+
+  dispose(): void {
+    this.stateDisposable.dispose();
+    this.changeEmitter.dispose();
+  }
+}
+
+export function createMessageNode(label: string): BranchContextTreeNode {
+  return {
+    label,
+    kind: 'message',
+    icon: new vscode.ThemeIcon('info'),
+  };
+}
+
+export function createGroupNode(
+  label: string,
+  children: BranchContextTreeNode[],
+  description?: string,
+): BranchContextTreeNode {
+  return {
+    label,
+    kind: 'group',
+    description,
+    icon: new vscode.ThemeIcon('folder'),
+    children: () => children,
+  };
+}
+
+type ContextNodeOptions = {
+  description?: string;
+  tooltip?: string | vscode.MarkdownString;
+  icon?: vscode.ThemeIcon;
+  branch?: string;
+  branchKey?: string;
+  archived?: boolean;
+  current?: boolean;
+  local?: boolean;
+  remote?: boolean;
+  contextValue?: string;
+};
+
+export function createContextNode(
+  label: string,
+  contextDir: string,
+  options?: ContextNodeOptions,
+): BranchContextTreeNode {
+  return {
+    label,
+    kind: 'context',
+    path: contextDir,
+    ...options,
+    tooltip: options?.tooltip ?? contextDir,
+    icon: options?.icon ?? new vscode.ThemeIcon('git-branch'),
+    children: () => readDirectoryNodes(contextDir),
+  };
+}
+
+export function createTemplateNode(label: string, templateDir: string): BranchContextTreeNode {
+  const contextFile = join(templateDir, CONTEXT_FILE_NAME);
+  const hasContextFile = existsSync(contextFile);
+  const path = hasContextFile ? contextFile : templateDir;
+  return {
+    label,
+    kind: 'template',
+    path,
+    tooltip: path,
+    icon: new vscode.ThemeIcon('symbol-namespace'),
+    command: hasContextFile ? openFileCommand(contextFile) : undefined,
+  };
+}
+
+function createFileNode(path: string, label = basename(path)): BranchContextTreeNode {
+  return {
+    label,
+    kind: 'file',
+    path,
+    tooltip: path,
+    icon: new vscode.ThemeIcon('file'),
+    command: openFileCommand(path),
+  };
+}
+
+export function readDirectoryNodes(dir: string): BranchContextTreeNode[] {
+  if (!existsSync(dir)) {
+    return [createMessageNode('Missing')];
+  }
+
+  let entries: Dirent[];
+  try {
+    entries = readdirSync(dir, { withFileTypes: true })
+      .filter((entry) => !isSensitiveFile(entry.name))
+      .sort((left, right) => {
+        if (left.isDirectory() !== right.isDirectory()) {
+          return left.isDirectory() ? -1 : 1;
+        }
+        return left.name.localeCompare(right.name);
+      });
+  } catch {
+    return [createMessageNode('Unavailable')];
+  }
+
+  const visibleEntries = entries.slice(0, MAX_DIRECTORY_ITEMS);
+  const nodes = visibleEntries.map((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      return {
+        label: entry.name,
+        kind: 'folder' as const,
+        path,
+        tooltip: path,
+        icon: new vscode.ThemeIcon('folder'),
+        children: () => readDirectoryNodes(path),
+      };
+    }
+
+    return createFileNode(path, entry.name);
+  });
+
+  if (entries.length > visibleEntries.length) {
+    nodes.push(createMessageNode(`${entries.length - visibleEntries.length} more hidden`));
+  }
+
+  return nodes;
+}
+
+function openFileCommand(path: string): vscode.Command {
+  return {
+    command: 'vscode.open',
+    title: 'Open',
+    arguments: [vscode.Uri.file(path)],
+  };
+}
+
+function isSensitiveFile(name: string): boolean {
+  return (
+    name === '.env' || name.startsWith('.env.') || name.endsWith('.pem') || name.endsWith('.key')
+  );
+}

@@ -1,0 +1,54 @@
+import * as os from 'node:os';
+import * as path from 'node:path';
+
+export { CONTEXT_FILE_NAME } from '@branch-context/core/constants';
+
+const APP_ID = 'branch-context';
+const APP_LOG_FILENAME = 'extension.log';
+export const APP_NAME = 'Branch Context';
+export const STATUS_BAR_PRIORITY = 10;
+
+export const commandIds = {
+  openCurrentContext: `${APP_ID}.openCurrentContext`,
+  sync: `${APP_ID}.sync`,
+  status: `${APP_ID}.status`,
+  setBase: `${APP_ID}.setBase`,
+  applyTemplate: `${APP_ID}.applyTemplate`,
+  openConfig: `${APP_ID}.openConfig`,
+  openCurrentContextFolder: `${APP_ID}.openCurrentContextFolder`,
+  groupContextsBy: `${APP_ID}.groupContextsBy`,
+  checkoutContextBranch: `${APP_ID}.checkoutContextBranch`,
+  openContext: `${APP_ID}.openContext`,
+  revealContextFolder: `${APP_ID}.revealContextFolder`,
+  archiveContext: `${APP_ID}.archiveContext`,
+  restoreContext: `${APP_ID}.restoreContext`,
+  deleteContext: `${APP_ID}.deleteContext`,
+  showLogs: `${APP_ID}.showLogs`,
+  showStatusBarActions: `${APP_ID}.internal.showStatusBarActions`,
+  showDetails: `${APP_ID}.internal.showDetails`,
+} as const;
+
+export const viewIds = {
+  currentContext: `${APP_ID}.currentContext`,
+  contexts: `${APP_ID}.contexts`,
+  templates: `${APP_ID}.templates`,
+} as const;
+
+export const contextKeys = {
+  initialized: `${APP_ID}.initialized`,
+} as const;
+
+export const codeLensTitles = {
+  sync: 'Sync',
+  setBase: 'Set Base',
+  applyTemplate: 'Apply Template',
+  openConfig: 'Open Config',
+} as const;
+
+function getAppLogDirname(appId = APP_ID): string {
+  return `.${appId}`;
+}
+
+export function getAppLogFilePath(tmpDir = os.tmpdir(), appId = APP_ID): string {
+  return path.join(tmpDir, getAppLogDirname(appId), APP_LOG_FILENAME);
+}

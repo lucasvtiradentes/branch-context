@@ -3,3 +3,7 @@ dist
 build
 .turbo
 *.tsbuildinfo
+*.vsix
+dist-dev
+_branch
+.bctx/branches/

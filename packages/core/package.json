@@ -15,11 +15,32 @@
       "types": "./dist/constants.d.ts",
       "development": "./src/constants.ts",
       "import": "./dist/constants.js"
+    },
+    "./config-schema": {
+      "types": "./dist/data/config-schema.d.ts",
+      "development": "./src/data/config-schema.ts",
+      "import": "./dist/data/config-schema.js"
+    },
+    "./services": {
+      "types": "./dist/services/index.d.ts",
+      "development": "./src/services/index.ts",
+      "import": "./dist/services/index.js"
+    },
+    "./services/status": {
+      "types": "./dist/services/status.d.ts",
+      "development": "./src/services/status.ts",
+      "import": "./dist/services/status.js"
+    },
+    "./services/actions": {
+      "types": "./dist/services/actions.d.ts",
+      "development": "./src/services/actions.ts",
+      "import": "./dist/services/actions.js"
     }
   },
   "files": [
     "assets",
-    "dist"
+    "dist",
+    "resources"
   ],
   "scripts": {
     "build": "tsup",
@@ -32,5 +53,8 @@
     "@types/node": "^22.0.0",
     "tsup": "^8.5.1",
     "vitest": "^4.1.0"
+  },
+  "dependencies": {
+    "zod": "^4.4.1"
   }
 }

@@ -1,0 +1,12 @@
+.turbo/**
+dist-dev/**
+dist/**/*.map
+node_modules/**
+scripts/**
+src/**
+*.vsix
+.DS_Store
+.env
+.env.*
+tsconfig.json
+tsup.config.ts

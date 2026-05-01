@@ -1,9 +1,42 @@
 {
   "name": "branch-context-vscode-extension",
   "displayName": "Branch Context",
-  "version": "0.0.0",
-  "private": true,
+  "description": "Branch Context notes, status, commands, and context.md helpers for VS Code.",
+  "version": "0.1.0",
+  "private": false,
   "publisher": "lucasvtiradentes",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lucasvtiradentes/branch-context.git",
+    "directory": "apps/vscode-extension"
+  },
+  "scripts": {
+    "build": "pnpm run schema && tsup && pnpm run resources",
+    "dev": "tsup --watch",
+    "postbuild": "tsx scripts/install-local-vscode.ts",
+    "install-local": "pnpm run build",
+    "package": "vsce package --no-dependencies --out branch-context-vscode-extension-${npm_package_version}.vsix",
+    "resources": "tsx --conditions=development scripts/copy-core-resources.ts",
+    "schema": "tsx --conditions=development scripts/generate-schema.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "vscode:prepublish": "pnpm run build"
+  },
+  "devDependencies": {
+    "@branch-context/core": "workspace:*",
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.104.0",
+    "@vscode/vsce": "^3.6.1",
+    "tsx": "^4.21.0",
+    "tsup": "^8.5.1"
+  },
+  "keywords": [
+    "branch-context",
+    "bctx",
+    "git",
+    "context",
+    "markdown"
+  ],
   "engines": {
     "vscode": "^1.104.0"
   },
@@ -11,28 +44,260 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:branch-context.showSharedSum"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "branch-context",
+          "title": "Branch Context",
+          "icon": "resources/branch-context.svg"
+        }
+      ]
+    },
+    "views": {
+      "branch-context": [
+        {
+          "id": "branch-context.currentContext",
+          "name": "Current Context",
+          "icon": "resources/branch-context.svg"
+        },
+        {
+          "id": "branch-context.contexts",
+          "name": "Contexts",
+          "icon": "resources/branch-context.svg"
+        },
+        {
+          "id": "branch-context.templates",
+          "name": "Templates",
+          "icon": "resources/branch-context.svg"
+        }
+      ]
+    },
     "commands": [
       {
-        "command": "branch-context.showSharedSum",
-        "title": "Branch Context: Show Shared Sum"
+        "command": "branch-context.openCurrentContext",
+        "title": "Branch Context: Open Current Context",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "branch-context.sync",
+        "title": "Branch Context: Sync",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "branch-context.status",
+        "title": "Branch Context: Status",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "branch-context.setBase",
+        "title": "Branch Context: Set Base",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "branch-context.applyTemplate",
+        "title": "Branch Context: Apply Template",
+        "icon": "$(symbol-namespace)"
+      },
+      {
+        "command": "branch-context.openConfig",
+        "title": "Branch Context: Open Config",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "branch-context.openCurrentContextFolder",
+        "title": "Branch Context: Open Current Context Folder",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "branch-context.groupContextsBy",
+        "title": "Branch Context: Group Contexts By",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "branch-context.checkoutContextBranch",
+        "title": "Branch Context: Checkout Branch",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "branch-context.openContext",
+        "title": "Branch Context: Open Context",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "branch-context.revealContextFolder",
+        "title": "Branch Context: Open Context Folder",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "branch-context.archiveContext",
+        "title": "Branch Context: Archive Context",
+        "icon": "$(archive)"
+      },
+      {
+        "command": "branch-context.restoreContext",
+        "title": "Branch Context: Restore Context",
+        "icon": "$(history)"
+      },
+      {
+        "command": "branch-context.deleteContext",
+        "title": "Branch Context: Delete Context",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "branch-context.showLogs",
+        "title": "Branch Context: Show Logs",
+        "icon": "$(output)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "workbench.view.extension.branch-context",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.currentContext.focus",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.contexts.focus",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.templates.focus",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.openCurrentContext",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.sync",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.status",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.setBase",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.applyTemplate",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.openConfig",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.openCurrentContextFolder",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.groupContextsBy",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.checkoutContextBranch",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.openContext",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.revealContextFolder",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.archiveContext",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.restoreContext",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.deleteContext",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "branch-context.sync",
+          "when": "view == branch-context.currentContext && branch-context.initialized",
+          "group": "navigation@1"
+        },
+        {
+          "command": "branch-context.setBase",
+          "when": "view == branch-context.currentContext && branch-context.initialized",
+          "group": "navigation@2"
+        },
+        {
+          "command": "branch-context.applyTemplate",
+          "when": "view == branch-context.currentContext && branch-context.initialized",
+          "group": "navigation@3"
+        },
+        {
+          "command": "branch-context.openCurrentContextFolder",
+          "when": "view == branch-context.currentContext && branch-context.initialized",
+          "group": "navigation@4"
+        },
+        {
+          "command": "branch-context.groupContextsBy",
+          "when": "view == branch-context.contexts && branch-context.initialized",
+          "group": "navigation@1"
+        },
+        {
+          "command": "branch-context.openConfig",
+          "when": "view == branch-context.templates && branch-context.initialized",
+          "group": "navigation@1"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "branch-context.checkoutContextBranch",
+          "when": "view == branch-context.contexts && viewItem =~ /checkoutable/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "branch-context.openContext",
+          "when": "view == branch-context.contexts && viewItem =~ /branchContext\\.context/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "branch-context.revealContextFolder",
+          "when": "view == branch-context.contexts && viewItem =~ /branchContext\\.context/",
+          "group": "navigation@3"
+        },
+        {
+          "command": "branch-context.archiveContext",
+          "when": "view == branch-context.contexts && viewItem =~ /archivable/",
+          "group": "2_manage@1"
+        },
+        {
+          "command": "branch-context.restoreContext",
+          "when": "view == branch-context.contexts && viewItem =~ /restorable/",
+          "group": "2_manage@2"
+        },
+        {
+          "command": "branch-context.deleteContext",
+          "when": "view == branch-context.contexts && viewItem =~ /deletable/",
+          "group": "9_destructive@1"
+        }
+      ]
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": "**/.bctx/config.json",
+        "url": "./resources/schema.json"
       }
     ]
-  },
-  "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
-  },
-  "dependencies": {
-    "@branch-context/core": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@types/vscode": "^1.104.0",
-    "tsup": "^8.5.1"
   }
 }

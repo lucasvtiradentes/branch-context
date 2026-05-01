@@ -6,8 +6,8 @@ export default defineConfig({
   target: 'node22',
   platform: 'node',
   outDir: 'dist',
-  external: ['vscode'],
-  noExternal: ['@branch-context/core/constants'],
+  external: ['vscode', 'readline/promises'],
+  noExternal: [/^@branch-context\/core/],
   clean: true,
   sourcemap: true,
 });

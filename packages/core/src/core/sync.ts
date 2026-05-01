@@ -8,26 +8,35 @@ import {
   readFileSync,
   readlinkSync,
   renameSync,
+  rmSync,
   symlinkSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { dirname, extname, join, relative } from 'node:path';
-import { initTemplates } from '../assets';
 import {
   ARCHIVED_DIR,
   BRANCHES_DIR,
   CONFIG_DIR,
+  CONTEXT_FILE_NAME,
   DEFAULT_SOUND_FILE,
   DEFAULT_SYMLINK,
   TEMPLATE_FILE_EXTENSIONS,
 } from '../constants';
 import { Config, getBranchesDir, getDefaultTemplate, getTemplateDir } from '../data/config';
-import { archiveBranchMeta, createBranchMeta, unarchiveBranchMeta } from '../data/meta';
+import {
+  archiveBranchMeta,
+  createBranchMeta,
+  deleteArchivedBranchMeta,
+  deleteBranchMeta,
+  unarchiveBranchMeta,
+} from '../data/meta';
+import { copyInitTemplatesResource } from '../resources';
 import { getTemplateVariables, renderTemplateContent } from '../utils/template';
 
 export type CreateBranchContextResult =
   | 'exists'
+  | 'repaired_from_template'
   | 'restored_from_archive'
   | 'created_from_template'
   | 'created_empty';
@@ -128,6 +137,14 @@ export function createBranchContext(
   const branchKey = sanitizeBranchName(branch);
 
   if (existsSync(branchDir)) {
+    createBranchMeta(workspace, branchKey, branch);
+    if (!existsSync(join(branchDir, CONTEXT_FILE_NAME))) {
+      const templateDir = resolveTemplateDir(workspace, branch, template);
+      if (templateDir) {
+        copyTemplateToBranch(templateDir, branchDir, branch);
+        return 'repaired_from_template';
+      }
+    }
     return 'exists';
   }
 
@@ -197,12 +214,16 @@ export function updateSymlink(workspace: string, branch: string): UpdateSymlinkR
   return 'updated';
 }
 
-export function syncBranch(workspace: string, branch: string) {
+export type SyncBranchOptions = {
+  sound?: boolean;
+};
+
+export function syncBranch(workspace: string, branch: string, options: SyncBranchOptions = {}) {
   const config = Config.load(workspace);
   const createResult = createBranchContext(workspace, branch);
   const symlinkResult = updateSymlink(workspace, branch);
 
-  if (config.sound) {
+  if (options.sound ?? config.sound) {
     playSound(config.soundFile);
   }
 
@@ -274,13 +295,23 @@ export function unarchiveBranch(workspace: string, branchName: string) {
   return true;
 }
 
-export function copyInitTemplates(dest: string) {
-  mkdirSync(dest, { recursive: true });
-  for (const [templateName, files] of Object.entries(initTemplates)) {
-    const templateDir = join(dest, templateName);
-    mkdirSync(templateDir, { recursive: true });
-    for (const [filename, content] of Object.entries(files)) {
-      writeFileSync(join(templateDir, filename), content);
-    }
+export function deleteBranchContext(workspace: string, branchName: string, archived = false) {
+  const rootDir = archived ? getArchivedDir(workspace) : getBranchesDir(workspace);
+  const contextDir = join(rootDir, branchName);
+
+  if (!existsSync(contextDir)) {
+    return false;
   }
+
+  rmSync(contextDir, { recursive: true, force: true });
+  if (archived) {
+    deleteArchivedBranchMeta(workspace, branchName);
+  } else {
+    deleteBranchMeta(workspace, branchName);
+  }
+  return true;
+}
+
+export function copyInitTemplates(dest: string) {
+  copyInitTemplatesResource(dest);
 }

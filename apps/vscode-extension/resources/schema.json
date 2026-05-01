@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "JSON Schema reference",
+      "type": "string"
+    },
+    "default_base_branch": {
+      "description": "Default branch or ref used to compute commits and changed files",
+      "type": "string"
+    },
+    "sound": {
+      "description": "Play a sound when branch context sync runs",
+      "type": "boolean"
+    },
+    "sound_file": {
+      "description": "Custom sound file path",
+      "type": "string"
+    },
+    "commit_description": {
+      "description": "Include commit body text in the generated commits section",
+      "type": "boolean"
+    },
+    "template_rules": {
+      "description": "Rules that map branch prefixes to template names",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "prefix": {
+            "type": "string",
+            "description": "Branch name prefix matched against the current git branch"
+          },
+          "template": {
+            "type": "string",
+            "description": "Template directory name to use when the branch prefix matches"
+          }
+        },
+        "required": [
+          "prefix",
+          "template"
+        ],
+        "additionalProperties": false,
+        "description": "Template selection rule"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "description": "Branch Context configuration file"
+}

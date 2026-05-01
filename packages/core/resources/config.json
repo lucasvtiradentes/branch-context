@@ -1,0 +1,27 @@
+{
+  "default_base_branch": "main",
+  "sound": true,
+  "commit_description": false,
+  "template_rules": [
+    {
+      "prefix": "feature/",
+      "template": "feature"
+    },
+    {
+      "prefix": "fix/",
+      "template": "fix"
+    },
+    {
+      "prefix": "bugfix/",
+      "template": "fix"
+    },
+    {
+      "prefix": "chore/",
+      "template": "chore"
+    },
+    {
+      "prefix": "refactor/",
+      "template": "chore"
+    }
+  ]
+}

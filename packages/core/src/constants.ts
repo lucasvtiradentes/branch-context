@@ -17,8 +17,9 @@ export const BRANCHES_DIR = 'branches';
 export const ARCHIVED_DIR = '_archived';
 
 export const DEFAULT_SYMLINK = '_branch';
+export const CONTEXT_FILE_NAME = 'context.md';
 export const DEFAULT_TEMPLATE = '_default';
-export const DEFAULT_BASE_BRANCH = 'origin/main';
+export const DEFAULT_BASE_BRANCH = 'main';
 export const BASE_BRANCH_FILE = 'base_branch';
 
 export const TEMPLATE_FILE_EXTENSIONS = ['.md', '.txt', '.json', '.yaml', '.yml', '.toml'];

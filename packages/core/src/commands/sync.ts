@@ -1,10 +1,8 @@
 import { CLI_NAME } from '../constants';
-import { updateContextTags } from '../core/context-tags';
-import { getCurrentBranch, getGitRoot } from '../core/hooks';
-import { sanitizeBranchName, syncBranch } from '../core/sync';
-import { getBaseBranch } from '../data/branch-base';
-import { Config, configExists } from '../data/config';
-import { updateBranchMeta } from '../data/meta';
+import { getGitRoot } from '../core/hooks';
+import { playSound } from '../core/sync';
+import { Config } from '../data/config';
+import { syncCurrentBranch } from '../services/actions';
 
 export function cmdSync(_args: string[]) {
   const gitRoot = getGitRoot();
@@ -13,41 +11,39 @@ export function cmdSync(_args: string[]) {
     return 1;
   }
 
-  if (!configExists(gitRoot)) {
-    console.log(`error: not initialized. Run '${CLI_NAME} init' first`);
-    return 1;
-  }
-
-  const branch = getCurrentBranch(gitRoot);
-  if (!branch) {
-    console.log('error: could not determine current branch');
-    return 1;
-  }
-
-  const result = syncBranch(gitRoot, branch);
-  const branchKey = sanitizeBranchName(branch);
-  const contextDir = result.branch_dir;
-  const baseBranch = getBaseBranch(gitRoot, contextDir);
   const config = Config.load(gitRoot);
-
-  updateBranchMeta(gitRoot, branchKey, baseBranch, config.commitDescription);
-  const updates = updateContextTags(gitRoot, contextDir, branchKey, baseBranch);
+  const result = syncCurrentBranch(gitRoot, {
+    sound: config.sound,
+    playSound,
+  });
+  if (!result.ok) {
+    if (result.reason === 'not_initialized') {
+      console.log(`error: not initialized. Run '${CLI_NAME} init' first`);
+    } else if (result.reason === 'no_current_branch') {
+      console.log('error: could not determine current branch');
+    } else {
+      console.log(`error: ${result.message}`);
+    }
+    return 1;
+  }
 
   console.log(`Branch:  ${result.branch}`);
-  console.log(`Context: ${result.branch_dir}`);
-  console.log(`Symlink: ${result.symlink_path} -> ${result.branch_dir}`);
-  console.log(`Base:    ${baseBranch}`);
+  console.log(`Context: ${result.contextDir}`);
+  console.log(`Symlink: ${result.symlinkPath} -> ${result.contextDir}`);
+  console.log(`Base:    ${result.baseBranch}`);
 
-  if (result.create_result === 'created_from_template') {
+  if (result.createResult === 'created_from_template') {
     console.log('Status:  created from template');
-  } else if (result.create_result === 'created_empty') {
+  } else if (result.createResult === 'repaired_from_template') {
+    console.log('Status:  repaired from template');
+  } else if (result.createResult === 'created_empty') {
     console.log('Status:  created (no template)');
   } else {
     console.log('Status:  synced');
   }
 
-  if (updates.length > 0) {
-    console.log(`Updated: ${updates.length} tag(s)`);
+  if (result.updates.length > 0) {
+    console.log(`Updated: ${result.updates.length} tag(s)`);
   }
 
   return 0;

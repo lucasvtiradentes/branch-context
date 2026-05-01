@@ -1,7 +1,12 @@
-import { rmSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  Config,
   cmdStatus,
+  createBranchContext,
+  getBranchDir,
+  getStatus,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
   installHook,
@@ -18,6 +23,14 @@ describe('status command', () => {
     expect(capture.output).toContain('not initialized');
   });
 
+  it('returns uninitialized status data', () => {
+    const repo = createGitRepo();
+    const status = getStatus(repo);
+    expect(status.initialized).toBe(false);
+    expect(status.gitRoot).toBe(repo);
+    expect(status.issues.some((issue) => issue.message === 'not initialized')).toBe(true);
+  });
+
   it('shows branch and base', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
@@ -26,6 +39,58 @@ describe('status command', () => {
     cmdStatus([]);
     expect(capture.output).toContain('Branch:');
     expect(capture.output).toContain('Base:');
+  });
+
+  it('returns initialized status data', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    syncBranch(repo, 'main');
+    const status = getStatus(repo);
+    expect(status.initialized).toBe(true);
+    expect(status.currentBranch).toBe('main');
+    expect(status.currentContextDir).toContain('.bctx/branches/main');
+    expect(status.currentContextRelPath).toBe('.bctx/branches/main');
+    expect(status.templates).toContain('_default');
+    expect(status.symlink.state).toBe('valid');
+  });
+
+  it('detects manually applied template from context content', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    new Config({ sound: false, templateRules: [{ prefix: 'fix/', template: 'fix' }] }).save(repo);
+
+    const batchTemplateDir = join(repo, '.bctx', 'templates', 'batch');
+    mkdirSync(batchTemplateDir);
+    writeFileSync(
+      join(batchTemplateDir, 'context.md'),
+      `---
+branch: {{branch}}
+created: {{date}}
+author: {{author}}
+---
+
+<!--
+  This is a BATCH branch - multiple Linear tickets handled in one branch.
+-->
+
+## Goal
+
+-
+
+## Tickets
+
+-
+`,
+    );
+
+    createBranchContext(repo, 'feature/fb_partner_reports_and_payouts', 'batch');
+    const status = getStatus(repo);
+    const context = status.recentContexts.find(
+      (item) => item.branchKey === 'feature-fb_partner_reports_and_payouts',
+    );
+
+    expect(context?.template).toBe('batch');
+    expect(context?.contextDir).toBe(getBranchDir(repo, 'feature/fb_partner_reports_and_payouts'));
   });
 
   it('shows current branch', () => {
@@ -106,6 +171,18 @@ describe('status command', () => {
     const capture = captureConsole();
     cmdStatus([]);
     expect(capture.output).toContain('symlink valid');
+  });
+
+  it('reports missing configured base ref', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    new Config({ defaultBaseBranch: 'origin/main', sound: false }).save(repo);
+    syncBranch(repo, 'main');
+    const status = getStatus(repo);
+    expect(status.issues).toContainEqual({
+      level: 'error',
+      message: 'base branch not found: origin/main',
+    });
   });
 
   it('returns error when hook missing', () => {
