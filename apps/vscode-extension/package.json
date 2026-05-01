@@ -81,7 +81,7 @@
         },
         {
           "id": "branch-context.templates",
-          "name": "Config",
+          "name": "Templates",
           "icon": "resources/branch-context.svg"
         }
       ]
