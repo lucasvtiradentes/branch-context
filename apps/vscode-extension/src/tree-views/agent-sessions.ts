@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import type { AgentSession } from '@branch-context/core/services/agents';
 import * as vscode from 'vscode';
+import { isAgentSessionActive } from '../core/active-agent-sessions';
 import { getBranchContextState } from '../core/state';
 import { formatRelativeTime } from '../lib/format-relative-time';
 import { createMessageNode, StateTreeProvider } from './items';
@@ -122,14 +123,21 @@ function createAgentSessionNode(item: AgentSessionViewItem) {
   const session = item.session;
   const description = formatRelativeTime(session.updatedAt ?? session.startedAt);
   const path = session.path ?? undefined;
+  const active = isAgentSessionActive(session);
 
   return {
     label: getSessionDisplayText(item),
     kind: 'agent' as const,
     path,
+    agentProvider: session.provider,
+    sessionId: session.sessionId,
     description,
     tooltip: createAgentTooltip(item),
-    icon: new vscode.ThemeIcon(session.provider === 'codex' ? 'terminal' : 'sparkle'),
+    icon: new vscode.ThemeIcon(
+      session.provider === 'codex' ? 'terminal' : 'sparkle',
+      active ? new vscode.ThemeColor('errorForeground') : undefined,
+    ),
+    contextValue: 'branchContext.agentSession resumable',
     command: path
       ? {
           command: 'vscode.open',
@@ -160,12 +168,12 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
       ['Today', 'This week', 'Older'],
       getRecentGroup,
       'history',
-    ).map(createAgentSessionGroupNode);
+    ).map((group) => createAgentSessionGroupNode(group, vscode.TreeItemCollapsibleState.Expanded));
   }
 
   if (agentSessionsGroupBy === 'size') {
     return createOrderedGroups(items, ['Small', 'Medium', 'Large'], getSizeGroup, 'database').map(
-      createAgentSessionGroupNode,
+      (group) => createAgentSessionGroupNode(group, vscode.TreeItemCollapsibleState.Expanded),
     );
   }
 
@@ -243,16 +251,27 @@ function getSizeGroup(item: AgentSessionViewItem) {
 
 function getSessionDisplayText(item: AgentSessionViewItem) {
   if (agentSessionTextMode === 'last') {
-    return firstText(item.details.lastMessage, item.details.initialMessage, item.session.title);
+    return firstText(
+      item.details.lastMessage,
+      item.details.initialMessage,
+      item.session.title,
+      isAgentSessionActive(item.session) ? 'Starting session' : null,
+    );
   }
 
   if (agentSessionTextMode === 'summary') {
-    return firstText(item.details.summary, item.details.initialMessage, item.session.title);
+    return firstText(
+      item.details.summary,
+      item.details.initialMessage,
+      item.session.title,
+      isAgentSessionActive(item.session) ? 'Starting session' : null,
+    );
   }
 
   return firstText(
     item.details.initialMessage,
     item.session.title,
+    isAgentSessionActive(item.session) ? 'Starting session' : null,
     item.session.sessionId.slice(0, 8),
   );
 }
@@ -330,7 +349,15 @@ function toUserMessage(
   text: string | null,
   options?: Pick<UserMessageExtraction, 'fallback' | 'lastOnly'>,
 ): UserMessageExtraction | null {
-  return text ? { text, ...options } : null;
+  if (!text || isInternalUserMessage(text)) {
+    return null;
+  }
+
+  return { text, ...options };
+}
+
+function isInternalUserMessage(text: string) {
+  return text.startsWith('# AGENTS.md instructions for ');
 }
 
 function extractSummary(data: Record<string, unknown>) {
@@ -464,6 +491,7 @@ function createAgentTooltip(item: AgentSessionViewItem) {
   return new vscode.MarkdownString(
     [
       markdownTooltipLine('provider', formatProviderName(session.provider)),
+      markdownTooltipLine('session', getShortSessionId(session.sessionId)),
       markdownTooltipLine('branch', session.branch),
       markdownTooltipLine('scope', session.scope),
       markdownTooltipLine('model', session.model ?? 'unknown'),
@@ -471,6 +499,10 @@ function createAgentTooltip(item: AgentSessionViewItem) {
       markdownTooltipLine('size', formatBytes(item.sizeBytes)),
     ].join('  \n'),
   );
+}
+
+function getShortSessionId(sessionId: string) {
+  return sessionId.slice(0, 7);
 }
 
 function formatBytes(value: number) {

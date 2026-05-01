@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync } from 'node:fs';
+import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -39,6 +39,38 @@ describe('agent provider parsers', () => {
     const session = parseCodexSessionFile(join(fixturesDir, 'codex-injected.jsonl'));
 
     expect(session.title).toBe('real prompt');
+  });
+
+  it('ignores Codex injected response items before the first prompt', () => {
+    const root = createTempDir();
+    const sessionPath = join(root, 'codex.jsonl');
+    writeFileSync(
+      sessionPath,
+      [
+        JSON.stringify({
+          type: 'session_meta',
+          payload: {
+            id: 'codex-5',
+            timestamp: '2026-05-01T14:24:16.417Z',
+            cwd: '/repo/project',
+            source: 'cli',
+            git: { branch: 'feature/test' },
+          },
+        }),
+        JSON.stringify({
+          type: 'response_item',
+          payload: {
+            type: 'message',
+            role: 'user',
+            content: [{ type: 'input_text', text: '# AGENTS.md instructions for /repo/project' }],
+          },
+        }),
+      ].join('\n'),
+    );
+
+    const session = parseCodexSessionFile(sessionPath);
+
+    expect(session.title).toBeNull();
   });
 
   it('scans Claude sessions from the repo-specific directory', () => {

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { viewIds } from '../constants';
+import { initializeActiveAgentSessions } from '../core/active-agent-sessions';
 import {
   createAgentSessionsProvider,
   getAgentSessionsViewDescription,
@@ -22,6 +23,7 @@ export function initializeTreeViews(context: vscode.ExtensionContext): void {
 
   const currentContextProvider = createCurrentContextProvider();
   const agentSessionsProvider = createAgentSessionsProvider();
+  initializeActiveAgentSessions(context, () => agentSessionsProvider.refresh());
   const gitChangesProvider = createGitChangesProvider();
   const providers = [
     [viewIds.currentContext, currentContextProvider],

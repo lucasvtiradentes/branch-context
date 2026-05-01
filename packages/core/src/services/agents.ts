@@ -462,10 +462,14 @@ function extractContentTitle(content: unknown) {
 
 function cleanTitle(value: string | null) {
   const title = value?.trim().replace(/\s+/g, ' ') ?? '';
-  if (!title) {
+  if (!title || isInternalUserMessage(title)) {
     return null;
   }
   return title.length > 120 ? `${title.slice(0, 117)}...` : title;
+}
+
+function isInternalUserMessage(text: string) {
+  return text.startsWith('# AGENTS.md instructions for ');
 }
 
 function formatSource(value: unknown) {

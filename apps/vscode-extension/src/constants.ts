@@ -22,6 +22,7 @@ export const commandIds = {
   groupGitCommitsBy: `${APP_ID}.groupGitCommitsBy`,
   groupAgentSessionsBy: `${APP_ID}.groupAgentSessionsBy`,
   toggleAgentSessionText: `${APP_ID}.toggleAgentSessionText`,
+  resumeAgentSession: `${APP_ID}.resumeAgentSession`,
   groupContextsBy: `${APP_ID}.groupContextsBy`,
   checkoutContextBranch: `${APP_ID}.checkoutContextBranch`,
   openContext: `${APP_ID}.openContext`,

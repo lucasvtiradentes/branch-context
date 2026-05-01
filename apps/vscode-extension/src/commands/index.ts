@@ -8,6 +8,7 @@ import { registerOpenCommitDiffCommand } from './open-commit-diff';
 import { registerOpenConfigCommand } from './open-config';
 import { registerOpenCurrentContextCommand } from './open-current-context';
 import { registerOpenCurrentContextFolderCommand } from './open-current-context-folder';
+import { registerResumeAgentSessionCommand } from './resume-agent-session';
 import { registerReviewDiffCommand } from './review-diff';
 import { registerSetBaseCommand } from './set-base';
 import { registerShowLogsCommand } from './show-logs';
@@ -26,6 +27,7 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerOpenConfigCommand(),
     registerOpenCommitDiffCommand(),
     registerOpenCurrentContextFolderCommand(),
+    registerResumeAgentSessionCommand(),
     registerReviewDiffCommand(),
     registerToggleGitChangesModeCommand(context),
     registerGroupGitCommitsCommand(context),

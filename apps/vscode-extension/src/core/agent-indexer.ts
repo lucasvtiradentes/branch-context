@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { getClaudeProjectKey, syncAgentSessions } from '@branch-context/core/services/agents';
 import * as vscode from 'vscode';
+import { markAgentSessionFileActive } from './active-agent-sessions';
 import {
   type BranchContextExtensionState,
   getBranchContextState,
@@ -12,9 +13,11 @@ import {
 
 const SYNC_DEBOUNCE_MS = 250;
 const CODEX_WATCH_DAYS = 2;
+const FOLLOW_UP_SYNC_DELAYS_MS = [1_500, 3_500];
 
 let watcherDisposables: vscode.Disposable[] = [];
 let syncTimer: ReturnType<typeof setTimeout> | undefined;
+let followUpSyncTimers: ReturnType<typeof setTimeout>[] = [];
 let rolloverTimer: ReturnType<typeof setTimeout> | undefined;
 let watcherKey: string | null = null;
 let branchKey: string | null = null;
@@ -85,10 +88,16 @@ function registerProviderWatcher(root: string, pattern: string): void {
 
   watcherDisposables.push(
     watcher,
-    watcher.onDidCreate(scheduleAgentSync),
-    watcher.onDidChange(scheduleAgentSync),
+    watcher.onDidCreate(handleAgentSessionFileChange),
+    watcher.onDidChange(handleAgentSessionFileChange),
     watcher.onDidDelete(scheduleAgentSync),
   );
+}
+
+function handleAgentSessionFileChange(uri: vscode.Uri): void {
+  markAgentSessionFileActive(uri.fsPath);
+  scheduleAgentSync();
+  scheduleFollowUpAgentSyncs();
 }
 
 function scheduleAgentSync(): void {
@@ -112,6 +121,15 @@ function syncCurrentAgentSessions(): void {
   if (result.ok) {
     refreshBranchContextState();
   }
+}
+
+function scheduleFollowUpAgentSyncs(): void {
+  clearFollowUpSyncTimers();
+  followUpSyncTimers = FOLLOW_UP_SYNC_DELAYS_MS.map((delay) =>
+    setTimeout(() => {
+      syncCurrentAgentSessions();
+    }, delay),
+  );
 }
 
 function getCodexWatchPatterns(): string[] {
@@ -171,7 +189,15 @@ function clearTimers(): void {
     clearTimeout(syncTimer);
     syncTimer = undefined;
   }
+  clearFollowUpSyncTimers();
   clearRolloverTimer();
+}
+
+function clearFollowUpSyncTimers(): void {
+  for (const timer of followUpSyncTimers) {
+    clearTimeout(timer);
+  }
+  followUpSyncTimers = [];
 }
 
 function clearRolloverTimer(): void {

@@ -28,6 +28,8 @@ export type BranchContextTreeNode = {
   current?: boolean;
   local?: boolean;
   remote?: boolean;
+  agentProvider?: 'claude' | 'codex';
+  sessionId?: string;
   contextValue?: string;
   description?: string;
   tooltip?: string | vscode.MarkdownString;

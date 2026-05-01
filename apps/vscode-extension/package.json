@@ -148,6 +148,11 @@
         "icon": "$(symbol-string)"
       },
       {
+        "command": "branch-context.resumeAgentSession",
+        "title": "Branch Context: Resume Agent Session",
+        "icon": "$(debug-continue)"
+      },
+      {
         "command": "branch-context.groupContextsBy",
         "title": "Branch Context: Group Other Branches By",
         "icon": "$(list-tree)"
@@ -265,6 +270,10 @@
         },
         {
           "command": "branch-context.toggleAgentSessionText",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.resumeAgentSession",
           "when": "false"
         },
         {
@@ -387,6 +396,11 @@
           "command": "branch-context.deleteContext",
           "when": "view == branch-context.contexts && viewItem =~ /deletable/",
           "group": "9_destructive@1"
+        },
+        {
+          "command": "branch-context.resumeAgentSession",
+          "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "group": "inline@1"
         }
       ]
     },
