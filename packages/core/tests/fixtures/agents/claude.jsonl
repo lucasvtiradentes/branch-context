@@ -1,0 +1,3 @@
+{"type":"user","cwd":"/repo/project","sessionId":"claude-1","timestamp":"2026-05-01T14:21:29.940Z","gitBranch":"feature/test","message":{"role":"user","content":"testando claude"}}
+{"type":"assistant","message":{"model":"claude-opus-4-7"}}
+{"type":"custom-title","customTitle":"Claude title"}

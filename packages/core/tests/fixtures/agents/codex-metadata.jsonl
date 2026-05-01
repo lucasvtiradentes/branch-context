@@ -1,0 +1,3 @@
+{"type":"session_meta","payload":{"id":"codex-2","timestamp":"2026-05-01T14:22:16.417Z","cwd":"/repo/project","source":"cli"}}
+{"type":"turn_context","payload":{"cwd":"/repo/project","model":"gpt-5.5","timezone":"America/Belem","current_date":"2026-05-01"}}
+{"type":"response_item","payload":{"type":"message","role":"developer","content":[{"type":"output_text","text":"BCTX_SESSION_METADATA:\n{\"version\":1,\"provider\":\"codex\",\"repoRoot\":\"/repo/project\",\"branch\":\"feature/test\",\"branchKey\":\"feature-test\",\"sessionId\":\"codex-2\",\"path\":\"~/.codex/sessions/session.jsonl\",\"model\":\"gpt-5.5\",\"startedAt\":\"2026-05-01T14:22:16.417Z\"}"}]}}
