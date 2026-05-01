@@ -17,6 +17,7 @@
     "build:no-cache": "turbo run build --force",
     "changeset": "changeset",
     "changeset:version": "changeset version",
+    "release": "echo 'Release triggered by changesets'",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "check": "biome check .",
