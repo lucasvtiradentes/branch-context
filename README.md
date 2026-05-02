@@ -6,7 +6,7 @@
   <!-- </DYNFIELD:HEADER_LOGO> -->
   <div>Branch Context</div>
   <br />
-  <a href="#-overview">Overview</a> • <a href="#-demo">Demo</a> • <a href="#-motivation">Motivation</a> • <a href="#-features">Features</a> • <a href="#-packages">Packages</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-commands">Commands</a> • <a href="#-configuration">Configuration</a> • <a href="#-license">License</a>
+  <a href="#-overview">Overview</a> • <a href="#-motivation">Motivation</a> • <a href="#-features">Features</a> • <a href="#-packages">Packages</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-commands">Commands</a> • <a href="#-configuration">Configuration</a> • <a href="#-license">License</a>
 </div>
 
 <!-- <DYNFIELD:TOP_DIVIDER> -->
@@ -15,13 +15,13 @@
 </div>
 <!-- </DYNFIELD:TOP_DIVIDER> -->
 
-## 🎯 Overview
+## 🎺 Overview
 
 AI agents are stateless, but work is organized in branches. Branch Context pins a folder to each branch and exposes it at a fixed path (`_branch/`), a stable target for your agents and hooks, automatically swapped on checkout.
 
-## 📸 Demo
-
-![Branch Context VS Code extension demo](https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/demo.png)
+<div align="center">
+  <img src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/demo.png" alt="Branch Context VS Code extension demo">
+</div>
 
 ## ❓ Motivation
 
