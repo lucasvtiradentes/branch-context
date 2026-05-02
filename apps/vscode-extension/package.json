@@ -244,6 +244,11 @@
         "icon": "$(trash)"
       },
       {
+        "command": "branch-context.updateCli",
+        "title": "Branch Context: Update CLI",
+        "icon": "$(terminal)"
+      },
+      {
         "command": "branch-context.showLogs",
         "title": "Branch Context: Show Logs",
         "icon": "$(output)"

@@ -260,9 +260,7 @@ async function promptCliUpdate(state: BranchContextExtensionState): Promise<void
     return;
   }
 
-  const terminal = vscode.window.createTerminal(`${APP_NAME}: Update CLI`);
-  terminal.show();
-  terminal.sendText(cli.updateCommand, true);
+  await vscode.commands.executeCommand(commandIds.updateCli);
 }
 
 function getIssueTooltipLines(state: BranchContextExtensionState): string[] {
