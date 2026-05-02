@@ -2,9 +2,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, expect, vi } from 'vitest';
+import { setMultiSelectOverride } from '../src/cli/prompt';
+import { gitAdd, gitCommit, gitConfig, gitInit } from '../src/git';
 import { Config, copyInitTemplates, getBranchesDir, getTemplateDir } from '../src/index';
-import { gitAdd, gitCommit, gitConfig, gitInit } from '../src/utils/git';
-import { setMultiSelectOverride } from '../src/utils/prompt';
 
 const repos: string[] = [];
 let originalCwd = process.cwd();

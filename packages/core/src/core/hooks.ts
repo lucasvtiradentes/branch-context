@@ -8,16 +8,10 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { basename, delimiter, dirname, isAbsolute, join, relative } from 'node:path';
+import type { PromptYesNo } from '../cli/prompt';
 import { CLI_NAME, GIT_DIR, HOOK_MARKER, HookType } from '../constants';
+import { gitConfigUnset, gitCurrentBranch, gitHooksPath, gitInfoExcludeAdd, gitRoot } from '../git';
 import { loadHookTemplateResource } from '../resources';
-import {
-  gitConfigUnset,
-  gitCurrentBranch,
-  gitHooksPath,
-  gitInfoExcludeAdd,
-  gitRoot,
-} from '../utils/git';
-import type { PromptYesNo } from '../utils/prompt';
 
 export enum HookInstallResult {
   Installed = 'installed',
@@ -174,7 +168,7 @@ export async function installHook(
   hookType: HookType = HookType.PostCheckout,
   ask?: PromptYesNo,
 ): Promise<HookInstallResult> {
-  const prompt = ask ?? (await import('../utils/prompt')).promptYesNo;
+  const prompt = ask ?? (await import('../cli/prompt')).promptYesNo;
   const customHooksDir = getCustomHooksDir(gitRootPath);
   let useCustom = false;
 

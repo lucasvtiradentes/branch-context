@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { gitAdd, gitCheckout, gitCommit } from '../src/git';
 import {
   createBranchMeta,
   DEFAULT_SYMLINK,
@@ -9,7 +10,6 @@ import {
   updateBranchMeta,
   updateContextTags,
 } from '../src/index';
-import { gitAdd, gitCheckout, gitCommit } from '../src/utils/git';
 import { createGitRepo, expectOk, initBctxWorkspace } from './helpers';
 
 describe('context tags e2e', () => {

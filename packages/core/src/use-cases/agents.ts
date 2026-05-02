@@ -21,7 +21,7 @@ import {
   writeAgentsFile,
 } from '../data/agents';
 import { configExists } from '../data/config';
-import { gitCurrentBranch } from '../utils/git';
+import { gitCurrentBranch } from '../git';
 import { asRecord, asString, parseJsonRecord } from '../utils/unknown';
 import { syncCurrentBranch } from './actions';
 

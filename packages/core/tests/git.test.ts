@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gitCurrentBranch, gitInit } from '../src/index';
+import { gitCurrentBranch, gitInit, normalizeGitRemoteUrl } from '../src/index';
 import { createTempDir, expectOk } from './helpers';
 
 describe('git helpers', () => {
@@ -17,5 +17,19 @@ describe('git helpers', () => {
 
   it('returns null outside git repo', () => {
     expect(gitCurrentBranch(createTempDir())).toBeNull();
+  });
+
+  it('normalizes common remote urls', () => {
+    expect(normalizeGitRemoteUrl('git@github.com:owner/repo.git')).toEqual({
+      host: 'github.com',
+      owner: 'owner',
+      repo: 'repo',
+    });
+    expect(normalizeGitRemoteUrl('https://gitlab.com/group/repo.git')).toEqual({
+      host: 'gitlab.com',
+      owner: 'group',
+      repo: 'repo',
+    });
+    expect(normalizeGitRemoteUrl('not-a-url')).toBeNull();
   });
 });

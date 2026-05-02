@@ -18,7 +18,7 @@ import {
   listTemplates,
 } from '../data/config';
 import { loadArchivedMeta, loadBranchMeta } from '../data/meta';
-import { gitRefExists } from '../utils/git';
+import { gitRefExists } from '../git';
 import { type BranchInfo, collectBranchInfo } from './branch-info';
 
 export type BranchContextStatusIssue = {

@@ -1,9 +1,9 @@
-import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   archiveContextByKey,
   deleteContextByKey,
+  gitCheckout,
   restoreContextByKey,
   syncCurrentBranch,
 } from '@branch-context/core';
@@ -77,10 +77,7 @@ async function checkoutContextBranch(node: unknown): Promise<void> {
       return;
     }
 
-    const result = spawnSync('git', ['checkout', contextNode.branch], {
-      cwd: workspaceRoot,
-      encoding: 'utf8',
-    });
+    const result = gitCheckout(workspaceRoot, contextNode.branch);
     if (result.status !== 0) {
       logger.warning(
         `checkout context failed: branch=${contextNode.branch} status=${result.status} stderr=${result.stderr.trim()} stdout=${result.stdout.trim()}`,

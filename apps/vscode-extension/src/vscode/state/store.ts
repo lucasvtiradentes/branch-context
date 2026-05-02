@@ -7,6 +7,7 @@ import {
 import * as vscode from 'vscode';
 import { contextKeys } from '../../constants';
 import { logger } from '../../shared/logger';
+import { readCliCompatibility } from '../cli/compatibility';
 import { getWorkspaceInfo } from '../workspace';
 import type { BranchContextExtensionState } from './types';
 
@@ -42,8 +43,12 @@ class BranchContextStateStore {
 
   private read(): BranchContextExtensionState {
     const workspace = getWorkspaceInfo();
+    const cliCompatibility = readCliCompatibility();
     if (!workspace.workspaceRoot) {
-      return this.createEmptyState();
+      return {
+        ...this.createEmptyState(),
+        cliCompatibility,
+      };
     }
 
     try {
@@ -55,6 +60,7 @@ class BranchContextStateStore {
       return {
         workspaceRoot: workspace.workspaceRoot,
         initialized: status.initialized,
+        cliCompatibility,
         status,
         currentBranch: status.currentBranch,
         currentContextDir: status.currentContextDir,
@@ -72,6 +78,7 @@ class BranchContextStateStore {
       );
       return {
         ...this.createEmptyState(),
+        cliCompatibility,
         workspaceRoot: workspace.workspaceRoot,
         configPath: workspace.configPath,
       };
@@ -82,6 +89,7 @@ class BranchContextStateStore {
     return {
       workspaceRoot: null,
       initialized: false,
+      cliCompatibility: readCliCompatibility(),
       status: null,
       currentBranch: null,
       currentContextDir: null,
@@ -102,6 +110,9 @@ class BranchContextStateStore {
 
   private formatRefresh(state: BranchContextExtensionState): string {
     const issueCount = state.status?.issues.length ?? 0;
+    const cliStatus = state.cliCompatibility.compatible
+      ? 'ok'
+      : (state.cliCompatibility.error ?? 'unknown');
     const recentCount = state.recentContexts.length;
     const archivedCount = state.archivedContexts.length;
     const commitCount = state.gitSummary?.ok ? state.gitSummary.commits.length : 0;
@@ -110,6 +121,7 @@ class BranchContextStateStore {
       'state refreshed:',
       `workspace=${state.workspaceRoot ?? 'none'}`,
       `initialized=${state.initialized}`,
+      `cli=${cliStatus}`,
       `branch=${state.currentBranch ?? 'none'}`,
       `contextDir=${state.currentContextDir ?? 'none'}`,
       `contextFile=${state.currentContextFile ?? 'none'}`,

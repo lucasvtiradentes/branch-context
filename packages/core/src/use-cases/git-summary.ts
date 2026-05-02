@@ -4,7 +4,7 @@ import {
   gitChangedFileSummaries,
   gitCommitSummaries,
   gitRefExists,
-} from '../utils/git';
+} from '../git';
 
 export enum BranchGitSummaryErrorReason {
   MissingBase = 'missing_base',

@@ -1,5 +1,5 @@
 import { listBranches, sanitizeBranchName } from '../core/sync';
-import { gitListBranches, gitListRemoteBranches } from '../utils/git';
+import { gitListBranches, gitListRemoteBranches } from '../git';
 
 const PROTECTED_BRANCH_NAMES = new Set(['main', 'master']);
 

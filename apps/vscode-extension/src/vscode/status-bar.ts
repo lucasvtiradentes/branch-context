@@ -9,8 +9,12 @@ import { type BranchContextExtensionState, branchContextState } from './state';
 
 const PROMPT_YES = 'Yes';
 const PROMPT_NO = 'No';
+const PROMPT_UPDATE_CLI = 'Update CLI';
+const PROMPT_IGNORE = 'Ignore';
+const CLI_UPDATE_COMMAND = 'npm install -g branch-context@latest';
 
 let item: vscode.StatusBarItem | undefined;
+let cliCompatibilityPromptShown = false;
 
 export function initializeStatusBar(context: vscode.ExtensionContext): void {
   logger.info('status bar initialized');
@@ -21,8 +25,15 @@ export function initializeStatusBar(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.showStatusBarActions, showStatusBarActions),
   );
-  context.subscriptions.push(branchContextState.onDidChange(updateStatusBar));
-  updateStatusBar(branchContextState.get());
+  context.subscriptions.push(
+    branchContextState.onDidChange((state) => {
+      updateStatusBar(state);
+      void maybePromptCliCompatibilityIssue(state);
+    }),
+  );
+  const state = branchContextState.get();
+  updateStatusBar(state);
+  void maybePromptCliCompatibilityIssue(state);
 }
 
 function updateStatusBar(state: BranchContextExtensionState): void {
@@ -52,6 +63,11 @@ async function showStatusBarActions(): Promise<void> {
     logger.info(
       `status bar clicked: workspace=${state.workspaceRoot ?? 'none'} initialized=${state.initialized} branch=${state.currentBranch ?? 'none'} contextFile=${state.currentContextFile ?? 'none'}`,
     );
+    if (!state.cliCompatibility.compatible) {
+      await promptCliUpdate(state);
+      return;
+    }
+
     if (!state.initialized) {
       await promptInitProject(state);
       return;
@@ -133,6 +149,10 @@ const statusLabels = {
 } as const satisfies Record<StatusBarState, string>;
 
 function getStatusBarState(state: BranchContextExtensionState): StatusBarState {
+  if (!state.cliCompatibility.compatible) {
+    return StatusBarState.Error;
+  }
+
   if (!state.initialized) {
     return StatusBarState.Error;
   }
@@ -176,6 +196,8 @@ function getTooltip(state: BranchContextExtensionState): vscode.MarkdownString {
       [
         '**Branch Context**',
         '',
+        ...getCliCompatibilityTooltipLines(state),
+        '',
         markdownTooltipLine('Status', getStatusLabel(status)),
         '',
         'Do you want to init bctx in the current project?',
@@ -196,10 +218,52 @@ function getTooltip(state: BranchContextExtensionState): vscode.MarkdownString {
       markdownTooltipLine('Updated', formatRelativeTime(currentContext?.updatedAt ?? null)),
       markdownTooltipLine('Commits', String(currentContext?.commitCount ?? 0)),
       markdownTooltipLine('Files', String(currentContext?.changedFileCount ?? 0)),
+      ...getCliCompatibilityTooltipLines(state),
       ...getIssueTooltipLines(state),
     ].join('\n\n'),
   );
   return tooltip;
+}
+
+function getCliCompatibilityTooltipLines(state: BranchContextExtensionState): string[] {
+  const cli = state.cliCompatibility;
+  if (cli.compatible) {
+    return [markdownTooltipLine('CLI', `${cli.command ?? 'bctx'} ${cli.version}`)];
+  }
+
+  return [
+    markdownTooltipLine('CLI', cli.installed ? (cli.version ?? 'unknown') : 'not found'),
+    markdownTooltipLine('Expected CLI', cli.expectedVersion),
+    `${cli.installed ? '$(error)' : '$(warning)'} ${escapeMarkdown(cli.error ?? 'CLI mismatch')}`,
+  ];
+}
+
+async function maybePromptCliCompatibilityIssue(state: BranchContextExtensionState): Promise<void> {
+  if (cliCompatibilityPromptShown || !state.workspaceRoot || state.cliCompatibility.compatible) {
+    return;
+  }
+
+  cliCompatibilityPromptShown = true;
+  await promptCliUpdate(state);
+}
+
+async function promptCliUpdate(state: BranchContextExtensionState): Promise<void> {
+  const cli = state.cliCompatibility;
+  const message = cli.installed
+    ? `${APP_NAME}: CLI version ${cli.version ?? 'unknown'} does not match extension ${cli.expectedVersion}`
+    : `${APP_NAME}: CLI not found`;
+  const selected = await vscode.window.showWarningMessage(
+    message,
+    PROMPT_UPDATE_CLI,
+    PROMPT_IGNORE,
+  );
+  if (selected !== PROMPT_UPDATE_CLI) {
+    return;
+  }
+
+  const terminal = vscode.window.createTerminal(`${APP_NAME}: Update CLI`);
+  terminal.show();
+  terminal.sendText(CLI_UPDATE_COMMAND, true);
 }
 
 function getIssueTooltipLines(state: BranchContextExtensionState): string[] {

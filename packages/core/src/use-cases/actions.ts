@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { PromptYesNo } from '../cli/prompt';
 import { CONFIG_FILE, DEFAULT_SYMLINK, HookType } from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
@@ -29,8 +30,7 @@ import {
   listTemplates,
 } from '../data/config';
 import { updateBranchMeta } from '../data/meta';
-import { gitRefExists } from '../utils/git';
-import type { PromptYesNo } from '../utils/prompt';
+import { gitRefExists } from '../git';
 
 export enum BranchContextActionErrorReason {
   NotInitialized = 'not_initialized',

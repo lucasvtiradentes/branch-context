@@ -1,6 +1,7 @@
 import { renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { gitAdd, gitCheckout, gitCommit } from '../src/git';
 import {
   BranchGitSummaryErrorReason,
   GitFileStatus,
@@ -8,7 +9,6 @@ import {
   gitChangedFileSummaries,
   gitCommitSummaries,
 } from '../src/index';
-import { gitAdd, gitCheckout, gitCommit } from '../src/utils/git';
 import { createGitRepo, expectOk, initBctxWorkspace } from './helpers';
 
 describe('git branch summary', () => {

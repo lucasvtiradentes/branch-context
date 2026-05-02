@@ -1,8 +1,8 @@
 import { readFileSync, readlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { gitCheckout } from '../src/git';
 import { DEFAULT_SYMLINK, getBranchRelPath, syncBranch } from '../src/index';
-import { gitCheckout } from '../src/utils/git';
 import { createGitRepo, expectOk, initBctxWorkspace } from './helpers';
 
 function normalize(path: string) {
