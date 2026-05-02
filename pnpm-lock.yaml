@@ -14,6 +14,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.31.0
         version: 2.31.0(@types/node@22.19.17)
+      '@types/node':
+        specifier: ^22.19.17
+        version: 22.19.17
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -23,6 +26,12 @@ importers:
       lint-staged:
         specifier: ^16.4.0
         version: 16.4.0
+      markdown-helper:
+        specifier: ^0.0.0
+        version: 0.0.0
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
       turbo:
         specifier: ^2.9.6
         version: 2.9.6
@@ -2161,6 +2170,9 @@ packages:
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
+  markdown-helper@0.0.0:
+    resolution: {integrity: sha512-z867XxUqG6xo3jyQgF/hfOIjEeEUI58Upt6xl65GJjLDKUeB/tY6wsq6b9nkbkFzvYUDWZUiuBlm+6dVF7TXAg==}
+
   markdown-it@14.1.1:
     resolution: {integrity: sha512-BuU2qnTti9YKgK5N+IeMubp14ZUKUUw7yeJbkjtosvHiP0AZ5c8IAgEMk79D0eC8F23r4Ac/q8cAIFdm2FtyoA==}
     hasBin: true
@@ -3105,6 +3117,9 @@ packages:
 
   yazl@2.5.1:
     resolution: {integrity: sha512-phENi2PLiHnHb6QBVot+dJnaAZ0xosj7p3fWl+znIjBDlnMI2PsZCJZ306BPTFOaHf5qdDEI8x5qFrSOBN5vrw==}
+
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
   zod@4.4.1:
     resolution: {integrity: sha512-a6ENMBBGZBsnlSebQ/eKCguSBeGKSf4O7BPnqVPmYGtpBYI7VSqoVqw+QcB7kPRjbqPwhYTpFbVj/RqNz/CT0Q==}
@@ -5087,6 +5102,10 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  markdown-helper@0.0.0:
+    dependencies:
+      zod: 3.25.76
+
   markdown-it@14.1.1:
     dependencies:
       argparse: 2.0.1
@@ -6071,5 +6090,7 @@ snapshots:
   yazl@2.5.1:
     dependencies:
       buffer-crc32: 0.2.13
+
+  zod@3.25.76: {}
 
   zod@4.4.1: {}
