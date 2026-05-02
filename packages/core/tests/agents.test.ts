@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  AgentSessionProvider,
   createAgentSession,
   createEmptyAgentsFile,
   getBranchAgentsFilePath,
@@ -16,7 +17,7 @@ import { createWorkspace } from './helpers';
 
 function createSession(overrides: Partial<ReturnType<typeof createAgentSession>> = {}) {
   return createAgentSession({
-    provider: 'codex',
+    provider: AgentSessionProvider.Codex,
     sessionId: 'codex-1',
     repoRoot: '/repo',
     branch: 'feature/test',

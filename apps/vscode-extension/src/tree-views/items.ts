@@ -1,6 +1,6 @@
 import { type Dirent, existsSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import type { GitCommitSummary } from '@branch-context/core';
+import type { AgentSessionProvider, GitCommitSummary } from '@branch-context/core';
 import { AGENTS_FILE_NAME } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { CONTEXT_FILE_NAME } from '../constants';
@@ -10,15 +10,16 @@ const MAX_DIRECTORY_ITEMS = 200;
 const archivedContextResourceScheme = 'branch-context-archived';
 const inactiveAgentSessionResourceScheme = 'branch-context-inactive-agent';
 
-type BranchContextTreeNodeKind =
-  | 'message'
-  | 'file'
-  | 'folder'
-  | 'group'
-  | 'context'
-  | 'template'
-  | 'commit'
-  | 'agent';
+export enum BranchContextTreeNodeKind {
+  Message = 'message',
+  File = 'file',
+  Folder = 'folder',
+  Group = 'group',
+  Context = 'context',
+  Template = 'template',
+  Commit = 'commit',
+  Agent = 'agent',
+}
 
 export type BranchContextTreeNode = {
   label: string;
@@ -30,7 +31,7 @@ export type BranchContextTreeNode = {
   current?: boolean;
   local?: boolean;
   remote?: boolean;
-  agentProvider?: 'claude' | 'codex';
+  agentProvider?: AgentSessionProvider;
   sessionId?: string;
   pinned?: boolean;
   pinDescription?: string;
@@ -135,7 +136,7 @@ export function createInactiveAgentSessionResourceUri(sessionId: string): vscode
 export function createMessageNode(label: string): BranchContextTreeNode {
   return {
     label,
-    kind: 'message',
+    kind: BranchContextTreeNodeKind.Message,
     icon: new vscode.ThemeIcon('info'),
   };
 }
@@ -152,7 +153,7 @@ export function createGroupNode(
 
   return {
     label,
-    kind: 'group',
+    kind: BranchContextTreeNodeKind.Group,
     description: options.description,
     icon: options.icon ?? new vscode.ThemeIcon('folder'),
     collapsibleState: options.collapsibleState,
@@ -188,7 +189,7 @@ export function createContextNode(
 ): BranchContextTreeNode {
   return {
     label,
-    kind: 'context',
+    kind: BranchContextTreeNodeKind.Context,
     path: contextDir,
     ...options,
     tooltip: options?.tooltip ?? contextDir,
@@ -203,7 +204,7 @@ export function createTemplateNode(label: string, templateDir: string): BranchCo
   const path = hasContextFile ? contextFile : templateDir;
   return {
     label,
-    kind: 'template',
+    kind: BranchContextTreeNodeKind.Template,
     path,
     tooltip: path,
     icon: new vscode.ThemeIcon('symbol-namespace'),
@@ -214,7 +215,7 @@ export function createTemplateNode(label: string, templateDir: string): BranchCo
 function createFileNode(path: string, label = basename(path)): BranchContextTreeNode {
   return {
     label,
-    kind: 'file',
+    kind: BranchContextTreeNodeKind.File,
     path,
     tooltip: path,
     icon: new vscode.ThemeIcon('file'),
@@ -247,7 +248,7 @@ export function readDirectoryNodes(dir: string): BranchContextTreeNode[] {
     if (entry.isDirectory()) {
       return {
         label: entry.name,
-        kind: 'folder' as const,
+        kind: BranchContextTreeNodeKind.Folder,
         path,
         tooltip: path,
         icon: new vscode.ThemeIcon('folder'),

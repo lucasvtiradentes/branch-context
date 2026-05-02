@@ -12,6 +12,7 @@ import { groupByDate } from '../lib/date-groups';
 import { formatRelativeTime } from '../lib/format-relative-time';
 import {
   type BranchContextTreeNode,
+  BranchContextTreeNodeKind,
   createGroupNode,
   createMessageNode,
   StateTreeProvider,
@@ -227,7 +228,7 @@ function createChangedFileNode(
 
   return {
     label: file.path,
-    kind: 'file' as const,
+    kind: BranchContextTreeNodeKind.File,
     path: fileExists ? filePath : undefined,
     description: formatChangedFileDescription(file, includeStatusInDescription),
     tooltip: createChangedFileTooltip(file),
@@ -254,7 +255,7 @@ function formatChangedFileDescription(
 function createCommitNode(commit: GitCommitSummary) {
   return {
     label: commit.subject,
-    kind: 'commit' as const,
+    kind: BranchContextTreeNodeKind.Commit,
     description: formatRelativeTime(commit.authoredAt),
     tooltip: createCommitTooltip(commit),
     icon: new vscode.ThemeIcon('git-commit'),

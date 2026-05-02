@@ -3,6 +3,8 @@ import {
   getGitRoot,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
+  HookType,
+  HookUninstallResult,
   uninstallHook,
   unsetGlobalHooksPath,
 } from '@branch-context/core';
@@ -28,22 +30,25 @@ function cmdUninstall(args: string[]) {
     return 1;
   }
 
-  const checkoutResult = uninstallHook(gitRoot, HOOK_POST_CHECKOUT);
-  const commitResult = uninstallHook(gitRoot, HOOK_POST_COMMIT);
+  const checkoutResult = uninstallHook(gitRoot, HookType.PostCheckout);
+  const commitResult = uninstallHook(gitRoot, HookType.PostCommit);
 
-  if (checkoutResult === 'uninstalled') {
+  if (checkoutResult === HookUninstallResult.Uninstalled) {
     console.log(`Hook removed: ${HOOK_POST_CHECKOUT}`);
-  } else if (checkoutResult === 'not_managed') {
+  } else if (checkoutResult === HookUninstallResult.NotManaged) {
     console.log(`warning: ${HOOK_POST_CHECKOUT} hook exists but not managed by ${CLI_NAME}`);
   }
 
-  if (commitResult === 'uninstalled') {
+  if (commitResult === HookUninstallResult.Uninstalled) {
     console.log(`Hook removed: ${HOOK_POST_COMMIT}`);
-  } else if (commitResult === 'not_managed') {
+  } else if (commitResult === HookUninstallResult.NotManaged) {
     console.log(`warning: ${HOOK_POST_COMMIT} hook exists but not managed by ${CLI_NAME}`);
   }
 
-  if (checkoutResult === 'not_installed' && commitResult === 'not_installed') {
+  if (
+    checkoutResult === HookUninstallResult.NotInstalled &&
+    commitResult === HookUninstallResult.NotInstalled
+  ) {
     console.log('No hooks installed');
   }
 

@@ -1,4 +1,6 @@
 import {
+  BranchContextStatusIssueLevel,
+  BranchContextSymlinkState,
   CLI_NAME,
   DEFAULT_SYMLINK,
   DEFAULT_TEMPLATE,
@@ -71,16 +73,16 @@ function cmdStatus(_args: string[]) {
   }
 
   switch (status.symlink.state) {
-    case 'valid':
+    case BranchContextSymlinkState.Valid:
       console.log(`  ${STATUS_OK} symlink valid`);
       break;
-    case 'broken':
+    case BranchContextSymlinkState.Broken:
       console.log(`  ${STATUS_ERROR} symlink broken -> ${status.symlink.target}`);
       break;
-    case 'not_symlink':
+    case BranchContextSymlinkState.NotSymlink:
       console.log(`  ${STATUS_ERROR} ${DEFAULT_SYMLINK} is not a symlink`);
       break;
-    case 'missing':
+    case BranchContextSymlinkState.Missing:
       console.log(`  ${STATUS_WARN} symlink not set`);
       break;
   }
@@ -100,5 +102,5 @@ function cmdStatus(_args: string[]) {
     printTable(status.contexts, status.currentBranch);
   }
 
-  return status.issues.some((issue) => issue.level === 'error') ? 1 : 0;
+  return status.issues.some((issue) => issue.level === BranchContextStatusIssueLevel.Error) ? 1 : 0;
 }

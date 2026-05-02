@@ -1,4 +1,12 @@
-import { CLI_NAME, Config, getGitRoot, playSound, syncCurrentBranch } from '@branch-context/core';
+import {
+  BranchContextActionErrorReason,
+  CLI_NAME,
+  Config,
+  CreateBranchContextResult,
+  getGitRoot,
+  playSound,
+  syncCurrentBranch,
+} from '@branch-context/core';
 import type { Program } from '@caporal/core';
 
 export function registerSyncCommand(program: Program) {
@@ -18,9 +26,9 @@ function cmdSync(_args: string[]) {
     playSound,
   });
   if (!result.ok) {
-    if (result.reason === 'not_initialized') {
+    if (result.reason === BranchContextActionErrorReason.NotInitialized) {
       console.log(`error: not initialized. Run '${CLI_NAME} init' first`);
-    } else if (result.reason === 'no_current_branch') {
+    } else if (result.reason === BranchContextActionErrorReason.NoCurrentBranch) {
       console.log('error: could not determine current branch');
     } else {
       console.log(`error: ${result.message}`);
@@ -33,11 +41,11 @@ function cmdSync(_args: string[]) {
   console.log(`Symlink: ${result.symlinkPath} -> ${result.contextDir}`);
   console.log(`Base:    ${result.baseBranch}`);
 
-  if (result.createResult === 'created_from_template') {
+  if (result.createResult === CreateBranchContextResult.CreatedFromTemplate) {
     console.log('Status:  created from template');
-  } else if (result.createResult === 'repaired_from_template') {
+  } else if (result.createResult === CreateBranchContextResult.RepairedFromTemplate) {
     console.log('Status:  repaired from template');
-  } else if (result.createResult === 'created_empty') {
+  } else if (result.createResult === CreateBranchContextResult.CreatedEmpty) {
     console.log('Status:  created (no template)');
   } else {
     console.log('Status:  synced');

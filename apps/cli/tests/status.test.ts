@@ -1,6 +1,8 @@
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+  BranchContextStatusIssueLevel,
+  BranchContextSymlinkState,
   Config,
   createBranchContext,
   getBranchDir,
@@ -51,7 +53,7 @@ describe('status command', () => {
     expect(status.currentContextDir).toContain('.bctx/branches/main');
     expect(status.currentContextRelPath).toBe('.bctx/branches/main');
     expect(status.templates).toContain('_default');
-    expect(status.symlink.state).toBe('valid');
+    expect(status.symlink.state).toBe(BranchContextSymlinkState.Valid);
   });
 
   it('detects manually applied template from context content', () => {
@@ -180,7 +182,7 @@ author: {{author}}
     syncBranch(repo, 'main');
     const status = getStatus(repo);
     expect(status.issues).toContainEqual({
-      level: 'error',
+      level: BranchContextStatusIssueLevel.Error,
       message: 'base branch not found: origin/main',
     });
   });

@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  AgentSessionProvider,
   getAgentSessions,
   getClaudeProjectKey,
   readAgentsFile,
@@ -78,7 +79,7 @@ describe('agent session service', () => {
       readAgentsFile(result.agentsFilePath ?? '')
         .sessions.map((session) => session.provider)
         .sort(),
-    ).toEqual(['claude', 'codex']);
+    ).toEqual([AgentSessionProvider.Claude, AgentSessionProvider.Codex]);
   });
 
   it('does not write repo-scoped fallback sessions', () => {

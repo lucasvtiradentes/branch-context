@@ -1,6 +1,7 @@
 import {
   CLI_NAME,
   Config,
+  CreateBranchContextResult,
   configExists,
   getBaseBranch,
   getGitRoot,
@@ -48,11 +49,11 @@ function cmdOnCheckout(args: string[]) {
 
   const createResult = result.create_result;
   const status =
-    createResult === 'restored_from_archive'
+    createResult === CreateBranchContextResult.RestoredFromArchive
       ? 'restored'
-      : createResult === 'repaired_from_template'
+      : createResult === CreateBranchContextResult.RepairedFromTemplate
         ? 'repaired'
-        : createResult !== 'exists'
+        : createResult !== CreateBranchContextResult.Exists
           ? 'new'
           : 'synced';
   console.log(`Branch: ${oldBranch} -> ${newBranch} (${status})`);

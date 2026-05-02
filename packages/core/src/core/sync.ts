@@ -34,15 +34,24 @@ import {
 import { copyInitTemplatesResource, getResourcesDir } from '../resources';
 import { getTemplateVariables, renderTemplateContent } from '../utils/template';
 
-export type CreateBranchContextResult =
-  | 'exists'
-  | 'repaired_from_template'
-  | 'restored_from_archive'
-  | 'created_from_template'
-  | 'created_empty';
+export enum CreateBranchContextResult {
+  Exists = 'exists',
+  RepairedFromTemplate = 'repaired_from_template',
+  RestoredFromArchive = 'restored_from_archive',
+  CreatedFromTemplate = 'created_from_template',
+  CreatedEmpty = 'created_empty',
+}
 
-export type ResetBranchContextResult = 'reset' | 'template_not_found';
-export type UpdateSymlinkResult = 'unchanged' | 'error_not_symlink' | 'updated';
+export enum ResetBranchContextResult {
+  Reset = 'reset',
+  TemplateNotFound = 'template_not_found',
+}
+
+export enum UpdateSymlinkResult {
+  Unchanged = 'unchanged',
+  ErrorNotSymlink = 'error_not_symlink',
+  Updated = 'updated',
+}
 
 export function getDefaultSoundFile() {
   return join(getResourcesDir(), 'assets', DEFAULT_SOUND_FILE);
@@ -145,14 +154,14 @@ export function createBranchContext(
       const templateDir = resolveTemplateDir(workspace, branch, template);
       if (templateDir) {
         copyTemplateToBranch(templateDir, branchDir, branch);
-        return 'repaired_from_template';
+        return CreateBranchContextResult.RepairedFromTemplate;
       }
     }
-    return 'exists';
+    return CreateBranchContextResult.Exists;
   }
 
   if (unarchiveBranch(workspace, branchKey)) {
-    return 'restored_from_archive';
+    return CreateBranchContextResult.RestoredFromArchive;
   }
 
   mkdirSync(branchDir, { recursive: true });
@@ -161,10 +170,10 @@ export function createBranchContext(
   const templateDir = resolveTemplateDir(workspace, branch, template);
   if (templateDir) {
     copyTemplateToBranch(templateDir, branchDir, branch);
-    return 'created_from_template';
+    return CreateBranchContextResult.CreatedFromTemplate;
   }
 
-  return 'created_empty';
+  return CreateBranchContextResult.CreatedEmpty;
 }
 
 export function resetBranchContext(
@@ -176,12 +185,12 @@ export function resetBranchContext(
   const templateDir = resolveTemplateDir(workspace, branch, template);
 
   if (!templateDir) {
-    return 'template_not_found';
+    return ResetBranchContextResult.TemplateNotFound;
   }
 
   mkdirSync(branchDir, { recursive: true });
   copyTemplateToBranch(templateDir, branchDir, branch);
-  return 'reset';
+  return ResetBranchContextResult.Reset;
 }
 
 function isSymlink(path: string) {
@@ -205,16 +214,16 @@ export function updateSymlink(workspace: string, branch: string): UpdateSymlinkR
   if (isSymlink(symlinkPath)) {
     try {
       if (readlinkSync(symlinkPath) === relPath) {
-        return 'unchanged';
+        return UpdateSymlinkResult.Unchanged;
       }
     } catch {}
     unlinkSync(symlinkPath);
   } else if (existsSync(symlinkPath)) {
-    return 'error_not_symlink';
+    return UpdateSymlinkResult.ErrorNotSymlink;
   }
 
   symlinkSync(relPath, symlinkPath);
-  return 'updated';
+  return UpdateSymlinkResult.Updated;
 }
 
 export type SyncBranchOptions = {

@@ -1,3 +1,4 @@
+import { AgentSessionProvider } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../constants';
 import { markAgentSessionTerminalActive } from '../core/active-agent-sessions';
@@ -24,8 +25,8 @@ export function registerResumeAgentSessionCommand(): vscode.Disposable {
   });
 }
 
-function getResumeCommand(provider: 'claude' | 'codex', sessionId: string) {
-  if (provider === 'claude') {
+function getResumeCommand(provider: AgentSessionProvider, sessionId: string) {
+  if (provider === AgentSessionProvider.Claude) {
     return `"${process.env.HOME ?? '~'}/.local/bin/claude" --dangerously-skip-permissions --resume ${shellQuote(sessionId)}`;
   }
 

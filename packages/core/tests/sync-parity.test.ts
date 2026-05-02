@@ -10,8 +10,10 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   archiveBranch,
+  BranchContextActionErrorReason,
   branchContextExists,
   Config,
+  CreateBranchContextResult,
   createBranchContext,
   DEFAULT_SYMLINK,
   deleteBranchContext,
@@ -21,10 +23,12 @@ import {
   initProject,
   listArchivedBranches,
   listBranches,
+  ResetBranchContextResult,
   resetBranchContext,
   setCurrentBase,
   syncBranch,
   syncCurrentBranch,
+  UpdateSymlinkResult,
   updateSymlink,
 } from '../src/index';
 import { gitAdd, gitCheckout, gitCommit } from '../src/utils/git';
@@ -42,7 +46,9 @@ function normalize(path: string) {
 describe('sync parity', () => {
   it('creates branch context from template', () => {
     const workspace = createWorkspace();
-    expect(createBranchContext(workspace, 'main')).toBe('created_from_template');
+    expect(createBranchContext(workspace, 'main')).toBe(
+      CreateBranchContextResult.CreatedFromTemplate,
+    );
     expect(existsSync(getBranchDir(workspace, 'main'))).toBe(true);
     expect(existsSync(join(getBranchDir(workspace, 'main'), 'context.md'))).toBe(true);
   });
@@ -50,14 +56,16 @@ describe('sync parity', () => {
   it('returns exists for existing branch context', () => {
     const workspace = createWorkspace();
     createBranchContext(workspace, 'main');
-    expect(createBranchContext(workspace, 'main')).toBe('exists');
+    expect(createBranchContext(workspace, 'main')).toBe(CreateBranchContextResult.Exists);
   });
 
   it('repairs existing branch context missing context file', () => {
     const workspace = createWorkspace();
     const branchDir = getBranchDir(workspace, 'main');
     mkdirSync(branchDir, { recursive: true });
-    expect(createBranchContext(workspace, 'main')).toBe('repaired_from_template');
+    expect(createBranchContext(workspace, 'main')).toBe(
+      CreateBranchContextResult.RepairedFromTemplate,
+    );
     expect(existsSync(join(branchDir, 'context.md'))).toBe(true);
   });
 
@@ -71,7 +79,7 @@ describe('sync parity', () => {
   it('updates symlink', () => {
     const workspace = createWorkspace();
     createBranchContext(workspace, 'main');
-    expect(updateSymlink(workspace, 'main')).toBe('updated');
+    expect(updateSymlink(workspace, 'main')).toBe(UpdateSymlinkResult.Updated);
     expect(existsSync(join(workspace, DEFAULT_SYMLINK))).toBe(true);
   });
 
@@ -79,7 +87,7 @@ describe('sync parity', () => {
     const workspace = createWorkspace();
     createBranchContext(workspace, 'main');
     updateSymlink(workspace, 'main');
-    expect(updateSymlink(workspace, 'main')).toBe('unchanged');
+    expect(updateSymlink(workspace, 'main')).toBe(UpdateSymlinkResult.Unchanged);
   });
 
   it('lists branches', () => {
@@ -92,7 +100,7 @@ describe('sync parity', () => {
 
   it('creates branch context without template', () => {
     const workspace = createWorkspaceNoTemplate();
-    expect(createBranchContext(workspace, 'main')).toBe('created_empty');
+    expect(createBranchContext(workspace, 'main')).toBe(CreateBranchContextResult.CreatedEmpty);
     expect(readdirSync(getBranchDir(workspace, 'main'))).toEqual([]);
   });
 
@@ -100,7 +108,7 @@ describe('sync parity', () => {
     const workspace = createWorkspace();
     createBranchContext(workspace, 'main');
     writeFileSync(join(workspace, DEFAULT_SYMLINK), 'regular file');
-    expect(updateSymlink(workspace, 'main')).toBe('error_not_symlink');
+    expect(updateSymlink(workspace, 'main')).toBe(UpdateSymlinkResult.ErrorNotSymlink);
   });
 
   it('syncs branch and returns result object', () => {
@@ -108,8 +116,8 @@ describe('sync parity', () => {
     const result = syncBranch(workspace, 'feature/test');
     expect(result.branch).toBe('feature/test');
     expect(result.branch_dir).toContain('feature-test');
-    expect(result.create_result).toBe('created_from_template');
-    expect(result.symlink_result).toBe('updated');
+    expect(result.create_result).toBe(CreateBranchContextResult.CreatedFromTemplate);
+    expect(result.symlink_result).toBe(UpdateSymlinkResult.Updated);
     expect(result.symlink_path).toBe(DEFAULT_SYMLINK);
   });
 
@@ -145,7 +153,9 @@ describe('sync parity', () => {
     const branches = ['main', 'dev', 'feature/a', 'feature/b'];
     for (const branch of branches) {
       const result = syncBranch(workspace, branch);
-      expect(['updated', 'unchanged']).toContain(result.symlink_result);
+      expect([UpdateSymlinkResult.Updated, UpdateSymlinkResult.Unchanged]).toContain(
+        result.symlink_result,
+      );
     }
     for (const branch of branches) {
       syncBranch(workspace, branch);
@@ -156,7 +166,9 @@ describe('sync parity', () => {
   it('creates branch context with template rules', () => {
     const workspace = createWorkspace();
     new Config({ templateRules: [{ prefix: 'feature/', template: 'feature' }] }).save(workspace);
-    expect(createBranchContext(workspace, 'feature/login')).toBe('created_from_template');
+    expect(createBranchContext(workspace, 'feature/login')).toBe(
+      CreateBranchContextResult.CreatedFromTemplate,
+    );
     const content = readFileSync(
       join(getBranchDir(workspace, 'feature/login'), 'context.md'),
       'utf8',
@@ -170,7 +182,7 @@ describe('sync parity', () => {
     createBranchContext(workspace, 'main');
     const branchDir = getBranchDir(workspace, 'main');
     writeFileSync(join(branchDir, 'context.md'), 'MODIFIED CONTENT');
-    expect(resetBranchContext(workspace, 'main')).toBe('reset');
+    expect(resetBranchContext(workspace, 'main')).toBe(ResetBranchContextResult.Reset);
     const content = readFileSync(join(branchDir, 'context.md'), 'utf8');
     expect(content).toContain('branch:');
     expect(content).not.toContain('MODIFIED CONTENT');
@@ -183,7 +195,7 @@ describe('sync parity', () => {
     writeFileSync(join(branchDir, 'notes.md'), 'my notes');
     mkdirSync(join(branchDir, 'attachments'));
     writeFileSync(join(branchDir, 'attachments', 'diagram.png'), 'fake png');
-    expect(resetBranchContext(workspace, 'main')).toBe('reset');
+    expect(resetBranchContext(workspace, 'main')).toBe(ResetBranchContextResult.Reset);
     expect(existsSync(join(branchDir, 'notes.md'))).toBe(true);
     expect(existsSync(join(branchDir, 'attachments', 'diagram.png'))).toBe(true);
   });
@@ -191,7 +203,7 @@ describe('sync parity', () => {
   it('resets branch context with specific template', () => {
     const workspace = createWorkspace();
     createBranchContext(workspace, 'main');
-    expect(resetBranchContext(workspace, 'main', 'feature')).toBe('reset');
+    expect(resetBranchContext(workspace, 'main', 'feature')).toBe(ResetBranchContextResult.Reset);
     expect(readFileSync(join(getBranchDir(workspace, 'main'), 'context.md'), 'utf8')).toContain(
       '## Decisions',
     );
@@ -205,7 +217,9 @@ describe('sync parity', () => {
     expect(archiveBranch(workspace, 'feature-test')).toBe(true);
     expect(existsSync(branchDir)).toBe(false);
     expect(listArchivedBranches(workspace)).toContain('feature-test');
-    expect(createBranchContext(workspace, 'feature/test')).toBe('restored_from_archive');
+    expect(createBranchContext(workspace, 'feature/test')).toBe(
+      CreateBranchContextResult.RestoredFromArchive,
+    );
     expect(readFileSync(join(branchDir, 'context.md'), 'utf8')).toBe('MY CUSTOM CONTENT');
   });
 
@@ -215,7 +229,9 @@ describe('sync parity', () => {
     const branchDir = getBranchDir(workspace, 'feature/old');
     writeFileSync(join(branchDir, 'context.md'), 'ARCHIVED CONTENT');
     archiveBranch(workspace, 'feature-old');
-    expect(createBranchContext(workspace, 'feature/old')).toBe('restored_from_archive');
+    expect(createBranchContext(workspace, 'feature/old')).toBe(
+      CreateBranchContextResult.RestoredFromArchive,
+    );
     expect(readFileSync(join(branchDir, 'context.md'), 'utf8')).toBe('ARCHIVED CONTENT');
   });
 
@@ -225,7 +241,9 @@ describe('sync parity', () => {
     const branchDir = getBranchDir(workspace, 'feature/archived');
     writeFileSync(join(branchDir, 'context.md'), 'RESTORE ME');
     archiveBranch(workspace, 'feature-archived');
-    expect(syncBranch(workspace, 'feature/archived').create_result).toBe('restored_from_archive');
+    expect(syncBranch(workspace, 'feature/archived').create_result).toBe(
+      CreateBranchContextResult.RestoredFromArchive,
+    );
     expect(readFileSync(join(branchDir, 'context.md'), 'utf8')).toBe('RESTORE ME');
   });
 
@@ -251,8 +269,8 @@ describe('sync parity', () => {
     }
     expect(result.branch).toBe('main');
     expect(result.branchKey).toBe('main');
-    expect(result.createResult).toBe('created_from_template');
-    expect(result.symlinkResult).toBe('updated');
+    expect(result.createResult).toBe(CreateBranchContextResult.CreatedFromTemplate);
+    expect(result.symlinkResult).toBe(UpdateSymlinkResult.Updated);
     expect(result.baseBranch).toBe('main');
     expect(existsSync(join(repo, DEFAULT_SYMLINK))).toBe(true);
   });
@@ -269,7 +287,7 @@ describe('sync parity', () => {
     if (!result.syncResult.ok) {
       return;
     }
-    expect(result.syncResult.createResult).toBe('created_from_template');
+    expect(result.syncResult.createResult).toBe(CreateBranchContextResult.CreatedFromTemplate);
     expect(existsSync(join(repo, DEFAULT_SYMLINK, 'context.md'))).toBe(true);
   });
 
@@ -286,7 +304,7 @@ describe('sync parity', () => {
     if (result.ok) {
       return;
     }
-    expect(result.reason).toBe('base_branch_not_found');
+    expect(result.reason).toBe(BranchContextActionErrorReason.BaseBranchNotFound);
     expect(result.baseBranch).toBe('origin/main');
     expect(result.branch).toBe('feature/missing-base');
     expect(existsSync(join(repo, DEFAULT_SYMLINK, 'context.md'))).toBe(true);
@@ -299,7 +317,7 @@ describe('sync parity', () => {
     if (result.ok) {
       return;
     }
-    expect(result.reason).toBe('not_initialized');
+    expect(result.reason).toBe(BranchContextActionErrorReason.NotInitialized);
   });
 
   it('gets and sets current base through service', () => {
@@ -335,7 +353,7 @@ describe('sync parity', () => {
     if (result.ok) {
       return;
     }
-    expect(result.reason).toBe('missing_context');
+    expect(result.reason).toBe(BranchContextActionErrorReason.MissingContext);
     expect(result.branch).toBe('main');
   });
 });

@@ -14,6 +14,8 @@ import {
   getTemplatesDir,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
+  HookInstallResult,
+  HookType,
   installHook,
   syncBranch,
 } from '@branch-context/core';
@@ -47,29 +49,29 @@ async function cmdInit(_args: string[]) {
     console.log(`  branches:  ${branchesDir}/ (gitignored)`);
   }
 
-  const checkoutResult = await installHook(gitRoot, HOOK_POST_CHECKOUT);
-  if (checkoutResult === 'installed') {
+  const checkoutResult = await installHook(gitRoot, HookType.PostCheckout);
+  if (checkoutResult === HookInstallResult.Installed) {
     console.log(`Hook installed: ${HOOK_POST_CHECKOUT}`);
-  } else if (checkoutResult === 'updated') {
+  } else if (checkoutResult === HookInstallResult.Updated) {
     console.log(`Hook updated: ${HOOK_POST_CHECKOUT}`);
-  } else if (checkoutResult === 'appended') {
+  } else if (checkoutResult === HookInstallResult.Appended) {
     console.log(`Hook appended: ${HOOK_POST_CHECKOUT}`);
-  } else if (checkoutResult === 'already_installed') {
+  } else if (checkoutResult === HookInstallResult.AlreadyInstalled) {
     if (alreadyInitialized) {
       console.log('Already initialized');
     }
-  } else if (checkoutResult === 'hook_exists') {
+  } else if (checkoutResult === HookInstallResult.HookExists) {
     console.log(`warning: ${HOOK_POST_CHECKOUT} hook exists but not managed by ${CLI_NAME}`);
   }
 
-  const commitResult = await installHook(gitRoot, HOOK_POST_COMMIT);
-  if (commitResult === 'installed') {
+  const commitResult = await installHook(gitRoot, HookType.PostCommit);
+  if (commitResult === HookInstallResult.Installed) {
     console.log(`Hook installed: ${HOOK_POST_COMMIT}`);
-  } else if (commitResult === 'updated') {
+  } else if (commitResult === HookInstallResult.Updated) {
     console.log(`Hook updated: ${HOOK_POST_COMMIT}`);
-  } else if (commitResult === 'appended') {
+  } else if (commitResult === HookInstallResult.Appended) {
     console.log(`Hook appended: ${HOOK_POST_COMMIT}`);
-  } else if (commitResult === 'hook_exists') {
+  } else if (commitResult === HookInstallResult.HookExists) {
     console.log(`warning: ${HOOK_POST_COMMIT} hook exists but not managed by ${CLI_NAME}`);
   }
 

@@ -9,7 +9,11 @@ import { Config, configExists } from '../data/config';
 import { updateBranchMeta } from '../data/meta';
 import { syncAgentSessions } from './agents';
 
-type CommitSyncSkipReason = 'not_initialized' | 'no_current_branch' | 'missing_context';
+export enum CommitSyncSkipReason {
+  NotInitialized = 'not_initialized',
+  NoCurrentBranch = 'no_current_branch',
+  MissingContext = 'missing_context',
+}
 
 export type CommitSyncResult =
   | {
@@ -26,18 +30,18 @@ export type CommitSyncResult =
 
 export function syncBranchAfterCommit(gitRoot: string): CommitSyncResult {
   if (!configExists(gitRoot)) {
-    return skipped('not_initialized');
+    return skipped(CommitSyncSkipReason.NotInitialized);
   }
 
   const branch = getCurrentBranch(gitRoot);
   if (!branch) {
-    return skipped('no_current_branch');
+    return skipped(CommitSyncSkipReason.NoCurrentBranch);
   }
 
   const branchKey = sanitizeBranchName(branch);
   const contextDir = join(gitRoot, DEFAULT_SYMLINK);
   if (!existsSync(contextDir)) {
-    return skipped('missing_context');
+    return skipped(CommitSyncSkipReason.MissingContext);
   }
 
   const baseBranch = getBaseBranch(gitRoot, contextDir);

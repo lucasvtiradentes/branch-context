@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   applyTemplateToCurrentBranch,
+  BranchContextActionErrorReason,
   getBranchDir,
   getTemplateVariables,
   renderTemplateContent,
@@ -85,6 +86,6 @@ describe('template variables', () => {
     if (result.ok) {
       return;
     }
-    expect(result.reason).toBe('not_initialized');
+    expect(result.reason).toBe(BranchContextActionErrorReason.NotInitialized);
   });
 });

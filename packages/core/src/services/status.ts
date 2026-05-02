@@ -22,15 +22,27 @@ import { gitRefExists } from '../utils/git';
 import { type BranchInfo, collectBranchInfo } from './branch-info';
 
 export type BranchContextStatusIssue = {
-  level: 'error' | 'warning';
+  level: BranchContextStatusIssueLevel;
   message: string;
 };
+
+export enum BranchContextStatusIssueLevel {
+  Error = 'error',
+  Warning = 'warning',
+}
 
 export type BranchContextSymlinkStatus = {
   path: string;
   target: string | null;
-  state: 'valid' | 'missing' | 'broken' | 'not_symlink';
+  state: BranchContextSymlinkState;
 };
+
+export enum BranchContextSymlinkState {
+  Valid = 'valid',
+  Missing = 'missing',
+  Broken = 'broken',
+  NotSymlink = 'not_symlink',
+}
 
 export type BranchContextHooksStatus = {
   checkout: boolean;
@@ -102,41 +114,62 @@ export function getStatus(gitRoot: string): BranchContextStatus {
   const issues: BranchContextStatusIssue[] = [];
 
   if (!initialized) {
-    issues.push({ level: 'error', message: 'not initialized' });
+    issues.push({ level: BranchContextStatusIssueLevel.Error, message: 'not initialized' });
   } else {
     if (!hooks.checkout) {
-      issues.push({ level: 'error', message: `${HOOK_POST_CHECKOUT} hook not installed` });
+      issues.push({
+        level: BranchContextStatusIssueLevel.Error,
+        message: `${HOOK_POST_CHECKOUT} hook not installed`,
+      });
     }
 
     if (!hooks.commit) {
-      issues.push({ level: 'error', message: `${HOOK_POST_COMMIT} hook not installed` });
+      issues.push({
+        level: BranchContextStatusIssueLevel.Error,
+        message: `${HOOK_POST_COMMIT} hook not installed`,
+      });
     }
 
     if (!templatesDirExists) {
-      issues.push({ level: 'error', message: 'templates/ missing' });
+      issues.push({ level: BranchContextStatusIssueLevel.Error, message: 'templates/ missing' });
     }
 
     if (!defaultTemplateExists) {
-      issues.push({ level: 'error', message: `${DEFAULT_TEMPLATE} template missing` });
+      issues.push({
+        level: BranchContextStatusIssueLevel.Error,
+        message: `${DEFAULT_TEMPLATE} template missing`,
+      });
     }
 
-    if (symlink.state === 'broken') {
-      issues.push({ level: 'error', message: 'symlink points to non-existent target' });
-    } else if (symlink.state === 'not_symlink') {
-      issues.push({ level: 'error', message: 'symlink path exists but is not a symlink' });
-    } else if (symlink.state === 'missing') {
-      issues.push({ level: 'warning', message: 'symlink not set' });
+    if (symlink.state === BranchContextSymlinkState.Broken) {
+      issues.push({
+        level: BranchContextStatusIssueLevel.Error,
+        message: 'symlink points to non-existent target',
+      });
+    } else if (symlink.state === BranchContextSymlinkState.NotSymlink) {
+      issues.push({
+        level: BranchContextStatusIssueLevel.Error,
+        message: 'symlink path exists but is not a symlink',
+      });
+    } else if (symlink.state === BranchContextSymlinkState.Missing) {
+      issues.push({ level: BranchContextStatusIssueLevel.Warning, message: 'symlink not set' });
     }
 
     if (baseBranch && !gitRefExists(gitRoot, baseBranch)) {
-      issues.push({ level: 'error', message: `base branch not found: ${baseBranch}` });
+      issues.push({
+        level: BranchContextStatusIssueLevel.Error,
+        message: `base branch not found: ${baseBranch}`,
+      });
     }
 
     const orphanCount = Array.from(contexts.entries()).filter(
       ([, info]) => info.context && !info.local,
     ).length;
     if (orphanCount > 0) {
-      issues.push({ level: 'warning', message: `${orphanCount} orphan contexts` });
+      issues.push({
+        level: BranchContextStatusIssueLevel.Warning,
+        message: `${orphanCount} orphan contexts`,
+      });
     }
   }
 
@@ -412,7 +445,9 @@ function getSymlinkStatus(gitRoot: string): BranchContextSymlinkStatus {
     return {
       path,
       target,
-      state: existsSync(join(gitRoot, target)) ? 'valid' : 'broken',
+      state: existsSync(join(gitRoot, target))
+        ? BranchContextSymlinkState.Valid
+        : BranchContextSymlinkState.Broken,
     };
   }
 
@@ -420,14 +455,14 @@ function getSymlinkStatus(gitRoot: string): BranchContextSymlinkStatus {
     return {
       path,
       target: null,
-      state: 'not_symlink',
+      state: BranchContextSymlinkState.NotSymlink,
     };
   }
 
   return {
     path,
     target: null,
-    state: 'missing',
+    state: BranchContextSymlinkState.Missing,
   };
 }
 

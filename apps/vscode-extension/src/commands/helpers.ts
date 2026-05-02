@@ -1,4 +1,7 @@
-import type { BranchContextActionError } from '@branch-context/core';
+import {
+  type BranchContextActionError,
+  BranchContextActionErrorReason,
+} from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME } from '../constants';
 import { type BranchContextExtensionState, getBranchContextState } from '../core/state';
@@ -31,27 +34,27 @@ export async function openExternalFolder(path: string): Promise<void> {
 }
 
 export function formatActionError(error: BranchContextActionError): string {
-  if (error.reason === 'not_initialized') {
+  if (error.reason === BranchContextActionErrorReason.NotInitialized) {
     return `${APP_NAME}: no .bctx config found`;
   }
 
-  if (error.reason === 'no_current_branch') {
+  if (error.reason === BranchContextActionErrorReason.NoCurrentBranch) {
     return `${APP_NAME}: could not determine current branch`;
   }
 
-  if (error.reason === 'missing_context') {
+  if (error.reason === BranchContextActionErrorReason.MissingContext) {
     return `${APP_NAME}: no context for '${error.branch ?? 'current branch'}'. Run sync first.`;
   }
 
-  if (error.reason === 'base_branch_not_found') {
+  if (error.reason === BranchContextActionErrorReason.BaseBranchNotFound) {
     return `${APP_NAME}: base branch not found: ${error.baseBranch ?? 'unknown'}`;
   }
 
-  if (error.reason === 'no_templates') {
+  if (error.reason === BranchContextActionErrorReason.NoTemplates) {
     return `${APP_NAME}: no templates found`;
   }
 
-  if (error.reason === 'template_not_found') {
+  if (error.reason === BranchContextActionErrorReason.TemplateNotFound) {
     return `${APP_NAME}: ${error.message}`;
   }
 

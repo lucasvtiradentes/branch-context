@@ -8,7 +8,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { basename, delimiter, dirname, isAbsolute, join, relative } from 'node:path';
-import { CLI_NAME, GIT_DIR, HOOK_MARKER, HOOK_POST_CHECKOUT } from '../constants';
+import { CLI_NAME, GIT_DIR, HOOK_MARKER, HookType } from '../constants';
 import { loadHookTemplateResource } from '../resources';
 import {
   gitConfigUnset,
@@ -19,15 +19,20 @@ import {
 } from '../utils/git';
 import type { PromptYesNo } from '../utils/prompt';
 
-export type HookType = 'post-checkout' | 'post-commit';
-export type HookInstallResult =
-  | 'installed'
-  | 'already_installed'
-  | 'hook_exists'
-  | 'appended'
-  | 'updated'
-  | 'skipped';
-export type HookUninstallResult = 'uninstalled' | 'not_installed' | 'not_managed';
+export enum HookInstallResult {
+  Installed = 'installed',
+  AlreadyInstalled = 'already_installed',
+  HookExists = 'hook_exists',
+  Appended = 'appended',
+  Updated = 'updated',
+  Skipped = 'skipped',
+}
+
+export enum HookUninstallResult {
+  Uninstalled = 'uninstalled',
+  NotInstalled = 'not_installed',
+  NotManaged = 'not_managed',
+}
 
 const customHooksConfirmed = new Map<string, boolean>();
 const excludeConfirmed = new Map<string, boolean>();
@@ -56,7 +61,7 @@ export function getBranchctxPath() {
 
 export function getCallback(hookType: HookType) {
   const branchctxPath = getBranchctxPath();
-  if (hookType === HOOK_POST_CHECKOUT) {
+  if (hookType === HookType.PostCheckout) {
     return `"${branchctxPath}" on-checkout`;
   }
   return `"${branchctxPath}" on-commit`;
@@ -87,7 +92,7 @@ function getHuskyUserHooksDir(hooksDir: string) {
 
 export function getHookPath(
   gitRootPath: string,
-  hookType: HookType = HOOK_POST_CHECKOUT,
+  hookType: HookType = HookType.PostCheckout,
   useCustom = false,
 ) {
   if (useCustom) {
@@ -117,7 +122,7 @@ function getAllHookPaths(gitRootPath: string, hookType: HookType) {
   return paths;
 }
 
-export function isHookInstalled(gitRootPath: string, hookType: HookType = HOOK_POST_CHECKOUT) {
+export function isHookInstalled(gitRootPath: string, hookType: HookType = HookType.PostCheckout) {
   for (const hookPath of getAllHookPaths(gitRootPath, hookType)) {
     if (existsSync(hookPath) && readFileSync(hookPath, 'utf8').includes(HOOK_MARKER)) {
       return true;
@@ -140,7 +145,7 @@ const SNIPPET_END_MARKER = '# branch-ctx-end';
 
 function getAppendSnippet(hookType: HookType) {
   const callback = getCallback(hookType);
-  if (hookType === HOOK_POST_CHECKOUT) {
+  if (hookType === HookType.PostCheckout) {
     return `
 ${HOOK_MARKER}
 OLD_BRANCH=$(git rev-parse --abbrev-ref @{-1} 2>/dev/null || echo "unknown")
@@ -166,7 +171,7 @@ function replaceBctxSnippet(content: string, hookType: HookType) {
 
 export async function installHook(
   gitRootPath: string,
-  hookType: HookType = HOOK_POST_CHECKOUT,
+  hookType: HookType = HookType.PostCheckout,
   ask?: PromptYesNo,
 ): Promise<HookInstallResult> {
   const prompt = ask ?? (await import('../utils/prompt')).promptYesNo;
@@ -207,9 +212,9 @@ export async function installHook(
       if (updated !== existing) {
         writeFileSync(hookPath, updated);
         chmodSync(hookPath, statSync(hookPath).mode | 0o111);
-        return 'updated';
+        return HookInstallResult.Updated;
       }
-      return 'already_installed';
+      return HookInstallResult.AlreadyInstalled;
     }
 
     const appendKey = `${gitRootPath}:${hookType}`;
@@ -219,11 +224,11 @@ export async function installHook(
     }
 
     if (!appendConfirmed.get(appendKey)) {
-      return 'hook_exists';
+      return HookInstallResult.HookExists;
     }
 
     writeFileSync(hookPath, `${existing}${getAppendSnippet(hookType)}`);
-    return 'appended';
+    return HookInstallResult.Appended;
   }
 
   writeFileSync(hookPath, getStandaloneHookContent(hookType));
@@ -233,7 +238,7 @@ export async function installHook(
     gitInfoExcludeAdd(gitRootPath, relative(gitRootPath, hookPath));
   }
 
-  return 'installed';
+  return HookInstallResult.Installed;
 }
 
 function removeBctxSnippet(content: string) {
@@ -265,7 +270,7 @@ function escapeRegex(value: string) {
 
 export function uninstallHook(
   gitRootPath: string,
-  hookType: HookType = HOOK_POST_CHECKOUT,
+  hookType: HookType = HookType.PostCheckout,
 ): HookUninstallResult {
   for (const hookPath of getAllHookPaths(gitRootPath, hookType)) {
     if (!existsSync(hookPath)) {
@@ -287,16 +292,16 @@ export function uninstallHook(
       rmSync(hookPath);
     }
 
-    return 'uninstalled';
+    return HookUninstallResult.Uninstalled;
   }
 
   for (const hookPath of getAllHookPaths(gitRootPath, hookType)) {
     if (existsSync(hookPath)) {
-      return 'not_managed';
+      return HookUninstallResult.NotManaged;
     }
   }
 
-  return 'not_installed';
+  return HookUninstallResult.NotInstalled;
 }
 
 export function getCurrentBranch(path?: string) {

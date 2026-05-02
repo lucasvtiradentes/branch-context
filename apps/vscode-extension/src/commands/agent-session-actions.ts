@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { AgentSessionProvider } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../constants';
 import { removeAgentSessionPin, upsertAgentSessionPin } from '../core/agent-session-pins';
@@ -8,7 +9,7 @@ import { formatError } from '../lib/format-error';
 import type { BranchContextTreeNode } from '../tree-views/items';
 
 type CachedAgentSession = {
-  provider: 'claude' | 'codex';
+  provider: AgentSessionProvider;
   sessionId: string;
 };
 
@@ -112,7 +113,7 @@ async function deleteAgentSession(node: unknown): Promise<void> {
   }
 }
 
-function removeCachedAgentSession(provider: 'claude' | 'codex', sessionId: string): void {
+function removeCachedAgentSession(provider: AgentSessionProvider, sessionId: string): void {
   const state = getBranchContextState();
   if (!state.workspaceRoot) {
     return;
@@ -150,7 +151,8 @@ function isCachedAgentSession(value: unknown): value is CachedAgentSession {
 
   const session = value as Partial<CachedAgentSession>;
   return (
-    (session.provider === 'claude' || session.provider === 'codex') &&
+    (session.provider === AgentSessionProvider.Claude ||
+      session.provider === AgentSessionProvider.Codex) &&
     typeof session.sessionId === 'string'
   );
 }

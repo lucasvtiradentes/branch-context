@@ -1,4 +1,4 @@
-import { syncCurrentBranch } from '@branch-context/core';
+import { CreateBranchContextResult, syncCurrentBranch } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
@@ -43,11 +43,11 @@ export function registerSyncCommand(): vscode.Disposable {
       logger.debug(`sync command updates: ${formatUpdates(result.updates)}`);
       refreshBranchContextState();
       const status =
-        result.createResult === 'created_from_template'
+        result.createResult === CreateBranchContextResult.CreatedFromTemplate
           ? 'created from template'
-          : result.createResult === 'repaired_from_template'
+          : result.createResult === CreateBranchContextResult.RepairedFromTemplate
             ? 'repaired from template'
-            : result.createResult === 'created_empty'
+            : result.createResult === CreateBranchContextResult.CreatedEmpty
               ? 'created'
               : 'synced';
       await vscode.window.showInformationMessage(

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { AgentSession } from '@branch-context/core';
+import { type AgentSession, AgentSessionProvider } from '@branch-context/core';
 import { getBranchContextState } from './state';
 
 const pinsFileName = 'agent-session-pins.json';
@@ -81,7 +81,7 @@ function isAgentSessionPin(value: unknown): value is AgentSessionPin {
 
   const pin = value as Partial<AgentSessionPin>;
   return (
-    (pin.provider === 'claude' || pin.provider === 'codex') &&
+    (pin.provider === AgentSessionProvider.Claude || pin.provider === AgentSessionProvider.Codex) &&
     typeof pin.sessionId === 'string' &&
     typeof pin.description === 'string' &&
     typeof pin.pinnedAt === 'string'

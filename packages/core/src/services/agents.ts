@@ -11,8 +11,10 @@ import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { DEFAULT_SYMLINK } from '../constants';
 import { sanitizeBranchName } from '../core/sync';
-import type { AgentSession } from '../data/agents';
 import {
+  type AgentSession,
+  AgentSessionProvider,
+  AgentSessionScope,
   createAgentSession,
   getCurrentAgentsFilePath,
   readAgentsFile,
@@ -100,7 +102,7 @@ export function getAgentSessions(
   const cachedSessions = agentsFilePath ? readAgentsFile(agentsFilePath).sessions : [];
   const scannedSessions = scanAgentSessions({ ...options, repoRoot, branch });
   const sessions = mergeSessions(cachedSessions, scannedSessions)
-    .filter((session) => session.scope === 'repo' || session.branch === branch)
+    .filter((session) => session.scope === AgentSessionScope.Repo || session.branch === branch)
     .sort(compareSessions);
 
   return {
@@ -133,7 +135,7 @@ export function syncAgentSessions(
   }
 
   const exactSessions = result.sessions.filter(
-    (session) => session.scope === 'branch' && session.branch === result.branch,
+    (session) => session.scope === AgentSessionScope.Branch && session.branch === result.branch,
   );
   writeAgentsFile(agentsFilePath, { version: 1, sessions: exactSessions });
 
@@ -167,12 +169,12 @@ export function scanClaudeSessions(options: AgentSessionScanOptions): AgentSessi
     .filter(({ session }) => !options.branch || session.branch === options.branch)
     .map(({ file, session }) =>
       createAgentSession({
-        provider: 'claude',
+        provider: AgentSessionProvider.Claude,
         sessionId: session.sessionId,
         repoRoot: options.repoRoot,
         branch: session.branch,
         branchKey: sanitizeBranchName(session.branch),
-        scope: 'branch',
+        scope: AgentSessionScope.Branch,
         path: file,
         model: session.model,
         source: null,
@@ -193,7 +195,10 @@ export function scanCodexSessions(options: AgentSessionScanOptions): AgentSessio
     .map(({ file, session }) => codexSessionToAgent(file, session, options))
     .filter((session): session is AgentSession => Boolean(session))
     .filter(
-      (session) => !options.branch || session.scope === 'repo' || session.branch === options.branch,
+      (session) =>
+        !options.branch ||
+        session.scope === AgentSessionScope.Repo ||
+        session.branch === options.branch,
     )
     .sort(compareSessions);
 }
@@ -301,12 +306,12 @@ function codexSessionToAgent(
       : '';
 
   return createAgentSession({
-    provider: 'codex',
+    provider: AgentSessionProvider.Codex,
     sessionId: session.sessionId,
     repoRoot: options.repoRoot,
     branch,
     branchKey,
-    scope: exactBranch ? 'branch' : 'repo',
+    scope: exactBranch ? AgentSessionScope.Branch : AgentSessionScope.Repo,
     path: file,
     model: session.model,
     source: session.source,

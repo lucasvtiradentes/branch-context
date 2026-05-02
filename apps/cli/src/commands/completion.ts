@@ -5,6 +5,12 @@ type CompletionGroup = {
   name: string;
 };
 
+enum CompletionShell {
+  Bash = 'bash',
+  Fish = 'fish',
+  Zsh = 'zsh',
+}
+
 const PARENT_DESCRIPTIONS: Record<string, string> = {
   agents: 'Agent integration commands',
 };
@@ -16,16 +22,16 @@ export function registerCompletionCommand(program: Program) {
     .strict(false)
     .action(async ({ args, program }) => {
       const shell = args.shell ? String(args.shell) : '';
-      if (shell === 'zsh') {
-        console.log(await getCompletionScript(program, shell));
+      if (shell === CompletionShell.Zsh) {
+        console.log(await getCompletionScript(program, CompletionShell.Zsh));
         return 0;
       }
-      if (shell === 'bash') {
-        console.log(await getCompletionScript(program, shell));
+      if (shell === CompletionShell.Bash) {
+        console.log(await getCompletionScript(program, CompletionShell.Bash));
         return 0;
       }
-      if (shell === 'fish') {
-        console.log(await getCompletionScript(program, shell));
+      if (shell === CompletionShell.Fish) {
+        console.log(await getCompletionScript(program, CompletionShell.Fish));
         return 0;
       }
       console.log(`error: unsupported shell '${shell || '<empty>'}'`);
@@ -34,7 +40,7 @@ export function registerCompletionCommand(program: Program) {
     });
 }
 
-async function getCompletionScript(program: Program, shell: 'bash' | 'fish' | 'zsh') {
+async function getCompletionScript(program: Program, shell: CompletionShell) {
   const binName = program.getBin();
   const commands = (await program.getAllCommands()).filter(
     (command) => command.visible && command.name !== 'completion',
@@ -42,10 +48,10 @@ async function getCompletionScript(program: Program, shell: 'bash' | 'fish' | 'z
   const roots = getRootCommands(commands);
   const subcommands = getSubcommandGroups(commands);
 
-  if (shell === 'bash') {
+  if (shell === CompletionShell.Bash) {
     return getBashCompletionScript(binName, roots, subcommands);
   }
-  if (shell === 'fish') {
+  if (shell === CompletionShell.Fish) {
     return getFishCompletionScript(binName, roots, subcommands);
   }
   return getZshCompletionScript(binName, roots, subcommands);

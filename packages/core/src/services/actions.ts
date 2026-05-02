@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CONFIG_FILE, DEFAULT_SYMLINK, HOOK_POST_CHECKOUT, HOOK_POST_COMMIT } from '../constants';
+import { CONFIG_FILE, DEFAULT_SYMLINK, HookType } from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
 import { getCurrentBranch, installHook } from '../core/hooks';
@@ -11,7 +11,7 @@ import {
   createBranchContext,
   deleteBranchContext,
   getBranchDir,
-  type ResetBranchContextResult,
+  ResetBranchContextResult,
   resetBranchContext,
   sanitizeBranchName,
   type UpdateSymlinkResult,
@@ -32,13 +32,14 @@ import { updateBranchMeta } from '../data/meta';
 import { gitRefExists } from '../utils/git';
 import type { PromptYesNo } from '../utils/prompt';
 
-export type BranchContextActionErrorReason =
-  | 'not_initialized'
-  | 'no_current_branch'
-  | 'missing_context'
-  | 'base_branch_not_found'
-  | 'no_templates'
-  | 'template_not_found';
+export enum BranchContextActionErrorReason {
+  NotInitialized = 'not_initialized',
+  NoCurrentBranch = 'no_current_branch',
+  MissingContext = 'missing_context',
+  BaseBranchNotFound = 'base_branch_not_found',
+  NoTemplates = 'no_templates',
+  TemplateNotFound = 'template_not_found',
+}
 
 export type BranchContextActionError = {
   ok: false;
@@ -143,8 +144,8 @@ export async function initProject(
     copyInitTemplates(templatesDir);
   }
 
-  const checkoutHook = await installHook(gitRoot, HOOK_POST_CHECKOUT, ask);
-  const commitHook = await installHook(gitRoot, HOOK_POST_COMMIT, ask);
+  const checkoutHook = await installHook(gitRoot, HookType.PostCheckout, ask);
+  const commitHook = await installHook(gitRoot, HookType.PostCommit, ask);
 
   addToGitignore(gitRoot, DEFAULT_SYMLINK);
   addToGitignore(gitRoot, '.bctx/branches/');
@@ -257,7 +258,7 @@ export function applyTemplateToCurrentBranch(
   if (templatesResult.templates.length === 0) {
     return {
       ok: false,
-      reason: 'no_templates',
+      reason: BranchContextActionErrorReason.NoTemplates,
       message: 'no templates found',
       branch: current.branch,
     };
@@ -266,7 +267,7 @@ export function applyTemplateToCurrentBranch(
   if (!templatesResult.templates.includes(templateName)) {
     return {
       ok: false,
-      reason: 'template_not_found',
+      reason: BranchContextActionErrorReason.TemplateNotFound,
       message: `template '${templateName}' not found`,
       branch: current.branch,
       templates: templatesResult.templates,
@@ -274,10 +275,10 @@ export function applyTemplateToCurrentBranch(
   }
 
   const resetResult = resetBranchContext(gitRoot, current.branch, templateName);
-  if (resetResult === 'template_not_found') {
+  if (resetResult === ResetBranchContextResult.TemplateNotFound) {
     return {
       ok: false,
-      reason: 'template_not_found',
+      reason: BranchContextActionErrorReason.TemplateNotFound,
       message: 'template not found',
       branch: current.branch,
       templates: templatesResult.templates,
@@ -388,7 +389,7 @@ function getInitializedCurrentBranch(gitRoot: string): InitializedCurrentBranch 
   if (!branch) {
     return {
       ok: false,
-      reason: 'no_current_branch',
+      reason: BranchContextActionErrorReason.NoCurrentBranch,
       message: 'could not determine current branch',
     };
   }
@@ -409,7 +410,7 @@ function getExistingCurrentContext(gitRoot: string): ExistingCurrentContext {
   if (!existsSync(contextDir)) {
     return {
       ok: false,
-      reason: 'missing_context',
+      reason: BranchContextActionErrorReason.MissingContext,
       message: `no context for '${current.branch}'`,
       branch: current.branch,
     };
@@ -437,7 +438,7 @@ function validateBaseBranch(
 
   return {
     ok: false,
-    reason: 'base_branch_not_found',
+    reason: BranchContextActionErrorReason.BaseBranchNotFound,
     message: `base branch not found: ${baseBranch}`,
     branch,
     baseBranch,
@@ -447,7 +448,7 @@ function validateBaseBranch(
 function notInitialized(): BranchContextActionError {
   return {
     ok: false,
-    reason: 'not_initialized',
+    reason: BranchContextActionErrorReason.NotInitialized,
     message: 'not initialized',
   };
 }
@@ -455,7 +456,7 @@ function notInitialized(): BranchContextActionError {
 function missingContext(branchKey: string): BranchContextActionError {
   return {
     ok: false,
-    reason: 'missing_context',
+    reason: BranchContextActionErrorReason.MissingContext,
     message: `no context for '${branchKey}'`,
     branch: branchKey,
   };

@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import type { AgentSession } from '@branch-context/core';
+import { type AgentSession, AgentSessionProvider } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { isAgentSessionActive } from '../core/active-agent-sessions';
 import { type AgentSessionPin, readAgentSessionPins } from '../core/agent-session-pins';
@@ -7,6 +7,7 @@ import { getBranchContextState } from '../core/state';
 import { groupByDate } from '../lib/date-groups';
 import { formatRelativeTime } from '../lib/format-relative-time';
 import {
+  BranchContextTreeNodeKind,
   createInactiveAgentSessionResourceUri,
   createMessageNode,
   StateTreeProvider,
@@ -112,7 +113,7 @@ function createGroupNode(
 ) {
   return {
     label,
-    kind: 'group' as const,
+    kind: BranchContextTreeNodeKind.Group,
     description: String(sessions.length),
     icon,
     collapsibleState,
@@ -140,7 +141,7 @@ function createAgentSessionNode(
     label: pinned
       ? (item.pin?.description ?? getSessionDisplayText(item))
       : getSessionDisplayText(item),
-    kind: 'agent' as const,
+    kind: BranchContextTreeNodeKind.Agent,
     path,
     agentProvider: session.provider,
     sessionId: session.sessionId,
@@ -190,7 +191,7 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
   return [
     {
       label: 'Pinned',
-      kind: 'group' as const,
+      kind: BranchContextTreeNodeKind.Group,
       description: String(pinnedItems.length),
       icon: new vscode.ThemeIcon('pinned'),
       collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
@@ -495,11 +496,11 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 function getProviderSort(provider: AgentSession['provider']) {
-  if (provider === 'codex') {
+  if (provider === AgentSessionProvider.Codex) {
     return 0;
   }
 
-  if (provider === 'claude') {
+  if (provider === AgentSessionProvider.Claude) {
     return 1;
   }
 
@@ -507,11 +508,11 @@ function getProviderSort(provider: AgentSession['provider']) {
 }
 
 function formatProviderName(provider: AgentSession['provider']) {
-  if (provider === 'codex') {
+  if (provider === AgentSessionProvider.Codex) {
     return 'Codex';
   }
 
-  if (provider === 'claude') {
+  if (provider === AgentSessionProvider.Claude) {
     return 'Claude Code';
   }
 
@@ -519,11 +520,11 @@ function formatProviderName(provider: AgentSession['provider']) {
 }
 
 function getProviderIcon(provider: AgentSession['provider'], active: boolean) {
-  if (provider === 'codex') {
+  if (provider === AgentSessionProvider.Codex) {
     return createLetterIcon('CX', active);
   }
 
-  if (provider === 'claude') {
+  if (provider === AgentSessionProvider.Claude) {
     return createLetterIcon('CC', active);
   }
 

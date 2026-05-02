@@ -6,6 +6,11 @@ import {
   gitRefExists,
 } from '../utils/git';
 
+export enum BranchGitSummaryErrorReason {
+  MissingBase = 'missing_base',
+  BaseNotFound = 'base_not_found',
+}
+
 export type BranchGitSummary =
   | {
       ok: true;
@@ -15,7 +20,7 @@ export type BranchGitSummary =
     }
   | {
       ok: false;
-      reason: 'missing_base' | 'base_not_found';
+      reason: BranchGitSummaryErrorReason;
       baseBranch: string | null;
       changedFiles: [];
       commits: [];
@@ -30,7 +35,7 @@ export function getGitBranchSummary(
   if (!baseBranch) {
     return {
       ok: false,
-      reason: 'missing_base',
+      reason: BranchGitSummaryErrorReason.MissingBase,
       baseBranch: null,
       changedFiles: [],
       commits: [],
@@ -40,7 +45,7 @@ export function getGitBranchSummary(
   if (!gitRefExists(workspace, baseBranch)) {
     return {
       ok: false,
-      reason: 'base_not_found',
+      reason: BranchGitSummaryErrorReason.BaseNotFound,
       baseBranch,
       changedFiles: [],
       commits: [],

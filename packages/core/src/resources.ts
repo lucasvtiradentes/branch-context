@@ -1,14 +1,14 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { CONFIG_DIR, CONFIG_FILE } from './constants';
+import { CONFIG_DIR, CONFIG_FILE, HookType } from './constants';
 import type { BranchContextConfigFile } from './data/config-schema';
 
 const RESOURCE_CONFIG_FILE = 'config.json';
 const RESOURCE_HOOKS_DIR = 'hooks';
 const RESOURCE_TEMPLATES_DIR = 'templates';
 const RESOURCE_HOOK_FILES = {
-  'post-checkout': 'post-checkout.sh',
-  'post-commit': 'post-commit.sh',
+  [HookType.PostCheckout]: 'post-checkout.sh',
+  [HookType.PostCommit]: 'post-commit.sh',
 } as const;
 
 export function getResourcesDir() {
@@ -39,7 +39,7 @@ export function getDefaultTemplatesResourceDir() {
   return join(getResourcesDir(), RESOURCE_TEMPLATES_DIR);
 }
 
-export function loadHookTemplateResource(hookType: keyof typeof RESOURCE_HOOK_FILES) {
+export function loadHookTemplateResource(hookType: HookType) {
   return readFileSync(join(getResourcesDir(), RESOURCE_HOOKS_DIR, RESOURCE_HOOK_FILES[hookType]), {
     encoding: 'utf8',
   });

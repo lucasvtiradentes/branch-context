@@ -12,7 +12,7 @@ import { APP_NAME, CONTEXT_FILE_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
 import { formatLogError, logger } from '../lib/logging';
-import type { BranchContextTreeNode } from '../tree-views/items';
+import { type BranchContextTreeNode, BranchContextTreeNodeKind } from '../tree-views/items';
 import { formatActionError, getInitializedState, openExternalFolder, openPath } from './helpers';
 
 type ContextTreeNode = BranchContextTreeNode & {
@@ -279,7 +279,7 @@ function isContextNode(node: unknown): node is ContextTreeNode {
 
   const value = node as Partial<BranchContextTreeNode>;
   return (
-    value.kind === 'context' &&
+    value.kind === BranchContextTreeNodeKind.Context &&
     typeof value.branch === 'string' &&
     typeof value.branchKey === 'string' &&
     typeof value.path === 'string'

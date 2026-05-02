@@ -1,6 +1,7 @@
 import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { AgentSessionProvider, AgentSessionScope } from '../src/index';
 import {
   getClaudeProjectKey,
   parseClaudeSessionFile,
@@ -87,7 +88,7 @@ describe('agent provider parsers', () => {
     });
 
     expect(sessions.map((session) => session.sessionId)).toEqual(['claude-1']);
-    expect(sessions[0]?.scope).toBe('branch');
+    expect(sessions[0]?.scope).toBe(AgentSessionScope.Branch);
   });
 
   it('scans Codex sessions from historical date buckets', () => {
@@ -126,9 +127,9 @@ describe('agent provider parsers', () => {
     });
 
     expect(sessions.map((session) => [session.sessionId, session.scope]).sort()).toEqual([
-      ['codex-1', 'branch'],
-      ['codex-3', 'repo'],
-      ['codex-old', 'branch'],
+      ['codex-1', AgentSessionScope.Branch],
+      ['codex-3', AgentSessionScope.Repo],
+      ['codex-old', AgentSessionScope.Branch],
     ]);
   });
 
@@ -150,6 +151,9 @@ describe('agent provider parsers', () => {
       now: new Date('2026-05-01T15:00:00.000Z'),
     });
 
-    expect(sessions.map((session) => session.provider).sort()).toEqual(['claude', 'codex']);
+    expect(sessions.map((session) => session.provider).sort()).toEqual([
+      AgentSessionProvider.Claude,
+      AgentSessionProvider.Codex,
+    ]);
   });
 });

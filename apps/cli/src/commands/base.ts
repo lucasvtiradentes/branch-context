@@ -1,4 +1,10 @@
-import { CLI_NAME, getCurrentBase, getGitRoot, setCurrentBase } from '@branch-context/core';
+import {
+  BranchContextActionErrorReason,
+  CLI_NAME,
+  getCurrentBase,
+  getGitRoot,
+  setCurrentBase,
+} from '@branch-context/core';
 import type { Program } from '@caporal/core';
 
 export function registerBaseCommand(program: Program) {
@@ -38,12 +44,16 @@ function stringArgs(value: unknown) {
   return value == null || value === '' ? [] : [String(value)];
 }
 
-function renderBaseError(result: { reason: string; message: string; branch?: string }) {
-  if (result.reason === 'not_initialized') {
+function renderBaseError(result: {
+  reason: BranchContextActionErrorReason;
+  message: string;
+  branch?: string;
+}) {
+  if (result.reason === BranchContextActionErrorReason.NotInitialized) {
     console.log(`error: not initialized. Run '${CLI_NAME} init' first`);
-  } else if (result.reason === 'no_current_branch') {
+  } else if (result.reason === BranchContextActionErrorReason.NoCurrentBranch) {
     console.log('error: could not determine current branch');
-  } else if (result.reason === 'missing_context') {
+  } else if (result.reason === BranchContextActionErrorReason.MissingContext) {
     console.log(`error: no context for '${result.branch}'. Run '${CLI_NAME} sync' first`);
   } else {
     console.log(`error: ${result.message}`);

@@ -3,9 +3,15 @@ import { dirname, join } from 'node:path';
 import { AGENTS_FILE_NAME, DEFAULT_SYMLINK } from '../constants';
 import { getBranchDir, sanitizeBranchName } from '../core/sync';
 
-export type AgentSessionProvider = 'claude' | 'codex';
+export enum AgentSessionProvider {
+  Claude = 'claude',
+  Codex = 'codex',
+}
 
-export type AgentSessionScope = 'branch' | 'repo';
+export enum AgentSessionScope {
+  Branch = 'branch',
+  Repo = 'repo',
+}
 
 export type AgentSession = {
   provider: AgentSessionProvider;
@@ -54,7 +60,7 @@ export function createAgentSession(input: AgentSessionInput): AgentSession {
   return {
     ...input,
     branchKey: input.branchKey || sanitizeBranchName(input.branch),
-    scope: input.scope ?? 'branch',
+    scope: input.scope ?? AgentSessionScope.Branch,
   };
 }
 
@@ -138,12 +144,13 @@ function isAgentSession(value: unknown): value is AgentSession {
 
   const session = value as Partial<AgentSession>;
   return (
-    (session.provider === 'claude' || session.provider === 'codex') &&
+    (session.provider === AgentSessionProvider.Claude ||
+      session.provider === AgentSessionProvider.Codex) &&
     typeof session.sessionId === 'string' &&
     typeof session.repoRoot === 'string' &&
     typeof session.branch === 'string' &&
     typeof session.branchKey === 'string' &&
-    (session.scope === 'branch' || session.scope === 'repo') &&
+    (session.scope === AgentSessionScope.Branch || session.scope === AgentSessionScope.Repo) &&
     isNullableString(session.path) &&
     isNullableString(session.model) &&
     isNullableString(session.source) &&

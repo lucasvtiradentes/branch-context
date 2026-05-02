@@ -1,3 +1,4 @@
+import { BranchContextStatusIssueLevel } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../../constants';
 import { refreshBranchContextState } from '../../core/state';
@@ -17,8 +18,12 @@ export function registerShowDetailsCommand(): vscode.Disposable {
         return;
       }
 
-      const errors = state.status.issues.filter((issue) => issue.level === 'error').length;
-      const warnings = state.status.issues.filter((issue) => issue.level === 'warning').length;
+      const errors = state.status.issues.filter(
+        (issue) => issue.level === BranchContextStatusIssueLevel.Error,
+      ).length;
+      const warnings = state.status.issues.filter(
+        (issue) => issue.level === BranchContextStatusIssueLevel.Warning,
+      ).length;
       await vscode.window.showInformationMessage(
         `${APP_NAME}: ${state.currentBranch ?? 'no branch'} | base ${state.status.baseBranch ?? 'n/a'} | ${state.recentContexts.length} contexts | ${state.archivedContexts.length} archived | ${errors} errors | ${warnings} warnings`,
       );

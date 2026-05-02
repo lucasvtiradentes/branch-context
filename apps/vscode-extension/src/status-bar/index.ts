@@ -1,4 +1,4 @@
-import { initProject } from '@branch-context/core';
+import { BranchContextStatusIssueLevel, initProject } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds, STATUS_BAR_PRIORITY } from '../constants';
 import {
@@ -108,26 +108,31 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
   await vscode.window.showInformationMessage(`${APP_NAME}: initialized`);
 }
 
-type StatusBarState = 'synced' | 'notSynced' | 'warning' | 'error';
+enum StatusBarState {
+  Synced = 'synced',
+  NotSynced = 'notSynced',
+  Warning = 'warning',
+  Error = 'error',
+}
 
 function getStatusBarState(state: BranchContextExtensionState): StatusBarState {
   if (!state.initialized) {
-    return 'error';
+    return StatusBarState.Error;
   }
 
-  if (state.status?.issues.some((issue) => issue.level === 'error')) {
-    return 'error';
+  if (state.status?.issues.some((issue) => issue.level === BranchContextStatusIssueLevel.Error)) {
+    return StatusBarState.Error;
   }
 
   if (!state.currentContextFile) {
-    return 'notSynced';
+    return StatusBarState.NotSynced;
   }
 
-  if (state.status?.issues.some((issue) => issue.level === 'warning')) {
-    return 'warning';
+  if (state.status?.issues.some((issue) => issue.level === BranchContextStatusIssueLevel.Warning)) {
+    return StatusBarState.Warning;
   }
 
-  return 'synced';
+  return StatusBarState.Synced;
 }
 
 function getStatusText(status: StatusBarState): string {
@@ -135,11 +140,11 @@ function getStatusText(status: StatusBarState): string {
 }
 
 function getStatusIcon(status: StatusBarState): string {
-  if (status === 'error') {
+  if (status === StatusBarState.Error) {
     return '$(error)';
   }
 
-  if (status === 'warning' || status === 'notSynced') {
+  if (status === StatusBarState.Warning || status === StatusBarState.NotSynced) {
     return '$(warning)';
   }
 
@@ -151,7 +156,7 @@ function getAccessibilityLabel(state: BranchContextExtensionState): string {
 }
 
 function getStatusLabel(status: StatusBarState): string {
-  if (status === 'notSynced') {
+  if (status === StatusBarState.NotSynced) {
     return 'not synced';
   }
 
@@ -203,7 +208,7 @@ function getIssueTooltipLines(state: BranchContextExtensionState): string[] {
     '**Issues:**',
     ...issues.map(
       (issue) =>
-        `${issue.level === 'error' ? '$(error)' : '$(warning)'} ${escapeMarkdown(issue.message)}`,
+        `${issue.level === BranchContextStatusIssueLevel.Error ? '$(error)' : '$(warning)'} ${escapeMarkdown(issue.message)}`,
     ),
   ];
 }

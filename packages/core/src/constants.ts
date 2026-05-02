@@ -5,8 +5,13 @@ export const VERSION = '0.3.2';
 
 export const GIT_DIR = '.git';
 export const HOOK_MARKER = '# branch-ctx-managed';
-export const HOOK_POST_CHECKOUT = 'post-checkout';
-export const HOOK_POST_COMMIT = 'post-commit';
+export enum HookType {
+  PostCheckout = 'post-checkout',
+  PostCommit = 'post-commit',
+}
+
+export const HOOK_POST_CHECKOUT = HookType.PostCheckout;
+export const HOOK_POST_COMMIT = HookType.PostCommit;
 export const DEFAULT_SOUND_FILE = 'notification.oga';
 
 export const CONFIG_DIR = '.bctx';
