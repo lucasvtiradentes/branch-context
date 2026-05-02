@@ -1,5 +1,3 @@
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import type {
   BranchGitSummary,
   GitChangedFileSummary,
@@ -19,6 +17,7 @@ import {
   createMessageNode,
   StateTreeProvider,
 } from '../../../shared/tree-items';
+import { createBranchFileDiffCommand } from '../../../vscode/git-diff';
 import { type BranchContextExtensionState, branchContextState } from '../../../vscode/state';
 
 enum GitChangesMode {
@@ -155,7 +154,7 @@ function isGitCommitsGroupBy(value: unknown): value is GitCommitsGroupBy {
 
 function createChangedFileNodes(state: BranchContextExtensionState) {
   return getGitSummaryChildren(state.gitSummary, (summary) =>
-    groupChangedFileNodes(state.workspaceRoot, summary.changedFiles),
+    groupChangedFileNodes(state.workspaceRoot, summary.baseBranch, summary.changedFiles),
   );
 }
 
@@ -177,14 +176,19 @@ function groupCommitNodes(commits: GitCommitSummary[]) {
   return commits.map(createCommitNode);
 }
 
-function groupChangedFileNodes(workspaceRoot: string | null, files: GitChangedFileSummary[]) {
+function groupChangedFileNodes(
+  workspaceRoot: string | null,
+  baseBranch: string,
+  files: GitChangedFileSummary[],
+) {
   if (gitChangedFilesGroupBy !== GitChangedFilesGroupBy.ChangeType) {
-    return files.map((file) => createChangedFileNode(workspaceRoot, file));
+    return files.map((file) => createChangedFileNode(workspaceRoot, baseBranch, file));
   }
 
   return [
     createChangedFileGroup(
       workspaceRoot,
+      baseBranch,
       files,
       'Added',
       [GitFileStatus.Added],
@@ -192,6 +196,7 @@ function groupChangedFileNodes(workspaceRoot: string | null, files: GitChangedFi
     ),
     createChangedFileGroup(
       workspaceRoot,
+      baseBranch,
       files,
       'Modified',
       [GitFileStatus.Modified],
@@ -199,6 +204,7 @@ function groupChangedFileNodes(workspaceRoot: string | null, files: GitChangedFi
     ),
     createChangedFileGroup(
       workspaceRoot,
+      baseBranch,
       files,
       'Renamed',
       [GitFileStatus.Renamed],
@@ -206,17 +212,26 @@ function groupChangedFileNodes(workspaceRoot: string | null, files: GitChangedFi
     ),
     createChangedFileGroup(
       workspaceRoot,
+      baseBranch,
       files,
       'Deleted',
       [GitFileStatus.Deleted],
       getChangedFileIcon(GitFileStatus.Deleted),
     ),
-    createChangedFileGroup(workspaceRoot, files, 'Other', [], new vscode.ThemeIcon('diff')),
+    createChangedFileGroup(
+      workspaceRoot,
+      baseBranch,
+      files,
+      'Other',
+      [],
+      new vscode.ThemeIcon('diff'),
+    ),
   ].filter((group) => group.children?.().length);
 }
 
 function createChangedFileGroup(
   workspaceRoot: string | null,
+  baseBranch: string,
   files: GitChangedFileSummary[],
   label: string,
   statuses: string[],
@@ -231,7 +246,7 @@ function createChangedFileGroup(
   return createGroupNode(
     label,
     groupedFiles.map((file) =>
-      createChangedFileNode(workspaceRoot, file, {
+      createChangedFileNode(workspaceRoot, baseBranch, file, {
         includeStatusInDescription: false,
         showStatusIcon: false,
       }),
@@ -270,29 +285,22 @@ type ChangedFileNodeOptions = {
 
 function createChangedFileNode(
   workspaceRoot: string | null,
+  baseBranch: string,
   file: GitChangedFileSummary,
   options: ChangedFileNodeOptions = {},
 ) {
-  const filePath = workspaceRoot ? join(workspaceRoot, file.path) : undefined;
-  const fileExists = filePath ? existsSync(filePath) : false;
   const includeStatusInDescription = options.includeStatusInDescription ?? false;
   const showStatusIcon = options.showStatusIcon ?? true;
 
   return {
     label: file.path,
     kind: BranchContextTreeNodeKind.File,
-    path: fileExists ? filePath : undefined,
     description: formatChangedFileDescription(file, includeStatusInDescription),
     tooltip: createChangedFileTooltip(file),
     icon: showStatusIcon ? getChangedFileIcon(file.status) : undefined,
-    command:
-      fileExists && filePath
-        ? {
-            command: 'vscode.open',
-            title: 'Open',
-            arguments: [vscode.Uri.file(filePath)],
-          }
-        : undefined,
+    command: workspaceRoot
+      ? createBranchFileDiffCommand(workspaceRoot, baseBranch, file)
+      : undefined,
   };
 }
 

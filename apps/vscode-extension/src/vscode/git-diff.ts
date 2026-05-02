@@ -62,6 +62,21 @@ export async function openBranchChanges(
   );
 }
 
+export function createBranchFileDiffCommand(
+  workspaceRoot: string,
+  baseBranch: string,
+  file: GitChangedFileSummary,
+): vscode.Command {
+  const mergeBase = gitMergeBase(workspaceRoot, baseBranch) ?? baseBranch;
+  const [, leftUri, rightUri] = createChangeResource(workspaceRoot, mergeBase, 'HEAD', file);
+
+  return {
+    command: 'vscode.diff',
+    title: 'Open Diff',
+    arguments: [leftUri, rightUri, createDiffTitle(file)],
+  };
+}
+
 async function openGitChanges(
   title: string,
   workspaceRoot: string,
@@ -108,6 +123,10 @@ function createGitContentUri(workspaceRoot: string, ref: string, filePath: strin
     path: `/${filePath}`,
     query: Buffer.from(JSON.stringify(request), 'utf8').toString('base64url'),
   });
+}
+
+function createDiffTitle(file: GitChangedFileSummary) {
+  return file.oldPath ? `${file.oldPath} -> ${file.path}` : file.path;
 }
 
 function parseGitContentRequest(uri: vscode.Uri): GitContentRequest | null {
