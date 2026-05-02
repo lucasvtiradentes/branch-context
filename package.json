@@ -1,9 +1,9 @@
 {
-  "name": "branch-context",
+  "name": "branch-context-monorepo",
   "private": true,
   "version": "0.0.0",
   "bin": {
-    "bctxd": "./scripts/bctxd"
+    "bctxd": "./apps/cli/scripts/bctxd"
   },
   "packageManager": "pnpm@10.33.0",
   "engines": {
@@ -23,7 +23,7 @@
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "knip": "knip",
-    "bctxd:install": "mkdir -p ~/.local/bin && ln -sf \"$PWD/scripts/bctxd\" ~/.local/bin/bctxd",
+    "bctxd:install": "mkdir -p ~/.local/bin && ln -sf \"$PWD/apps/cli/scripts/bctxd\" ~/.local/bin/bctxd",
     "bctxd:uninstall": "rm -f ~/.local/bin/bctxd"
   },
   "devDependencies": {

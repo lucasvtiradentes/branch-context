@@ -14,7 +14,7 @@ runs:
   steps:
     - name: Build extension
       shell: bash
-      run: pnpm --filter branch-context-vscode-extension build
+      run: pnpm --filter branch-context-vscode build
       env:
         CI: true
 

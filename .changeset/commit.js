@@ -3,7 +3,7 @@ const { readFileSync, writeFileSync } = require('node:fs');
 const { join } = require('node:path');
 
 function syncCoreVersionConstant() {
-  const packageJsonPath = join(process.cwd(), 'packages', 'core', 'package.json');
+  const packageJsonPath = join(process.cwd(), 'apps', 'cli', 'package.json');
   const constantsPath = join(process.cwd(), 'packages', 'core', 'src', 'constants.ts');
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
   const content = readFileSync(constantsPath, 'utf8');
