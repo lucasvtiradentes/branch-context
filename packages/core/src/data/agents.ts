@@ -29,9 +29,17 @@ export type AgentSession = {
   updatedAt: string | null;
 };
 
+export type AgentSessionPin = {
+  provider: AgentSessionProvider;
+  sessionId: string;
+  description: string;
+  pinnedAt: string;
+};
+
 export type AgentsFile = {
   version: 1;
   sessions: AgentSession[];
+  pinnedSessions: AgentSessionPin[];
 };
 
 export type AgentSessionInput = Omit<AgentSession, 'scope'> & {
@@ -42,6 +50,7 @@ export function createEmptyAgentsFile(): AgentsFile {
   return {
     version: 1,
     sessions: [],
+    pinnedSessions: [],
   };
 }
 
@@ -75,7 +84,11 @@ export function readAgentsFile(path: string): AgentsFile {
     if (!isAgentsFile(parsed)) {
       return createEmptyAgentsFile();
     }
-    return parsed;
+    return normalizeAgentsFile({
+      version: 1,
+      sessions: parsed.sessions,
+      pinnedSessions: parsed.pinnedSessions ?? [],
+    });
   } catch {
     return createEmptyAgentsFile();
   }
@@ -108,11 +121,60 @@ export function upsertAgentSession(path: string, session: AgentSessionInput): Ag
   return normalized;
 }
 
+export function upsertAgentSessionPin(
+  path: string,
+  pin: Omit<AgentSessionPin, 'pinnedAt'> & { pinnedAt?: string },
+): AgentsFile {
+  const data = readAgentsFile(path);
+  const nextPin = {
+    ...pin,
+    pinnedAt: pin.pinnedAt ?? new Date().toISOString(),
+  };
+  data.pinnedSessions = data.pinnedSessions.filter(
+    (existing) =>
+      existing.provider !== nextPin.provider || existing.sessionId !== nextPin.sessionId,
+  );
+  data.pinnedSessions.unshift(nextPin);
+
+  const normalized = normalizeAgentsFile(data);
+  writeAgentsFile(path, normalized);
+  return normalized;
+}
+
+export function removeAgentSessionPin(
+  path: string,
+  provider: AgentSessionProvider,
+  sessionId: string,
+): AgentsFile {
+  const data = readAgentsFile(path);
+  data.pinnedSessions = data.pinnedSessions.filter(
+    (pin) => pin.provider !== provider || pin.sessionId !== sessionId,
+  );
+
+  const normalized = normalizeAgentsFile(data);
+  writeAgentsFile(path, normalized);
+  return normalized;
+}
+
 export function normalizeAgentsFile(data: AgentsFile): AgentsFile {
   return {
     version: 1,
     sessions: data.sessions.filter(isAgentSession).sort(compareAgentSessions),
+    pinnedSessions: normalizeAgentSessionPins(data.pinnedSessions ?? []),
   };
+}
+
+function normalizeAgentSessionPins(pins: AgentSessionPin[]) {
+  const pinsByKey = new Map<string, AgentSessionPin>();
+
+  for (const pin of pins.filter(isAgentSessionPin).sort(compareAgentSessionPins)) {
+    const key = `${pin.provider}:${pin.sessionId}`;
+    if (!pinsByKey.has(key)) {
+      pinsByKey.set(key, pin);
+    }
+  }
+
+  return Array.from(pinsByKey.values()).sort(compareAgentSessionPins);
 }
 
 function compareAgentSessions(left: AgentSession, right: AgentSession) {
@@ -129,13 +191,31 @@ function compareAgentSessions(left: AgentSession, right: AgentSession) {
   return left.sessionId.localeCompare(right.sessionId);
 }
 
+function compareAgentSessionPins(left: AgentSessionPin, right: AgentSessionPin) {
+  if (left.pinnedAt !== right.pinnedAt) {
+    return right.pinnedAt.localeCompare(left.pinnedAt);
+  }
+
+  if (left.provider !== right.provider) {
+    return left.provider.localeCompare(right.provider);
+  }
+
+  return left.sessionId.localeCompare(right.sessionId);
+}
+
 function isAgentsFile(value: unknown): value is AgentsFile {
   if (!value || typeof value !== 'object') {
     return false;
   }
 
   const data = value as Partial<AgentsFile>;
-  return data.version === 1 && Array.isArray(data.sessions) && data.sessions.every(isAgentSession);
+  return (
+    data.version === 1 &&
+    Array.isArray(data.sessions) &&
+    data.sessions.every(isAgentSession) &&
+    (!data.pinnedSessions ||
+      (Array.isArray(data.pinnedSessions) && data.pinnedSessions.every(isAgentSessionPin)))
+  );
 }
 
 function isAgentSession(value: unknown): value is AgentSession {
@@ -158,6 +238,20 @@ function isAgentSession(value: unknown): value is AgentSession {
     isNullableString(session.title) &&
     isNullableString(session.startedAt) &&
     isNullableString(session.updatedAt)
+  );
+}
+
+export function isAgentSessionPin(value: unknown): value is AgentSessionPin {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const pin = value as Partial<AgentSessionPin>;
+  return (
+    (pin.provider === AgentSessionProvider.Claude || pin.provider === AgentSessionProvider.Codex) &&
+    typeof pin.sessionId === 'string' &&
+    typeof pin.description === 'string' &&
+    typeof pin.pinnedAt === 'string'
   );
 }
 

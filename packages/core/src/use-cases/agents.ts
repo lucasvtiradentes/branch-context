@@ -164,7 +164,11 @@ export function syncAgentSessions(
   const exactSessions = result.sessions.filter(
     (session) => session.scope === AgentSessionScope.Branch && session.branch === result.branch,
   );
-  writeAgentsFile(agentsFilePath, { version: 1, sessions: exactSessions });
+  const currentAgentsFile = readAgentsFile(agentsFilePath);
+  writeAgentsFile(agentsFilePath, {
+    ...currentAgentsFile,
+    sessions: exactSessions,
+  });
 
   return {
     ...result,

@@ -6,8 +6,10 @@ import {
   AgentSessionProvider,
   getAgentSessions,
   getClaudeProjectKey,
+  getCurrentAgentsFilePath,
   readAgentsFile,
   syncAgentSessions,
+  writeAgentsFile,
 } from '../src/index';
 import { createGitRepo, createTempDir, expectOk, initBctxWorkspace } from './helpers';
 
@@ -101,6 +103,39 @@ describe('agent session service', () => {
     }
     expect(result.sessions).toEqual([]);
     expect(readAgentsFile(result.agentsFilePath ?? '').sessions).toEqual([]);
+  });
+
+  it('preserves pinned sessions while syncing current agents file', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    expectOk(gitCheckout(repo, 'feature/test', true));
+    const agentsFilePath = getCurrentAgentsFilePath(repo);
+    writeAgentsFile(agentsFilePath, {
+      version: 1,
+      sessions: [],
+      pinnedSessions: [
+        {
+          provider: AgentSessionProvider.Codex,
+          sessionId: 'codex-1',
+          description: 'Pinned work',
+          pinnedAt: '2026-05-01T10:00:00.000Z',
+        },
+      ],
+    });
+    const codexRoot = createTempDir();
+    copyCodexFixture(codexRoot, repo);
+
+    const result = syncAgentSessions(repo, {
+      branch: 'feature/test',
+      codexSessionsRoot: codexRoot,
+      now: new Date('2026-05-01T15:00:00.000Z'),
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(readAgentsFile(agentsFilePath).pinnedSessions).toHaveLength(1);
   });
 
   it('syncs native Codex sessions into initialized current context', () => {

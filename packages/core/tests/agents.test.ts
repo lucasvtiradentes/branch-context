@@ -9,8 +9,10 @@ import {
   getBranchAgentsFilePathByKey,
   getCurrentAgentsFilePath,
   readAgentsFile,
+  removeAgentSessionPin,
   syncBranch,
   upsertAgentSession,
+  upsertAgentSessionPin,
   writeAgentsFile,
 } from '../src/index';
 import { createWorkspace } from './helpers';
@@ -34,7 +36,7 @@ function createSession(overrides: Partial<ReturnType<typeof createAgentSession>>
 
 describe('agents file', () => {
   it('creates empty agents file data', () => {
-    expect(createEmptyAgentsFile()).toEqual({ version: 1, sessions: [] });
+    expect(createEmptyAgentsFile()).toEqual({ version: 1, sessions: [], pinnedSessions: [] });
   });
 
   it('reads empty data when file is missing', () => {
@@ -52,9 +54,17 @@ describe('agents file', () => {
   it('writes agents file', () => {
     const workspace = createWorkspace();
     const path = join(workspace, 'nested', 'agents.json');
-    writeAgentsFile(path, { version: 1, sessions: [createSession()] });
+    writeAgentsFile(path, { version: 1, sessions: [createSession()], pinnedSessions: [] });
     expect(existsSync(path)).toBe(true);
     expect(JSON.parse(readFileSync(path, 'utf8')).sessions).toHaveLength(1);
+  });
+
+  it('reads legacy agents file without pinned sessions', () => {
+    const workspace = createWorkspace();
+    const path = join(workspace, 'agents.json');
+    writeFileSync(path, `${JSON.stringify({ version: 1, sessions: [createSession()] })}\n`);
+
+    expect(readAgentsFile(path).pinnedSessions).toEqual([]);
   });
 
   it('upserts sessions by provider and id', () => {
@@ -91,6 +101,37 @@ describe('agents file', () => {
     );
 
     expect(updated.sessions.map((session) => session.sessionId)).toEqual(['new', 'old']);
+  });
+
+  it('upserts and removes pinned sessions', () => {
+    const workspace = createWorkspace();
+    const path = join(workspace, 'agents.json');
+
+    upsertAgentSession(path, createSession());
+    upsertAgentSessionPin(path, {
+      provider: AgentSessionProvider.Codex,
+      sessionId: 'codex-1',
+      description: 'Old label',
+      pinnedAt: '2026-05-01T10:00:00.000Z',
+    });
+    const pinned = upsertAgentSessionPin(path, {
+      provider: AgentSessionProvider.Codex,
+      sessionId: 'codex-1',
+      description: 'New label',
+      pinnedAt: '2026-05-01T11:00:00.000Z',
+    });
+
+    expect(pinned.pinnedSessions).toEqual([
+      {
+        provider: AgentSessionProvider.Codex,
+        sessionId: 'codex-1',
+        description: 'New label',
+        pinnedAt: '2026-05-01T11:00:00.000Z',
+      },
+    ]);
+    expect(
+      removeAgentSessionPin(path, AgentSessionProvider.Codex, 'codex-1').pinnedSessions,
+    ).toEqual([]);
   });
 
   it('resolves current and branch-local paths', () => {

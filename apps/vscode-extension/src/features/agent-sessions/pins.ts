@@ -1,24 +1,39 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { type AgentSession, AgentSessionProvider, DEFAULT_SYMLINK } from '@branch-context/core';
+import { existsSync, readFileSync, unlinkSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import {
+  type AgentSession,
+  type AgentSessionPin,
+  getCurrentAgentsFilePath,
+  isAgentSessionPin,
+  readAgentsFile,
+  removeAgentSessionPin as removeCoreAgentSessionPin,
+  upsertAgentSessionPin as upsertCoreAgentSessionPin,
+  writeAgentsFile,
+} from '@branch-context/core';
 import { branchContextState } from '../../vscode/state';
 
-const pinsFileName = 'agent-session-pins.json';
+const legacyPinsFileName = 'agent-session-pins.json';
 
-export type AgentSessionPin = {
-  provider: AgentSession['provider'];
-  sessionId: string;
-  description: string;
-  pinnedAt: string;
-};
-
-type AgentSessionPinsFile = {
-  version: 1;
-  pins: AgentSessionPin[];
-};
+export type { AgentSessionPin };
 
 export function readAgentSessionPins(): AgentSessionPin[] {
-  return readAgentSessionPinsFile(getAgentSessionPinsFilePath()).pins;
+  const path = getAgentsFilePath();
+  if (!path) {
+    return [];
+  }
+
+  const agentsFile = readAgentsFile(path);
+  const legacyPins = readLegacyAgentSessionPins(path);
+  if (legacyPins.length === 0) {
+    return agentsFile.pinnedSessions;
+  }
+
+  writeAgentsFile(path, {
+    ...agentsFile,
+    pinnedSessions: [...legacyPins, ...agentsFile.pinnedSessions],
+  });
+  removeLegacyAgentSessionPins(path);
+  return readAgentsFile(path).pinnedSessions;
 }
 
 export function upsertAgentSessionPin(
@@ -26,64 +41,57 @@ export function upsertAgentSessionPin(
   sessionId: string,
   description: string,
 ): void {
-  const path = getAgentSessionPinsFilePath();
+  const path = getAgentsFilePath();
   if (!path) {
     return;
   }
 
-  const file = readAgentSessionPinsFile(path);
-  const pins = file.pins.filter((pin) => pin.provider !== provider || pin.sessionId !== sessionId);
-  pins.unshift({
+  upsertCoreAgentSessionPin(path, {
     provider,
     sessionId,
     description,
-    pinnedAt: new Date().toISOString(),
   });
-  writeFileSync(path, `${JSON.stringify({ version: 1, pins }, null, 2)}\n`);
 }
 
 export function removeAgentSessionPin(provider: AgentSession['provider'], sessionId: string): void {
-  const path = getAgentSessionPinsFilePath();
+  const path = getAgentsFilePath();
   if (!path) {
     return;
   }
 
-  const file = readAgentSessionPinsFile(path);
-  const pins = file.pins.filter((pin) => pin.provider !== provider || pin.sessionId !== sessionId);
-  writeFileSync(path, `${JSON.stringify({ version: 1, pins }, null, 2)}\n`);
+  removeCoreAgentSessionPin(path, provider, sessionId);
 }
 
-function getAgentSessionPinsFilePath(): string | null {
+function getAgentsFilePath(): string | null {
   const workspaceRoot = branchContextState.get().workspaceRoot;
-  return workspaceRoot ? join(workspaceRoot, DEFAULT_SYMLINK, pinsFileName) : null;
+  return workspaceRoot ? getCurrentAgentsFilePath(workspaceRoot) : null;
 }
 
-function readAgentSessionPinsFile(path: string | null): AgentSessionPinsFile {
-  if (!path || !existsSync(path)) {
-    return { version: 1, pins: [] };
+function readLegacyAgentSessionPins(agentsFilePath: string): AgentSessionPin[] {
+  const path = getLegacyAgentSessionPinsFilePath(agentsFilePath);
+  if (!existsSync(path)) {
+    return [];
   }
 
   try {
-    const parsed = JSON.parse(readFileSync(path, 'utf8')) as Partial<AgentSessionPinsFile>;
-    return {
-      version: 1,
-      pins: Array.isArray(parsed.pins) ? parsed.pins.filter(isAgentSessionPin) : [],
-    };
+    const parsed = JSON.parse(readFileSync(path, 'utf8')) as { pins?: unknown };
+    return Array.isArray(parsed.pins) ? parsed.pins.filter(isAgentSessionPin) : [];
   } catch {
-    return { version: 1, pins: [] };
+    return [];
   }
 }
 
-function isAgentSessionPin(value: unknown): value is AgentSessionPin {
-  if (!value || typeof value !== 'object') {
-    return false;
+function removeLegacyAgentSessionPins(agentsFilePath: string): void {
+  const path = getLegacyAgentSessionPinsFilePath(agentsFilePath);
+  if (!existsSync(path)) {
+    return;
   }
 
-  const pin = value as Partial<AgentSessionPin>;
-  return (
-    (pin.provider === AgentSessionProvider.Claude || pin.provider === AgentSessionProvider.Codex) &&
-    typeof pin.sessionId === 'string' &&
-    typeof pin.description === 'string' &&
-    typeof pin.pinnedAt === 'string'
-  );
+  try {
+    unlinkSync(path);
+  } catch {}
+}
+
+function getLegacyAgentSessionPinsFilePath(agentsFilePath: string) {
+  return join(dirname(agentsFilePath), legacyPinsFileName);
 }

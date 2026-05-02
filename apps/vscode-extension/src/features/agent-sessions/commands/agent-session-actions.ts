@@ -1,22 +1,16 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { AGENTS_FILE_NAME, AgentSessionProvider, DEFAULT_SYMLINK } from '@branch-context/core';
+import { existsSync } from 'node:fs';
+import {
+  type AgentSessionProvider,
+  getCurrentAgentsFilePath,
+  readAgentsFile,
+  writeAgentsFile,
+} from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../../../constants';
 import { formatError } from '../../../shared/format/error';
 import type { BranchContextTreeNodeDraft } from '../../../shared/tree-items';
 import { branchContextState } from '../../../vscode/state';
 import { removeAgentSessionPin, upsertAgentSessionPin } from '../pins';
-
-type CachedAgentSession = {
-  provider: AgentSessionProvider;
-  sessionId: string;
-};
-
-type CachedAgentsFile = {
-  version: 1;
-  sessions: CachedAgentSession[];
-};
 
 export function registerAgentSessionActionCommands(): vscode.Disposable[] {
   return [
@@ -119,40 +113,14 @@ function removeCachedAgentSession(provider: AgentSessionProvider, sessionId: str
     return;
   }
 
-  const agentsFilePath = join(state.workspaceRoot, DEFAULT_SYMLINK, AGENTS_FILE_NAME);
-  const agentsFile = readCachedAgentsFile(agentsFilePath);
+  const agentsFilePath = getCurrentAgentsFilePath(state.workspaceRoot);
+  const agentsFile = readAgentsFile(agentsFilePath);
   const sessions = agentsFile.sessions.filter(
     (session) => session.provider !== provider || session.sessionId !== sessionId,
   );
-
-  writeFileSync(agentsFilePath, `${JSON.stringify({ ...agentsFile, sessions }, null, 2)}\n`);
-}
-
-function readCachedAgentsFile(path: string): CachedAgentsFile {
-  if (!existsSync(path)) {
-    return { version: 1, sessions: [] };
-  }
-
-  try {
-    const parsed = JSON.parse(readFileSync(path, 'utf8')) as Partial<CachedAgentsFile>;
-    return {
-      version: 1,
-      sessions: Array.isArray(parsed.sessions) ? parsed.sessions.filter(isCachedAgentSession) : [],
-    };
-  } catch {
-    return { version: 1, sessions: [] };
-  }
-}
-
-function isCachedAgentSession(value: unknown): value is CachedAgentSession {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const session = value as Partial<CachedAgentSession>;
-  return (
-    (session.provider === AgentSessionProvider.Claude ||
-      session.provider === AgentSessionProvider.Codex) &&
-    typeof session.sessionId === 'string'
+  const pinnedSessions = agentsFile.pinnedSessions.filter(
+    (pin) => pin.provider !== provider || pin.sessionId !== sessionId,
   );
+
+  writeAgentsFile(agentsFilePath, { ...agentsFile, sessions, pinnedSessions });
 }
