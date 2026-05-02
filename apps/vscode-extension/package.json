@@ -6,6 +6,7 @@
   "private": true,
   "publisher": "lucasvtiradentes",
   "license": "MIT",
+  "icon": "resources/icon-colored.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/lucasvtiradentes/branch-context.git",
@@ -53,7 +54,7 @@
         {
           "id": "branch-context",
           "title": "Branch Context",
-          "icon": "resources/branch-context.svg"
+          "icon": "resources/icon.svg"
         }
       ]
     },
@@ -62,27 +63,27 @@
         {
           "id": "branch-context.currentContext",
           "name": "Branch Context",
-          "icon": "resources/branch-context.svg"
+          "icon": "resources/icon.svg"
         },
         {
           "id": "branch-context.agentSessions",
           "name": "Branch AI Sessions",
-          "icon": "resources/branch-context.svg"
+          "icon": "resources/icon.svg"
         },
         {
           "id": "branch-context.gitChanges",
           "name": "Branch Git Changes",
-          "icon": "resources/branch-context.svg"
+          "icon": "resources/icon.svg"
         },
         {
           "id": "branch-context.contexts",
           "name": "Other Branches",
-          "icon": "resources/branch-context.svg"
+          "icon": "resources/icon.svg"
         },
         {
           "id": "branch-context.templates",
           "name": "Templates",
-          "icon": "resources/branch-context.svg"
+          "icon": "resources/icon.svg"
         }
       ]
     },

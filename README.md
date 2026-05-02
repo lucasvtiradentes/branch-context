@@ -1,6 +1,7 @@
 <a name="TOC"></a>
 
 <div align="center">
+  <img height="80" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/apps/vscode-extension/resources/icon-colored.png" alt="branch-context logo">
   <div>Branch Context</div>
   <br />
   <a href="#-overview">Overview</a> • <a href="#-features">Features</a> • <a href="#-packages">Packages</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-commands">Commands</a> • <a href="#-configuration">Configuration</a> • <a href="#-development">Development</a> • <a href="#-license">License</a>
