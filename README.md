@@ -11,19 +11,19 @@
   <img src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/divider.png" />
 </div>
 
-## 🎯 Overview<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/up_arrow.png" width="22"></a>
+## 🎯 Overview
 
 Branch Context is a Git branch context manager. It keeps notes, metadata, templates, git summaries, and AI session references isolated per branch through `.bctx/` and the current `_branch/context.md` symlink.
 
 Use it to keep AI agents and developers aligned with the current branch intent, touched files, commits, tasks, and follow-up notes.
 
-## ❓ Motivation<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/up_arrow.png" width="22"></a>
+## ❓ Motivation
 
 Switching branches usually means losing context: why the work started, what was decided, which files matter, and where the AI session left off. Notes in scratch files leak across branches, and `git log` only tells you what was committed — not what you intended.
 
 Branch Context pins that context to the branch itself. Each branch gets its own `context.md`, automatically created on checkout and kept in sync with commits and changed files, so both you and your AI agents resume work with the full picture.
 
-## ⭐ Features<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/up_arrow.png" width="22"></a>
+## ⭐ Features
 
 - Per-branch context folders under `.bctx/branches`
 - `_branch/` symlink pointing to the active branch context
@@ -38,7 +38,7 @@ Branch Context pins that context to the branch itself. Each branch gets its own 
   <a href="https://open-vsx.org/extension/lucasvtiradentes/branch-context-vscode"><img src="https://img.shields.io/open-vsx/v/lucasvtiradentes/branch-context-vscode?label=Open%20VSX&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2aWV3Qm94PSI0LjYgNSA5Ni4yIDEyMi43IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoIGQ9Ik0zMCA0NC4yTDUyLjYgNUg3LjN6TTQuNiA4OC41aDQ1LjNMMjcuMiA0OS40em01MSAwbDIyLjYgMzkuMiAyMi42LTM5LjJ6IiBmaWxsPSIjYzE2MGVmIi8+CiAgPHBhdGggZD0iTTUyLjYgNUwzMCA0NC4yaDQ1LjJ6TTI3LjIgNDkuNGwyMi43IDM5LjEgMjIuNi0zOS4xem01MSAwTDU1LjYgODguNWg0NS4yeiIgZmlsbD0iI2E2MGVlNSIvPgo8L3N2Zz4=&labelColor=a60ee5&color=374151" alt="Open VSX"></a>
 </div>
 
-## 📦 Packages<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/up_arrow.png" width="22"></a>
+## 📦 Packages
 
 <table>
   <tr>
@@ -59,7 +59,7 @@ Branch Context pins that context to the branch itself. Each branch gets its own 
   </tr>
 </table>
 
-## 🚀 Quick Start<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/up_arrow.png" width="22"></a>
+## 🚀 Quick Start
 
 ```sh
 pnpm install
@@ -74,7 +74,7 @@ After `init`, the repo gets `.bctx/` configuration and Git hooks. The current br
 _branch/context.md
 ```
 
-## 🧰 Commands<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/up_arrow.png" width="22"></a>
+## 🧰 Commands
 
 ```sh
 bctx init
@@ -89,7 +89,7 @@ bctx prune
 bctx uninstall
 ```
 
-## ⚙️ Configuration<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/up_arrow.png" width="22"></a>
+## ⚙️ Configuration
 
 Default config lives in `.bctx/config.json`:
 
@@ -110,7 +110,7 @@ Default config lives in `.bctx/config.json`:
 
 Templates are stored in `.bctx/templates` after init and are sourced from `packages/core/resources/templates`.
 
-## 🛠️ Development<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/up_arrow.png" width="22"></a>
+## 🛠️ Development
 
 ```sh
 pnpm install
@@ -128,7 +128,7 @@ pnpm --filter branch-context-vscode build
 pnpm --filter @branch-context/core test
 ```
 
-## 📜 License<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/up_arrow.png" width="22"></a>
+## 📜 License
 
 MIT
 
