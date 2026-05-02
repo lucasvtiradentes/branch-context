@@ -45,6 +45,16 @@ const SOUND_COMMANDS = {
   [Platform.Linux]: 'paplay',
   [Platform.Windows]: 'powershell',
 } as const;
+const soundPlayers: Partial<
+  Record<NodeJS.Platform, (file: string) => { command: string; args: string[] }>
+> = {
+  [Platform.Darwin]: (file: string) => ({ command: SOUND_COMMANDS[Platform.Darwin], args: [file] }),
+  [Platform.Linux]: (file: string) => ({ command: SOUND_COMMANDS[Platform.Linux], args: [file] }),
+  [Platform.Windows]: (file: string) => ({
+    command: SOUND_COMMANDS[Platform.Windows],
+    args: ['-c', `(New-Object Media.SoundPlayer '${file}').Play()`],
+  }),
+};
 
 export enum CreateBranchContextResult {
   Exists = 'exists',
@@ -83,15 +93,10 @@ export function playSound(soundFile?: string | null) {
     } catch {}
   };
 
-  if (process.platform === Platform.Darwin) {
-    spawnSilent(SOUND_COMMANDS[Platform.Darwin], [file]);
-  } else if (process.platform === Platform.Linux) {
-    spawnSilent(SOUND_COMMANDS[Platform.Linux], [file]);
-  } else if (process.platform === Platform.Windows) {
-    spawnSilent(SOUND_COMMANDS[Platform.Windows], [
-      '-c',
-      `(New-Object Media.SoundPlayer '${file}').Play()`,
-    ]);
+  const player = soundPlayers[process.platform];
+  if (player) {
+    const { command, args } = player(file);
+    spawnSilent(command, args);
   }
 }
 

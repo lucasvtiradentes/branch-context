@@ -7,6 +7,24 @@ import {
 import type { Program } from '@caporal/core';
 import { requireGitRoot } from '../helpers/git-root';
 
+const baseErrorMessages = {
+  [BranchContextActionErrorReason.NotInitialized]: () =>
+    `error: not initialized. Run '${CLI_NAME} init' first`,
+  [BranchContextActionErrorReason.NoCurrentBranch]: () =>
+    'error: could not determine current branch',
+  [BranchContextActionErrorReason.MissingContext]: (result: { branch?: string }) =>
+    `error: no context for '${result.branch}'. Run '${CLI_NAME} sync' first`,
+  [BranchContextActionErrorReason.BaseBranchNotFound]: (result: { message: string }) =>
+    `error: ${result.message}`,
+  [BranchContextActionErrorReason.NoTemplates]: (result: { message: string }) =>
+    `error: ${result.message}`,
+  [BranchContextActionErrorReason.TemplateNotFound]: (result: { message: string }) =>
+    `error: ${result.message}`,
+} as const satisfies Record<
+  BranchContextActionErrorReason,
+  (result: { message: string; branch?: string }) => string
+>;
+
 export function registerBaseCommand(program: Program) {
   program
     .command('base', 'Show or set base branch')
@@ -48,14 +66,6 @@ function renderBaseError(result: {
   message: string;
   branch?: string;
 }) {
-  if (result.reason === BranchContextActionErrorReason.NotInitialized) {
-    console.log(`error: not initialized. Run '${CLI_NAME} init' first`);
-  } else if (result.reason === BranchContextActionErrorReason.NoCurrentBranch) {
-    console.log('error: could not determine current branch');
-  } else if (result.reason === BranchContextActionErrorReason.MissingContext) {
-    console.log(`error: no context for '${result.branch}'. Run '${CLI_NAME} sync' first`);
-  } else {
-    console.log(`error: ${result.message}`);
-  }
+  console.log(baseErrorMessages[result.reason](result));
   return 1;
 }

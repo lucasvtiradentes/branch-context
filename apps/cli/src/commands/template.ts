@@ -11,6 +11,15 @@ import type { Program } from '@caporal/core';
 import { requireGitRoot } from '../helpers/git-root';
 
 const CANCEL_TEMPLATE_SELECTION_INPUTS = new Set(['c', 'cancel']);
+const templateErrorMessages = {
+  [BranchContextActionErrorReason.NotInitialized]: (message: string) => `error: ${message}`,
+  [BranchContextActionErrorReason.NoCurrentBranch]: () =>
+    'error: could not determine current branch',
+  [BranchContextActionErrorReason.MissingContext]: (message: string) => `error: ${message}`,
+  [BranchContextActionErrorReason.BaseBranchNotFound]: (message: string) => `error: ${message}`,
+  [BranchContextActionErrorReason.NoTemplates]: (message: string) => `error: ${message}`,
+  [BranchContextActionErrorReason.TemplateNotFound]: () => 'error: template not found',
+} as const satisfies Record<BranchContextActionErrorReason, (message: string) => string>;
 
 export function registerTemplateCommand(program: Program) {
   program
@@ -95,13 +104,7 @@ async function cmdTemplate(args: string[]) {
 
   const result = applyTemplateToCurrentBranch(gitRoot, template);
   if (!result.ok) {
-    if (result.reason === BranchContextActionErrorReason.NoCurrentBranch) {
-      console.log('error: could not determine current branch');
-    } else if (result.reason === BranchContextActionErrorReason.TemplateNotFound) {
-      console.log('error: template not found');
-    } else {
-      console.log(`error: ${result.message}`);
-    }
+    console.log(templateErrorMessages[result.reason](result.message));
     return 1;
   }
 

@@ -124,6 +124,19 @@ enum StatusBarState {
   Error = 'error',
 }
 
+const statusIcons = {
+  [StatusBarState.Synced]: '$(check)',
+  [StatusBarState.NotSynced]: '$(warning)',
+  [StatusBarState.Warning]: '$(warning)',
+  [StatusBarState.Error]: '$(error)',
+} as const satisfies Record<StatusBarState, string>;
+const statusLabels = {
+  [StatusBarState.Synced]: StatusBarState.Synced,
+  [StatusBarState.NotSynced]: 'not synced',
+  [StatusBarState.Warning]: StatusBarState.Warning,
+  [StatusBarState.Error]: StatusBarState.Error,
+} as const satisfies Record<StatusBarState, string>;
+
 function getStatusBarState(state: BranchContextExtensionState): StatusBarState {
   if (!state.initialized) {
     return StatusBarState.Error;
@@ -149,15 +162,7 @@ function getStatusText(status: StatusBarState): string {
 }
 
 function getStatusIcon(status: StatusBarState): string {
-  if (status === StatusBarState.Error) {
-    return '$(error)';
-  }
-
-  if (status === StatusBarState.Warning || status === StatusBarState.NotSynced) {
-    return '$(warning)';
-  }
-
-  return '$(check)';
+  return statusIcons[status];
 }
 
 function getAccessibilityLabel(state: BranchContextExtensionState): string {
@@ -165,11 +170,7 @@ function getAccessibilityLabel(state: BranchContextExtensionState): string {
 }
 
 function getStatusLabel(status: StatusBarState): string {
-  if (status === StatusBarState.NotSynced) {
-    return 'not synced';
-  }
-
-  return status;
+  return statusLabels[status];
 }
 
 function getTooltip(state: BranchContextExtensionState): vscode.MarkdownString {

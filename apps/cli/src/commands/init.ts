@@ -21,6 +21,15 @@ import {
 import type { Program } from '@caporal/core';
 import { requireGitRoot } from '../helpers/git-root';
 
+const hookInstallMessages = {
+  [HookInstallResult.Installed]: (hookName: string) => `Hook installed: ${hookName}`,
+  [HookInstallResult.Updated]: (hookName: string) => `Hook updated: ${hookName}`,
+  [HookInstallResult.Appended]: (hookName: string) => `Hook appended: ${hookName}`,
+  [HookInstallResult.HookExists]: (hookName: string) =>
+    `warning: ${hookName} hook exists but not managed by ${CLI_NAME}`,
+  [HookInstallResult.AlreadyInstalled]: () => null,
+} as const satisfies Record<HookInstallResult, (hookName: string) => string | null>;
+
 export function registerInitCommand(program: Program) {
   program.command('init', 'Initialize and install hook').action(() => cmdInit([]));
 }
@@ -49,30 +58,13 @@ async function cmdInit(_args: string[]) {
   }
 
   const checkoutResult = await installHook(gitRoot, HookType.PostCheckout);
-  if (checkoutResult === HookInstallResult.Installed) {
-    console.log(`Hook installed: ${HOOK_POST_CHECKOUT}`);
-  } else if (checkoutResult === HookInstallResult.Updated) {
-    console.log(`Hook updated: ${HOOK_POST_CHECKOUT}`);
-  } else if (checkoutResult === HookInstallResult.Appended) {
-    console.log(`Hook appended: ${HOOK_POST_CHECKOUT}`);
-  } else if (checkoutResult === HookInstallResult.AlreadyInstalled) {
-    if (alreadyInitialized) {
-      console.log('Already initialized');
-    }
-  } else if (checkoutResult === HookInstallResult.HookExists) {
-    console.log(`warning: ${HOOK_POST_CHECKOUT} hook exists but not managed by ${CLI_NAME}`);
+  printHookInstallResult(checkoutResult, HOOK_POST_CHECKOUT);
+  if (checkoutResult === HookInstallResult.AlreadyInstalled && alreadyInitialized) {
+    console.log('Already initialized');
   }
 
   const commitResult = await installHook(gitRoot, HookType.PostCommit);
-  if (commitResult === HookInstallResult.Installed) {
-    console.log(`Hook installed: ${HOOK_POST_COMMIT}`);
-  } else if (commitResult === HookInstallResult.Updated) {
-    console.log(`Hook updated: ${HOOK_POST_COMMIT}`);
-  } else if (commitResult === HookInstallResult.Appended) {
-    console.log(`Hook appended: ${HOOK_POST_COMMIT}`);
-  } else if (commitResult === HookInstallResult.HookExists) {
-    console.log(`warning: ${HOOK_POST_COMMIT} hook exists but not managed by ${CLI_NAME}`);
-  }
+  printHookInstallResult(commitResult, HOOK_POST_COMMIT);
 
   addToGitignore(gitRoot, DEFAULT_SYMLINK);
   addToGitignore(gitRoot, '.bctx/branches/');
@@ -84,4 +76,11 @@ async function cmdInit(_args: string[]) {
   }
 
   return 0;
+}
+
+function printHookInstallResult(result: HookInstallResult, hookName: string) {
+  const message = hookInstallMessages[result](hookName);
+  if (message) {
+    console.log(message);
+  }
 }

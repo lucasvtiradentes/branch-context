@@ -6,6 +6,22 @@ import * as vscode from 'vscode';
 import { APP_NAME } from '../constants';
 import { type BranchContextExtensionState, getBranchContextState } from '../core/state';
 
+const actionErrorMessages = {
+  [BranchContextActionErrorReason.NotInitialized]: () => `${APP_NAME}: no .bctx config found`,
+  [BranchContextActionErrorReason.NoCurrentBranch]: () =>
+    `${APP_NAME}: could not determine current branch`,
+  [BranchContextActionErrorReason.MissingContext]: (error: BranchContextActionError) =>
+    `${APP_NAME}: no context for '${error.branch ?? 'current branch'}'. Run sync first.`,
+  [BranchContextActionErrorReason.BaseBranchNotFound]: (error: BranchContextActionError) =>
+    `${APP_NAME}: base branch not found: ${error.baseBranch ?? 'unknown'}`,
+  [BranchContextActionErrorReason.NoTemplates]: () => `${APP_NAME}: no templates found`,
+  [BranchContextActionErrorReason.TemplateNotFound]: (error: BranchContextActionError) =>
+    `${APP_NAME}: ${error.message}`,
+} as const satisfies Record<
+  BranchContextActionErrorReason,
+  (error: BranchContextActionError) => string
+>;
+
 export async function getInitializedState(): Promise<BranchContextExtensionState | null> {
   const state = getBranchContextState();
   if (!state.workspaceRoot) {
@@ -34,29 +50,5 @@ export async function openExternalFolder(path: string): Promise<void> {
 }
 
 export function formatActionError(error: BranchContextActionError): string {
-  if (error.reason === BranchContextActionErrorReason.NotInitialized) {
-    return `${APP_NAME}: no .bctx config found`;
-  }
-
-  if (error.reason === BranchContextActionErrorReason.NoCurrentBranch) {
-    return `${APP_NAME}: could not determine current branch`;
-  }
-
-  if (error.reason === BranchContextActionErrorReason.MissingContext) {
-    return `${APP_NAME}: no context for '${error.branch ?? 'current branch'}'. Run sync first.`;
-  }
-
-  if (error.reason === BranchContextActionErrorReason.BaseBranchNotFound) {
-    return `${APP_NAME}: base branch not found: ${error.baseBranch ?? 'unknown'}`;
-  }
-
-  if (error.reason === BranchContextActionErrorReason.NoTemplates) {
-    return `${APP_NAME}: no templates found`;
-  }
-
-  if (error.reason === BranchContextActionErrorReason.TemplateNotFound) {
-    return `${APP_NAME}: ${error.message}`;
-  }
-
-  return `${APP_NAME}: ${error.message}`;
+  return actionErrorMessages[error.reason](error);
 }

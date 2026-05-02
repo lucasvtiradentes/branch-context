@@ -36,6 +36,10 @@ export enum HookUninstallResult {
 const customHooksConfirmed = new Map<string, boolean>();
 const excludeConfirmed = new Map<string, boolean>();
 const appendConfirmed = new Map<string, boolean>();
+const hookCallbacks = {
+  [HookType.PostCheckout]: 'on-checkout',
+  [HookType.PostCommit]: 'on-commit',
+} as const satisfies Record<HookType, string>;
 
 export function resetConfirmationState() {
   customHooksConfirmed.clear();
@@ -60,10 +64,7 @@ export function getBranchctxPath() {
 
 export function getCallback(hookType: HookType) {
   const branchctxPath = getBranchctxPath();
-  if (hookType === HookType.PostCheckout) {
-    return `"${branchctxPath}" on-checkout`;
-  }
-  return `"${branchctxPath}" on-commit`;
+  return `"${branchctxPath}" ${hookCallbacks[hookType]}`;
 }
 
 export function getGitRoot(path?: string) {

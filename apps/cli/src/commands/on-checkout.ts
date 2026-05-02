@@ -12,6 +12,12 @@ import {
 import type { Program } from '@caporal/core';
 import { requireGitRoot } from '../helpers/git-root';
 
+const checkoutStatuses: Partial<Record<CreateBranchContextResult, string>> = {
+  [CreateBranchContextResult.RestoredFromArchive]: 'restored',
+  [CreateBranchContextResult.RepairedFromTemplate]: 'repaired',
+  [CreateBranchContextResult.Exists]: 'synced',
+};
+
 export function registerOnCheckoutCommand(program: Program) {
   program
     .command('on-checkout', 'Run post-checkout hook callback', { visible: false })
@@ -48,14 +54,7 @@ function cmdOnCheckout(args: string[]) {
   updateContextTags(gitRoot, contextDir, branchKey, baseBranch);
 
   const createResult = result.create_result;
-  const status =
-    createResult === CreateBranchContextResult.RestoredFromArchive
-      ? 'restored'
-      : createResult === CreateBranchContextResult.RepairedFromTemplate
-        ? 'repaired'
-        : createResult !== CreateBranchContextResult.Exists
-          ? 'new'
-          : 'synced';
+  const status = checkoutStatuses[createResult] ?? 'new';
   console.log(`Branch: ${oldBranch} -> ${newBranch} (${status})`);
   return 0;
 }
