@@ -118,9 +118,6 @@ function removeCachedAgentSession(provider: AgentSessionProvider, sessionId: str
   const sessions = agentsFile.sessions.filter(
     (session) => session.provider !== provider || session.sessionId !== sessionId,
   );
-  const pinnedSessions = agentsFile.pinnedSessions.filter(
-    (pin) => pin.provider !== provider || pin.sessionId !== sessionId,
-  );
 
-  writeAgentsFile(agentsFilePath, { ...agentsFile, sessions, pinnedSessions });
+  writeAgentsFile(agentsFilePath, { ...agentsFile, sessions });
 }

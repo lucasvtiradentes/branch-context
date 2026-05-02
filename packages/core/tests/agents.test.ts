@@ -21,12 +21,9 @@ function createSession(overrides: Partial<ReturnType<typeof createAgentSession>>
   return createAgentSession({
     provider: AgentSessionProvider.Codex,
     sessionId: 'codex-1',
-    repoRoot: '/repo',
     branch: 'feature/test',
-    branchKey: 'feature-test',
     path: '~/.codex/sessions/session.jsonl',
     model: 'gpt-5.5',
-    source: 'cli',
     title: 'First prompt',
     startedAt: '2026-05-01T10:00:00.000Z',
     updatedAt: '2026-05-01T10:00:00.000Z',
@@ -36,7 +33,7 @@ function createSession(overrides: Partial<ReturnType<typeof createAgentSession>>
 
 describe('agents file', () => {
   it('creates empty agents file data', () => {
-    expect(createEmptyAgentsFile()).toEqual({ version: 1, sessions: [], pinnedSessions: [] });
+    expect(createEmptyAgentsFile()).toEqual({ version: 1, sessions: [] });
   });
 
   it('reads empty data when file is missing', () => {
@@ -54,17 +51,37 @@ describe('agents file', () => {
   it('writes agents file', () => {
     const workspace = createWorkspace();
     const path = join(workspace, 'nested', 'agents.json');
-    writeAgentsFile(path, { version: 1, sessions: [createSession()], pinnedSessions: [] });
+    writeAgentsFile(path, { version: 1, sessions: [createSession()] });
     expect(existsSync(path)).toBe(true);
-    expect(JSON.parse(readFileSync(path, 'utf8')).sessions).toHaveLength(1);
+    const sessions = JSON.parse(readFileSync(path, 'utf8')).sessions;
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]).not.toHaveProperty('branch');
+    expect(sessions[0]).not.toHaveProperty('scope');
   });
 
-  it('reads legacy agents file without pinned sessions', () => {
+  it('reads legacy agents file with top-level pinned sessions', () => {
     const workspace = createWorkspace();
     const path = join(workspace, 'agents.json');
-    writeFileSync(path, `${JSON.stringify({ version: 1, sessions: [createSession()] })}\n`);
+    writeFileSync(
+      path,
+      `${JSON.stringify({
+        version: 1,
+        sessions: [createSession()],
+        pinnedSessions: [
+          {
+            provider: AgentSessionProvider.Codex,
+            sessionId: 'codex-1',
+            description: 'Pinned work',
+            pinnedAt: '2026-05-01T10:00:00.000Z',
+          },
+        ],
+      })}\n`,
+    );
 
-    expect(readAgentsFile(path).pinnedSessions).toEqual([]);
+    expect(readAgentsFile(path).sessions[0]?.pinned).toEqual({
+      description: 'Pinned work',
+      pinnedAt: '2026-05-01T10:00:00.000Z',
+    });
   });
 
   it('upserts sessions by provider and id', () => {
@@ -121,17 +138,13 @@ describe('agents file', () => {
       pinnedAt: '2026-05-01T11:00:00.000Z',
     });
 
-    expect(pinned.pinnedSessions).toEqual([
-      {
-        provider: AgentSessionProvider.Codex,
-        sessionId: 'codex-1',
-        description: 'New label',
-        pinnedAt: '2026-05-01T11:00:00.000Z',
-      },
-    ]);
+    expect(pinned.sessions[0]?.pinned).toEqual({
+      description: 'New label',
+      pinnedAt: '2026-05-01T11:00:00.000Z',
+    });
     expect(
-      removeAgentSessionPin(path, AgentSessionProvider.Codex, 'codex-1').pinnedSessions,
-    ).toEqual([]);
+      removeAgentSessionPin(path, AgentSessionProvider.Codex, 'codex-1').sessions[0]?.pinned,
+    ).toBeNull();
   });
 
   it('resolves current and branch-local paths', () => {
@@ -148,9 +161,7 @@ describe('agents file', () => {
     );
   });
 
-  it('derives branch key when omitted', () => {
-    expect(createSession({ branchKey: '', branch: 'feature/with spaces' }).branchKey).toBe(
-      'feature-with-spaces',
-    );
+  it('defaults branch scope when omitted', () => {
+    expect(createSession().scope).toBe('branch');
   });
 });

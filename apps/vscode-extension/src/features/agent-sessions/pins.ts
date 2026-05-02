@@ -3,12 +3,12 @@ import { dirname, join } from 'node:path';
 import {
   type AgentSession,
   type AgentSessionPin,
+  getAgentSessionPins,
   getCurrentAgentsFilePath,
   isAgentSessionPin,
   readAgentsFile,
   removeAgentSessionPin as removeCoreAgentSessionPin,
   upsertAgentSessionPin as upsertCoreAgentSessionPin,
-  writeAgentsFile,
 } from '@branch-context/core';
 import { branchContextState } from '../../vscode/state';
 
@@ -25,15 +25,15 @@ export function readAgentSessionPins(): AgentSessionPin[] {
   const agentsFile = readAgentsFile(path);
   const legacyPins = readLegacyAgentSessionPins(path);
   if (legacyPins.length === 0) {
-    return agentsFile.pinnedSessions;
+    return getAgentSessionPins(agentsFile);
   }
 
-  writeAgentsFile(path, {
-    ...agentsFile,
-    pinnedSessions: [...legacyPins, ...agentsFile.pinnedSessions],
-  });
+  let nextAgentsFile = agentsFile;
+  for (const pin of legacyPins) {
+    nextAgentsFile = upsertCoreAgentSessionPin(path, pin);
+  }
   removeLegacyAgentSessionPins(path);
-  return readAgentsFile(path).pinnedSessions;
+  return getAgentSessionPins(nextAgentsFile);
 }
 
 export function upsertAgentSessionPin(

@@ -550,7 +550,6 @@ function createAgentTooltip(item: AgentSessionViewItem) {
       markdownTooltipLine('provider', formatProviderName(session.provider)),
       markdownTooltipLine('session', getShortSessionId(session.sessionId)),
       markdownTooltipLine('branch', session.branch),
-      markdownTooltipLine('scope', session.scope),
       markdownTooltipLine('model', session.model ?? 'unknown'),
       markdownTooltipLine('updated', formatRelativeTime(session.updatedAt ?? session.startedAt)),
       markdownTooltipLine('size', formatBytes(item.sizeBytes)),

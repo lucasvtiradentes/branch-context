@@ -115,13 +115,19 @@ describe('agent session service', () => {
     const agentsFilePath = getCurrentAgentsFilePath(repo);
     writeAgentsFile(agentsFilePath, {
       version: 1,
-      sessions: [],
-      pinnedSessions: [
+      sessions: [
         {
           provider: AgentSessionProvider.Codex,
           sessionId: 'codex-1',
-          description: 'Pinned work',
-          pinnedAt: '2026-05-01T10:00:00.000Z',
+          path: null,
+          model: null,
+          title: null,
+          startedAt: null,
+          updatedAt: '2026-05-01T10:00:00.000Z',
+          pinned: {
+            description: 'Pinned work',
+            pinnedAt: '2026-05-01T10:00:00.000Z',
+          },
         },
       ],
     });
@@ -138,7 +144,10 @@ describe('agent session service', () => {
     if (!result.ok) {
       return;
     }
-    expect(readAgentsFile(agentsFilePath).pinnedSessions).toHaveLength(1);
+    expect(readAgentsFile(agentsFilePath).sessions[0]?.pinned).toEqual({
+      description: 'Pinned work',
+      pinnedAt: '2026-05-01T10:00:00.000Z',
+    });
   });
 
   it('gets cached agent sessions without scanning provider files', () => {
@@ -151,12 +160,9 @@ describe('agent session service', () => {
         createAgentSession({
           provider: AgentSessionProvider.Codex,
           sessionId: 'codex-current',
-          repoRoot: repo,
           branch: 'feature/test',
-          branchKey: 'feature-test',
           path: null,
           model: null,
-          source: null,
           title: null,
           startedAt: null,
           updatedAt: '2026-05-01T10:00:00.000Z',
@@ -164,12 +170,9 @@ describe('agent session service', () => {
         createAgentSession({
           provider: AgentSessionProvider.Claude,
           sessionId: 'claude-other',
-          repoRoot: repo,
           branch: 'feature/other',
-          branchKey: 'feature-other',
           path: null,
           model: null,
-          source: null,
           title: null,
           startedAt: null,
           updatedAt: '2026-05-01T11:00:00.000Z',
@@ -177,19 +180,15 @@ describe('agent session service', () => {
         createAgentSession({
           provider: AgentSessionProvider.Codex,
           sessionId: 'codex-repo',
-          repoRoot: repo,
           branch: '',
-          branchKey: '',
           scope: AgentSessionScope.Repo,
           path: null,
           model: null,
-          source: null,
           title: null,
           startedAt: null,
           updatedAt: '2026-05-01T12:00:00.000Z',
         }),
       ],
-      pinnedSessions: [],
     });
 
     const result = getCachedAgentSessions(repo, { branch: 'feature/test' });
@@ -200,6 +199,7 @@ describe('agent session service', () => {
     }
     expect(result.sessions.map((session) => session.sessionId)).toEqual([
       'codex-repo',
+      'claude-other',
       'codex-current',
     ]);
   });

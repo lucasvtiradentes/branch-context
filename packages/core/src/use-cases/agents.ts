@@ -19,6 +19,7 @@ import {
   getCurrentAgentsFilePath,
   normalizeAgentsFile,
   readAgentsFile,
+  type StoredAgentSession,
   writeAgentsFile,
 } from '../data/agents';
 import { configExists } from '../data/config';
@@ -139,7 +140,11 @@ export function getAgentSessions(
 
   const branchKey = sanitizeBranchName(branch);
   const agentsFilePath = getExistingAgentsFilePath(repoRoot);
-  const cachedSessions = agentsFilePath ? readAgentsFile(agentsFilePath).sessions : [];
+  const cachedSessions = agentsFilePath
+    ? readAgentsFile(agentsFilePath).sessions.map((session) =>
+        storedSessionToAgentSession(session, branch),
+      )
+    : [];
   const scannedSessions = scanAgentSessions({ ...options, repoRoot, branch });
   const sessions = mergeSessions(cachedSessions, scannedSessions)
     .filter((session) => session.scope === AgentSessionScope.Repo || session.branch === branch)
@@ -173,9 +178,7 @@ export function getCachedAgentSessions(
   const agentsFilePath = getExistingAgentsFilePath(repoRoot);
   const sessions = agentsFilePath
     ? readAgentsFile(agentsFilePath)
-        .sessions.filter(
-          (session) => session.scope === AgentSessionScope.Repo || session.branch === branch,
-        )
+        .sessions.map((session) => storedSessionToAgentSession(session, branch))
         .sort(compareSessions)
     : [];
 
@@ -253,13 +256,10 @@ export function scanClaudeSessions(options: AgentSessionScanOptions): AgentSessi
       createAgentSession({
         provider: AgentSessionProvider.Claude,
         sessionId: session.sessionId,
-        repoRoot: options.repoRoot,
         branch: session.branch,
-        branchKey: sanitizeBranchName(session.branch),
         scope: AgentSessionScope.Branch,
         path: file,
         model: session.model,
-        source: null,
         title: session.title,
         startedAt: session.startedAt,
         updatedAt: session.updatedAt,
@@ -399,22 +399,14 @@ function codexSessionToAgent(
 
   const exactBranch = session.branch;
   const branch = exactBranch ?? options.branch ?? '';
-  const branchKey = exactBranch
-    ? sanitizeBranchName(exactBranch)
-    : options.branch
-      ? sanitizeBranchName(options.branch)
-      : '';
 
   return createAgentSession({
     provider: AgentSessionProvider.Codex,
     sessionId: session.sessionId,
-    repoRoot: options.repoRoot,
     branch,
-    branchKey,
     scope: exactBranch ? AgentSessionScope.Branch : AgentSessionScope.Repo,
     path: file,
     model: session.model,
-    source: session.source,
     title: session.title,
     startedAt: session.startedAt,
     updatedAt: session.updatedAt,
@@ -449,12 +441,22 @@ function getExistingAgentsFilePath(repoRoot: string) {
 function mergeSessions(...groups: AgentSession[][]) {
   const sessions = new Map<string, AgentSession>();
   for (const session of groups.flat()) {
+    const existing = sessions.get(`${session.provider}:${session.sessionId}`);
     sessions.set(`${session.provider}:${session.sessionId}`, {
-      ...sessions.get(`${session.provider}:${session.sessionId}`),
+      ...existing,
       ...session,
+      pinned: session.pinned ?? existing?.pinned ?? null,
     });
   }
   return Array.from(sessions.values());
+}
+
+function storedSessionToAgentSession(session: StoredAgentSession, branch: string) {
+  return createAgentSession({
+    ...session,
+    branch,
+    scope: AgentSessionScope.Branch,
+  });
 }
 
 function agentsFilesEqual(
