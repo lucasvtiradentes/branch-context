@@ -1,6 +1,7 @@
 ---
 "@branch-context/cli": patch
 "@branch-context/core": patch
+"branch-context-vscode": patch
 ---
 
-Enable npm publishing for the CLI and core packages.
+Publish initial version.
