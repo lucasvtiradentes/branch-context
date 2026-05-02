@@ -72,7 +72,7 @@ I was tired of re-briefing Codex and Claude Code about the same branch on every 
 
    This sets up `.bctx/` and Git hooks. `_branch/context.md` now points at the active branch's context and stays in sync on checkout and commit.
 
-3. (Optional) Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode) for a richer view: branch contexts, git changes, templates, and AI sessions in the sidebar.
+3. (Optional) Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode) for a richer view: branch context, branch changes, templates, and resumable agent sessions in the sidebar.
 
 ## 🧰 Commands
 

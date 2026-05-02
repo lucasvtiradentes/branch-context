@@ -52,6 +52,8 @@ bctx uninstall        # remove .bctx/ and hooks
 
 Both `bctx` and `branch-ctx` bins are registered.
 
+`bctx agents status` indexes local Codex and Claude Code sessions for the current branch.
+
 ## ⚙️ Configuration
 
 Default `.bctx/config.json`:
