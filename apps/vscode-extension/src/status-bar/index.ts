@@ -10,6 +10,7 @@ import {
 import { formatError } from '../lib/format-error';
 import { formatRelativeTime } from '../lib/format-relative-time';
 import { formatLogError, logger } from '../lib/logging';
+import { escapeMarkdown, markdownTooltipLine } from '../lib/markdown';
 
 let item: vscode.StatusBarItem | undefined;
 
@@ -171,7 +172,7 @@ function getTooltip(state: BranchContextExtensionState): vscode.MarkdownString {
       [
         '**Branch Context**',
         '',
-        tooltipLine('Status', getStatusLabel(status)),
+        markdownTooltipLine('Status', getStatusLabel(status)),
         '',
         'Do you want to init bctx in the current project?',
       ].join('\n\n'),
@@ -184,13 +185,13 @@ function getTooltip(state: BranchContextExtensionState): vscode.MarkdownString {
   tooltip.supportThemeIcons = true;
   tooltip.appendMarkdown(
     [
-      tooltipLine('Status', getStatusLabel(status)),
-      tooltipLine('Branch', state.currentBranch ?? 'n/a'),
-      tooltipLine('Base', state.status?.baseBranch ?? 'n/a'),
-      tooltipLine('Template', currentContext?.template ?? 'n/a'),
-      tooltipLine('Updated', formatRelativeTime(currentContext?.updatedAt ?? null)),
-      tooltipLine('Commits', String(currentContext?.commitCount ?? 0)),
-      tooltipLine('Files', String(currentContext?.changedFileCount ?? 0)),
+      markdownTooltipLine('Status', getStatusLabel(status)),
+      markdownTooltipLine('Branch', state.currentBranch ?? 'n/a'),
+      markdownTooltipLine('Base', state.status?.baseBranch ?? 'n/a'),
+      markdownTooltipLine('Template', currentContext?.template ?? 'n/a'),
+      markdownTooltipLine('Updated', formatRelativeTime(currentContext?.updatedAt ?? null)),
+      markdownTooltipLine('Commits', String(currentContext?.commitCount ?? 0)),
+      markdownTooltipLine('Files', String(currentContext?.changedFileCount ?? 0)),
       ...getIssueTooltipLines(state),
     ].join('\n\n'),
   );
@@ -211,12 +212,4 @@ function getIssueTooltipLines(state: BranchContextExtensionState): string[] {
         `${issue.level === BranchContextStatusIssueLevel.Error ? '$(error)' : '$(warning)'} ${escapeMarkdown(issue.message)}`,
     ),
   ];
-}
-
-function tooltipLine(label: string, value: string): string {
-  return `**${label}:** ${escapeMarkdown(value)}`;
-}
-
-function escapeMarkdown(value: string): string {
-  return value.replace(/[\\`*_{}[\]()#+\-.!|>]/g, '\\$&');
 }

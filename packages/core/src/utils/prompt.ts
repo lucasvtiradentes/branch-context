@@ -18,8 +18,7 @@ export async function confirm(prompt: string) {
   }
   const rl = readline.createInterface({ input, output });
   try {
-    const answer = (await rl.question(`${prompt} [y/N] `)).trim().toLowerCase();
-    return answer === 'y' || answer === 'yes';
+    return isYesAnswer(await rl.question(`${prompt} [y/N] `));
   } catch {
     output.write('\n');
     return false;
@@ -35,11 +34,11 @@ export async function promptYesNo(question: string) {
   const rl = readline.createInterface({ input, output });
   try {
     while (true) {
-      const answer = (await rl.question(`${question} [y/n]: `)).trim().toLowerCase();
-      if (answer === 'y' || answer === 'yes') {
+      const answer = await rl.question(`${question} [y/n]: `);
+      if (isYesAnswer(answer)) {
         return true;
       }
-      if (answer === 'n' || answer === 'no') {
+      if (isNoAnswer(answer)) {
         return false;
       }
       output.write("Please answer 'y' or 'n'.\n");
@@ -49,6 +48,20 @@ export async function promptYesNo(question: string) {
   } finally {
     rl.close();
   }
+}
+
+function normalizePromptAnswer(answer: string) {
+  return answer.trim().toLowerCase();
+}
+
+function isYesAnswer(answer: string) {
+  const normalized = normalizePromptAnswer(answer);
+  return normalized === 'y' || normalized === 'yes';
+}
+
+function isNoAnswer(answer: string) {
+  const normalized = normalizePromptAnswer(answer);
+  return normalized === 'n' || normalized === 'no';
 }
 
 export async function multiSelect(items: string[], labels?: string[]) {

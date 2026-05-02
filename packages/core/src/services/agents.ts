@@ -22,6 +22,7 @@ import {
 } from '../data/agents';
 import { configExists } from '../data/config';
 import { gitCurrentBranch } from '../utils/git';
+import { asRecord, asString } from '../utils/unknown';
 import { syncCurrentBranch } from './actions';
 
 export type { AgentSession };
@@ -536,16 +537,6 @@ function formatSource(value: unknown) {
   }
 
   return null;
-}
-
-function asString(value: unknown): string | null {
-  return typeof value === 'string' ? value : null;
-}
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
 }
 
 function compareSessions(left: AgentSession, right: AgentSession) {

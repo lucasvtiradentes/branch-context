@@ -4,13 +4,13 @@ import {
   CreateBranchContextResult,
   configExists,
   getBaseBranch,
-  getGitRoot,
   sanitizeBranchName,
   syncBranch,
   updateBranchMeta,
   updateContextTags,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
+import { requireGitRoot } from '../helpers/git-root';
 
 export function registerOnCheckoutCommand(program: Program) {
   program
@@ -28,7 +28,7 @@ function cmdOnCheckout(args: string[]) {
 
   const oldBranch = args[0] ?? '';
   const newBranch = args[1] ?? '';
-  const gitRoot = getGitRoot();
+  const gitRoot = requireGitRoot({ silent: true });
   if (!gitRoot) {
     return 1;
   }

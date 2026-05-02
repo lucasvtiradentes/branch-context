@@ -10,6 +10,8 @@ import { commandIds, contextKeys } from '../constants';
 import { type BranchContextExtensionState, getBranchContextState } from '../core/state';
 import { groupByDate } from '../lib/date-groups';
 import { formatRelativeTime } from '../lib/format-relative-time';
+import { markdownTooltipLine } from '../lib/markdown';
+import { isStringValue } from '../lib/string-values';
 import {
   type BranchContextTreeNode,
   BranchContextTreeNodeKind,
@@ -106,13 +108,11 @@ export function createGitChangesProvider(): StateTreeProvider {
 }
 
 function isGitChangesMode(value: unknown): value is GitChangesMode {
-  return typeof value === 'string' && (gitChangesModeValues as readonly string[]).includes(value);
+  return isStringValue(gitChangesModeValues, value);
 }
 
 function isGitChangedFilesGroupBy(value: unknown): value is GitChangedFilesGroupBy {
-  return (
-    typeof value === 'string' && (gitChangedFilesGroupByValues as readonly string[]).includes(value)
-  );
+  return isStringValue(gitChangedFilesGroupByValues, value);
 }
 
 function updateGitChangesModeContext(): void {
@@ -120,9 +120,7 @@ function updateGitChangesModeContext(): void {
 }
 
 function isGitCommitsGroupBy(value: unknown): value is GitCommitsGroupBy {
-  return (
-    typeof value === 'string' && (gitCommitsGroupByValues as readonly string[]).includes(value)
-  );
+  return isStringValue(gitCommitsGroupByValues, value);
 }
 
 function createChangedFileNodes(state: BranchContextExtensionState) {
@@ -367,12 +365,4 @@ function createCommitTooltip(commit: GitCommitSummary) {
       markdownTooltipLine('authored', formatRelativeTime(commit.authoredAt)),
     ].join('  \n'),
   );
-}
-
-function markdownTooltipLine(label: string, value: string) {
-  return `**${label}:** ${escapeMarkdown(value)}`;
-}
-
-function escapeMarkdown(value: string) {
-  return value.replace(/[\\`*_{}[\]()#+\-.!|>]/g, '\\$&');
 }

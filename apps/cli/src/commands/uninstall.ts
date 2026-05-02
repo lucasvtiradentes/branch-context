@@ -1,6 +1,5 @@
 import {
   CLI_NAME,
-  getGitRoot,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
   HookType,
@@ -9,6 +8,7 @@ import {
   unsetGlobalHooksPath,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
+import { requireGitRoot } from '../helpers/git-root';
 
 export function registerUninstallCommand(program: Program) {
   program
@@ -24,9 +24,8 @@ function cmdUninstall(args: string[]) {
     return 0;
   }
 
-  const gitRoot = getGitRoot();
+  const gitRoot = requireGitRoot();
   if (!gitRoot) {
-    console.log('error: not a git repository');
     return 1;
   }
 

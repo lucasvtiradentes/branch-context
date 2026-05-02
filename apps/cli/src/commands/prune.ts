@@ -4,7 +4,6 @@ import {
   collectBranchInfo,
   configExists,
   getCurrentBranch,
-  getGitRoot,
   gitDeleteBranch,
   green,
   isProtectedBranchName,
@@ -16,6 +15,7 @@ import {
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
 import { printTable } from '../helpers/branches';
+import { requireGitRoot } from '../helpers/git-root';
 
 export function registerPruneCommand(program: Program) {
   program
@@ -24,9 +24,8 @@ export function registerPruneCommand(program: Program) {
 }
 
 async function cmdPrune(_args: string[]) {
-  const gitRoot = getGitRoot();
+  const gitRoot = requireGitRoot();
   if (!gitRoot) {
-    console.log('error: not a git repository');
     return 1;
   }
 

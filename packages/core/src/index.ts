@@ -13,3 +13,4 @@ export * from './utils/color';
 export * from './utils/git';
 export * from './utils/prompt';
 export * from './utils/template';
+export * from './utils/unknown';

@@ -1,5 +1,6 @@
-import { type AgentSession, getAgentSessions, getGitRoot } from '@branch-context/core';
+import { type AgentSession, getAgentSessions } from '@branch-context/core';
 import type { Program } from '@caporal/core';
+import { requireGitRoot } from '../../helpers/git-root';
 
 type AgentSessionProviderSource = Pick<AgentSession, 'provider'>;
 
@@ -8,9 +9,8 @@ export function registerAgentsStatusCommand(program: Program) {
 }
 
 function cmdAgentsStatus() {
-  const gitRoot = getGitRoot();
+  const gitRoot = requireGitRoot();
   if (!gitRoot) {
-    console.log('error: not a git repository');
     return 1;
   }
 

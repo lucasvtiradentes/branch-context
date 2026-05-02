@@ -4,7 +4,6 @@ import {
   CLI_NAME,
   DEFAULT_SYMLINK,
   DEFAULT_TEMPLATE,
-  getGitRoot,
   getStatus,
   green,
   HOOK_POST_CHECKOUT,
@@ -14,6 +13,7 @@ import {
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
 import { printTable } from '../helpers/branches';
+import { requireGitRoot } from '../helpers/git-root';
 
 const STATUS_OK = green('[ok]');
 const STATUS_ERROR = red('[!!]');
@@ -24,9 +24,8 @@ export function registerStatusCommand(program: Program) {
 }
 
 function cmdStatus(_args: string[]) {
-  const gitRoot = getGitRoot();
+  const gitRoot = requireGitRoot();
   if (!gitRoot) {
-    console.log('error: not a git repository');
     return 1;
   }
 

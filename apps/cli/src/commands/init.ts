@@ -10,7 +10,6 @@ import {
   getBranchesDir,
   getConfigDir,
   getCurrentBranch,
-  getGitRoot,
   getTemplatesDir,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
@@ -20,15 +19,15 @@ import {
   syncBranch,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
+import { requireGitRoot } from '../helpers/git-root';
 
 export function registerInitCommand(program: Program) {
   program.command('init', 'Initialize and install hook').action(() => cmdInit([]));
 }
 
 async function cmdInit(_args: string[]) {
-  const gitRoot = getGitRoot();
+  const gitRoot = requireGitRoot();
   if (!gitRoot) {
-    console.log('error: not a git repository');
     return 1;
   }
 

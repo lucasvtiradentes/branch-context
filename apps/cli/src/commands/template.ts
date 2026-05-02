@@ -5,10 +5,10 @@ import {
   BranchContextActionErrorReason,
   CLI_NAME,
   getCurrentBranch,
-  getGitRoot,
   listAvailableTemplates,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
+import { requireGitRoot } from '../helpers/git-root';
 
 export function registerTemplateCommand(program: Program) {
   program
@@ -49,9 +49,8 @@ function stringArgs(value: unknown) {
 }
 
 async function cmdTemplate(args: string[]) {
-  const gitRoot = getGitRoot();
+  const gitRoot = requireGitRoot();
   if (!gitRoot) {
-    console.log('error: not a git repository');
     return 1;
   }
 

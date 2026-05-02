@@ -2,10 +2,10 @@ import {
   BranchContextActionErrorReason,
   CLI_NAME,
   getCurrentBase,
-  getGitRoot,
   setCurrentBase,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
+import { requireGitRoot } from '../helpers/git-root';
 
 export function registerBaseCommand(program: Program) {
   program
@@ -15,9 +15,8 @@ export function registerBaseCommand(program: Program) {
 }
 
 function cmdBase(args: string[]) {
-  const gitRoot = getGitRoot();
+  const gitRoot = requireGitRoot();
   if (!gitRoot) {
-    console.log('error: not a git repository');
     return 1;
   }
 

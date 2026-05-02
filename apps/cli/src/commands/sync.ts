@@ -3,20 +3,19 @@ import {
   CLI_NAME,
   Config,
   CreateBranchContextResult,
-  getGitRoot,
   playSound,
   syncCurrentBranch,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
+import { requireGitRoot } from '../helpers/git-root';
 
 export function registerSyncCommand(program: Program) {
   program.command('sync', 'Sync context and update meta/tags').action(() => cmdSync([]));
 }
 
 function cmdSync(_args: string[]) {
-  const gitRoot = getGitRoot();
+  const gitRoot = requireGitRoot();
   if (!gitRoot) {
-    console.log('error: not a git repository');
     return 1;
   }
 

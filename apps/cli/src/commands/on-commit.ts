@@ -1,6 +1,7 @@
 import { relative } from 'node:path';
-import { getGitRoot, syncBranchAfterCommit } from '@branch-context/core';
+import { syncBranchAfterCommit } from '@branch-context/core';
 import type { Program } from '@caporal/core';
+import { requireGitRoot } from '../helpers/git-root';
 
 export function registerOnCommitCommand(program: Program) {
   program
@@ -9,7 +10,7 @@ export function registerOnCommitCommand(program: Program) {
 }
 
 function cmdOnCommit(_args: string[]) {
-  const gitRoot = getGitRoot();
+  const gitRoot = requireGitRoot({ silent: true });
   if (!gitRoot) {
     return 1;
   }

@@ -1,11 +1,13 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { type AgentSession, AgentSessionProvider } from '@branch-context/core';
+import { type AgentSession, AgentSessionProvider, asRecord, asString } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { isAgentSessionActive } from '../core/active-agent-sessions';
 import { type AgentSessionPin, readAgentSessionPins } from '../core/agent-session-pins';
 import { getBranchContextState } from '../core/state';
 import { groupByDate } from '../lib/date-groups';
 import { formatRelativeTime } from '../lib/format-relative-time';
+import { markdownTooltipLine } from '../lib/markdown';
+import { isStringValue } from '../lib/string-values';
 import {
   BranchContextTreeNodeKind,
   createInactiveAgentSessionResourceUri,
@@ -460,10 +462,7 @@ function getSessionSize(path: string | null) {
 }
 
 function isAgentSessionsGroupBy(value: unknown): value is SavedAgentSessionsGroupBy {
-  return (
-    typeof value === 'string' &&
-    (value === 'recent' || (agentSessionsGroupByValues as readonly string[]).includes(value))
-  );
+  return isStringValue([...agentSessionsGroupByValues, 'recent'], value);
 }
 
 function normalizeAgentSessionsGroupBy(value: SavedAgentSessionsGroupBy): AgentSessionsGroupBy {
@@ -471,9 +470,7 @@ function normalizeAgentSessionsGroupBy(value: SavedAgentSessionsGroupBy): AgentS
 }
 
 function isAgentSessionTextMode(value: unknown): value is AgentSessionTextMode {
-  return (
-    typeof value === 'string' && (agentSessionTextModeValues as readonly string[]).includes(value)
-  );
+  return isStringValue(agentSessionTextModeValues, value);
 }
 
 function parseJsonObject(line: string) {
@@ -483,16 +480,6 @@ function parseJsonObject(line: string) {
   } catch {
     return null;
   }
-}
-
-function asString(value: unknown): string | null {
-  return typeof value === 'string' ? value : null;
-}
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
 }
 
 function getProviderSort(provider: AgentSession['provider']) {
@@ -586,12 +573,4 @@ function formatBytes(value: number) {
   }
 
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function markdownTooltipLine(label: string, value: string) {
-  return `**${label}:** ${escapeMarkdown(value)}`;
-}
-
-function escapeMarkdown(value: string) {
-  return value.replace(/[\\`*_{}[\]()#+\-.!|>]/g, '\\$&');
 }

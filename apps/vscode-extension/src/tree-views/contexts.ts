@@ -6,6 +6,8 @@ import * as vscode from 'vscode';
 import { getBranchContextState } from '../core/state';
 import { groupByDate } from '../lib/date-groups';
 import { formatRelativeTime } from '../lib/format-relative-time';
+import { markdownTooltipLine } from '../lib/markdown';
+import { isStringValue } from '../lib/string-values';
 import {
   createArchivedContextResourceUri,
   createContextNode,
@@ -61,10 +63,7 @@ export async function saveContextsGroupBy(
 }
 
 function isContextsGroupBy(value: unknown): value is SavedContextsGroupBy {
-  return (
-    typeof value === 'string' &&
-    (value === 'recent' || (contextsGroupByValues as readonly string[]).includes(value))
-  );
+  return isStringValue([...contextsGroupByValues, 'recent'], value);
 }
 
 function normalizeContextsGroupBy(value: SavedContextsGroupBy): ContextsGroupBy {
@@ -253,14 +252,6 @@ function createContextTooltip(context: ContextViewItem) {
       markdownTooltipLine('size', formatBytes(context.sizeBytes)),
     ].join('  \n'),
   );
-}
-
-function markdownTooltipLine(label: string, value: string) {
-  return `**${label}:** ${escapeMarkdown(value)}`;
-}
-
-function escapeMarkdown(value: string) {
-  return value.replace(/[\\`*_{}[\]()#+\-.!|>]/g, '\\$&');
 }
 
 function getSizeGroup(context: ContextViewItem) {
