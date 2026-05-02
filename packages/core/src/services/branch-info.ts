@@ -1,12 +1,18 @@
 import { listBranches, sanitizeBranchName } from '../core/sync';
 import { gitListBranches, gitListRemoteBranches } from '../utils/git';
 
+const PROTECTED_BRANCH_NAMES = new Set(['main', 'master']);
+
 export type BranchInfo = {
   context: boolean;
   local: boolean;
   remote: boolean;
   sanitized: string;
 };
+
+export function isProtectedBranchName(branchName: string) {
+  return PROTECTED_BRANCH_NAMES.has(branchName);
+}
 
 export function collectBranchInfo(gitRoot: string) {
   const contextDirs = new Set(listBranches(gitRoot));

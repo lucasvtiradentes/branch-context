@@ -7,6 +7,7 @@ import {
   getGitRoot,
   gitDeleteBranch,
   green,
+  isProtectedBranchName,
   listArchivedBranches,
   multiSelect,
   red,
@@ -48,8 +49,7 @@ async function cmdPrune(_args: string[]) {
         info.local &&
         !info.remote &&
         info.sanitized !== currentSanitized &&
-        name !== 'main' &&
-        name !== 'master',
+        !isProtectedBranchName(name),
     )
     .map(([name]) => name);
 
