@@ -12,9 +12,10 @@ while [ -L "$self" ]; do
 done
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$self")" && pwd)
-root_dir=$(CDPATH= cd -- "$script_dir/.." && pwd)
-tsx_bin=$root_dir/apps/cli/node_modules/.bin/tsx
-entry=$root_dir/apps/cli/src/index.ts
+root_dir=$(CDPATH= cd -- "$script_dir/../../.." && pwd)
+app_dir=$root_dir/apps/cli
+tsx_bin=$app_dir/node_modules/.bin/tsx
+entry=$app_dir/src/index.ts
 
 if [ "${1-}" = "--" ]; then
   shift
