@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- 5218a80: Add an update extension action, improve CLI/extension mismatch prompts, and simplify the status bar tooltip.
+
 ## 0.1.0
 
 ### Minor Changes
