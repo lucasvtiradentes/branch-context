@@ -24,6 +24,7 @@ import { registerMoveAgentSessionCommand } from '../../features/other-branches/c
 import { registerToggleOtherBranchesModeCommand } from '../../features/other-branches/commands/toggle-other-branches-mode';
 import { registerShowLogsCommand } from './show-logs';
 import { registerUpdateCliCommand } from './update-cli';
+import { registerUpdateExtensionCommand } from './update-extension';
 
 export function registerCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
@@ -46,6 +47,7 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerToggleOtherBranchesModeCommand(context),
     registerMoveAgentSessionCommand(),
     registerUpdateCliCommand(),
+    registerUpdateExtensionCommand(),
     registerShowLogsCommand(),
     registerShowDetailsCommand(),
     registerSyncAgentsCommand(),

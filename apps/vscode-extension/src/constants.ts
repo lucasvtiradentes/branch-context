@@ -43,6 +43,7 @@ export const commandIds = {
   restoreContext: `${APP_ID}.restoreContext`,
   deleteContext: `${APP_ID}.deleteContext`,
   updateCli: `${APP_ID}.updateCli`,
+  updateExtension: `${APP_ID}.updateExtension`,
   showLogs: `${APP_ID}.showLogs`,
   syncAgents: `${APP_ID}.internal.syncAgents`,
   showStatusBarActions: `${APP_ID}.internal.showStatusBarActions`,

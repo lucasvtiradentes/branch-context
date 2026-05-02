@@ -249,6 +249,11 @@
         "icon": "$(terminal)"
       },
       {
+        "command": "branch-context.updateExtension",
+        "title": "Branch Context: Update Extension",
+        "icon": "$(extensions)"
+      },
+      {
         "command": "branch-context.showLogs",
         "title": "Branch Context: Show Logs",
         "icon": "$(output)"

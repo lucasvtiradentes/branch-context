@@ -20,11 +20,20 @@ export type CliCompatibilityState = {
   expectedVersion: string;
   installed: boolean;
   compatible: boolean;
+  mismatch: CliCompatibilityMismatch;
   command: string | null;
   version: string | null;
   error: string | null;
   updateCommand: string;
 };
+
+export enum CliCompatibilityMismatch {
+  None = 'none',
+  Missing = 'missing',
+  Unreadable = 'unreadable',
+  CliOlder = 'cliOlder',
+  CliNewer = 'cliNewer',
+}
 
 const cliCommands = getCliCommandCandidates();
 
@@ -69,7 +78,8 @@ function resolveCliCompatibility(): CliCompatibilityState {
       continue;
     }
 
-    const compatible = IS_DEV_EXTENSION || version === VERSION;
+    const mismatch = getVersionMismatch(version, VERSION);
+    const compatible = IS_DEV_EXTENSION || mismatch === CliCompatibilityMismatch.None;
     logger.info(
       `cli compatibility resolved: command=${command.label} version=${version} expected=${VERSION} compatible=${compatible}`,
     );
@@ -78,9 +88,10 @@ function resolveCliCompatibility(): CliCompatibilityState {
       expectedVersion: VERSION,
       installed: true,
       compatible,
+      mismatch: compatible ? CliCompatibilityMismatch.None : mismatch,
       command: command.label,
       version,
-      error: compatible ? null : `CLI ${version} does not match extension ${VERSION}`,
+      error: compatible ? null : getVersionMismatchError(mismatch, version, VERSION),
       updateCommand: getCliUpdateCommand(),
     };
   }
@@ -90,6 +101,7 @@ function resolveCliCompatibility(): CliCompatibilityState {
       expectedVersion: VERSION,
       installed: true,
       compatible: false,
+      mismatch: CliCompatibilityMismatch.Unreadable,
       command: unreadableVersions[0] ?? null,
       version: null,
       error: 'CLI version could not be read',
@@ -101,6 +113,7 @@ function resolveCliCompatibility(): CliCompatibilityState {
     expectedVersion: VERSION,
     installed: false,
     compatible: false,
+    mismatch: CliCompatibilityMismatch.Missing,
     command: null,
     version: null,
     error: 'CLI not found',
@@ -136,4 +149,55 @@ function getCliUpdateCommand() {
 
 function parseVersion(output: string): string | null {
   return output.match(/\b\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?\b/)?.[0] ?? null;
+}
+
+function getVersionMismatch(version: string, expectedVersion: string): CliCompatibilityMismatch {
+  const comparison = compareVersions(version, expectedVersion);
+  if (comparison === 0) {
+    return CliCompatibilityMismatch.None;
+  }
+
+  return comparison < 0 ? CliCompatibilityMismatch.CliOlder : CliCompatibilityMismatch.CliNewer;
+}
+
+function getVersionMismatchError(
+  mismatch: CliCompatibilityMismatch,
+  version: string,
+  expectedVersion: string,
+): string {
+  if (mismatch === CliCompatibilityMismatch.CliOlder) {
+    return `CLI ${version} is older than extension compatibility ${expectedVersion}`;
+  }
+
+  if (mismatch === CliCompatibilityMismatch.CliNewer) {
+    return `CLI ${version} is newer than extension compatibility ${expectedVersion}`;
+  }
+
+  return `CLI ${version} does not match extension compatibility ${expectedVersion}`;
+}
+
+function compareVersions(left: string, right: string): number {
+  const [leftMajor, leftMinor, leftPatch] = getVersionParts(left);
+  const [rightMajor, rightMinor, rightPatch] = getVersionParts(right);
+  const majorDifference = leftMajor - rightMajor;
+  if (majorDifference !== 0) {
+    return majorDifference;
+  }
+
+  const minorDifference = leftMinor - rightMinor;
+  if (minorDifference !== 0) {
+    return minorDifference;
+  }
+
+  const patchDifference = leftPatch - rightPatch;
+  if (patchDifference !== 0) {
+    return patchDifference;
+  }
+
+  return 0;
+}
+
+function getVersionParts(version: string): [number, number, number] {
+  const match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
+  return [Number(match?.[1] ?? 0), Number(match?.[2] ?? 0), Number(match?.[3] ?? 0)];
 }

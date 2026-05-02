@@ -3,20 +3,23 @@ import * as vscode from 'vscode';
 import { APP_NAME, commandIds, STATUS_BAR_PRIORITY } from '../constants';
 import { formatError } from '../shared/format/error';
 import { escapeMarkdown, markdownTooltipLine } from '../shared/format/markdown';
-import { formatRelativeTime } from '../shared/format/relative-time';
 import { logger } from '../shared/logger';
+import { CliCompatibilityMismatch } from './cli/compatibility';
 import { type BranchContextExtensionState, branchContextState } from './state';
 
 const PROMPT_YES = 'Yes';
 const PROMPT_NO = 'No';
 const PROMPT_UPDATE_CLI = 'Update CLI';
+const PROMPT_UPDATE_EXTENSION = 'Update Extension';
 const PROMPT_IGNORE = 'Ignore';
 
 let item: vscode.StatusBarItem | undefined;
 let cliCompatibilityPromptShown = false;
+let extensionVersion = 'unknown';
 
 export function initializeStatusBar(context: vscode.ExtensionContext): void {
   logger.info('status bar initialized');
+  extensionVersion = getExtensionVersion(context);
   item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, STATUS_BAR_PRIORITY);
   item.command = commandIds.showStatusBarActions;
   item.name = APP_NAME;
@@ -188,40 +191,30 @@ function getStatusLabel(status: StatusBarState): string {
 }
 
 function getTooltip(state: BranchContextExtensionState): vscode.MarkdownString {
-  const status = getStatusBarState(state);
-  if (!state.initialized) {
-    const tooltip = new vscode.MarkdownString();
-    tooltip.appendMarkdown(
-      [
-        '**Branch Context**',
-        '',
-        ...getCliCompatibilityTooltipLines(state),
-        '',
-        markdownTooltipLine('Status', getStatusLabel(status)),
-        '',
-        'Do you want to init bctx in the current project?',
-      ].join('\n\n'),
-    );
-    return tooltip;
-  }
-
   const currentContext = state.recentContexts.find((context) => context.current);
   const tooltip = new vscode.MarkdownString();
   tooltip.supportThemeIcons = true;
   tooltip.appendMarkdown(
     [
-      markdownTooltipLine('Status', getStatusLabel(status)),
+      markdownTooltipLine('Extension', extensionVersion),
+      ...getCliCompatibilityTooltipLines(state),
       markdownTooltipLine('Branch', state.currentBranch ?? 'n/a'),
       markdownTooltipLine('Base', state.status?.baseBranch ?? 'n/a'),
       markdownTooltipLine('Template', currentContext?.template ?? 'n/a'),
-      markdownTooltipLine('Updated', formatRelativeTime(currentContext?.updatedAt ?? null)),
-      markdownTooltipLine('Commits', String(currentContext?.commitCount ?? 0)),
-      markdownTooltipLine('Files', String(currentContext?.changedFileCount ?? 0)),
-      ...getCliCompatibilityTooltipLines(state),
       ...getIssueTooltipLines(state),
     ].join('\n\n'),
   );
   return tooltip;
+}
+
+function getExtensionVersion(context: vscode.ExtensionContext): string {
+  const packageJson = context.extension.packageJSON;
+  return typeof packageJson === 'object' &&
+    packageJson !== null &&
+    'version' in packageJson &&
+    typeof packageJson.version === 'string'
+    ? packageJson.version
+    : 'unknown';
 }
 
 function getCliCompatibilityTooltipLines(state: BranchContextExtensionState): string[] {
@@ -248,19 +241,39 @@ async function maybePromptCliCompatibilityIssue(state: BranchContextExtensionSta
 
 async function promptCliUpdate(state: BranchContextExtensionState): Promise<void> {
   const cli = state.cliCompatibility;
-  const message = cli.installed
-    ? `${APP_NAME}: CLI version ${cli.version ?? 'unknown'} does not match extension ${cli.expectedVersion}`
-    : `${APP_NAME}: CLI not found`;
-  const selected = await vscode.window.showWarningMessage(
-    message,
-    PROMPT_UPDATE_CLI,
-    PROMPT_IGNORE,
-  );
-  if (selected !== PROMPT_UPDATE_CLI) {
+  const message = getCliCompatibilityPromptMessage(state);
+  const updateLabel =
+    cli.mismatch === CliCompatibilityMismatch.CliNewer
+      ? PROMPT_UPDATE_EXTENSION
+      : PROMPT_UPDATE_CLI;
+  const selected = await vscode.window.showWarningMessage(message, updateLabel, PROMPT_IGNORE);
+  if (selected !== updateLabel) {
+    return;
+  }
+
+  if (cli.mismatch === CliCompatibilityMismatch.CliNewer) {
+    await vscode.commands.executeCommand(commandIds.updateExtension);
     return;
   }
 
   await vscode.commands.executeCommand(commandIds.updateCli);
+}
+
+function getCliCompatibilityPromptMessage(state: BranchContextExtensionState): string {
+  const cli = state.cliCompatibility;
+  if (!cli.installed) {
+    return `${APP_NAME}: CLI not found`;
+  }
+
+  if (cli.mismatch === CliCompatibilityMismatch.CliNewer) {
+    return `${APP_NAME}: CLI version ${cli.version ?? 'unknown'} is newer than extension compatibility ${cli.expectedVersion}`;
+  }
+
+  if (cli.mismatch === CliCompatibilityMismatch.CliOlder) {
+    return `${APP_NAME}: CLI version ${cli.version ?? 'unknown'} is older than extension compatibility ${cli.expectedVersion}`;
+  }
+
+  return `${APP_NAME}: ${cli.error ?? 'CLI version could not be read'}`;
 }
 
 function getIssueTooltipLines(state: BranchContextExtensionState): string[] {
