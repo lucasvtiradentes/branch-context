@@ -4,11 +4,11 @@ import {
   gitAdd,
   gitCheckout,
   gitCommit,
-  setMultiSelectOverride,
   syncBranch,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
 import { runCli } from '../src/index';
+import { setMultiSelectOverride } from '../src/ui/prompt';
 import {
   captureConsole,
   createGitRepo,

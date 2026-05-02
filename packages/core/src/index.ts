@@ -1,5 +1,3 @@
-export * from './cli/color';
-export * from './cli/prompt';
 export * from './constants';
 export * from './core/context-tags';
 export * from './core/hooks';

@@ -5,17 +5,15 @@ import {
   configExists,
   getCurrentBranch,
   gitDeleteBranch,
-  green,
   isProtectedBranchName,
   listArchivedBranches,
-  multiSelect,
-  red,
   sanitizeBranchName,
-  yellow,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
 import { printTable } from '../helpers/branches';
 import { requireGitRoot } from '../helpers/git-root';
+import { green, red, yellow } from '../ui/color';
+import { multiSelect } from '../ui/prompt';
 
 export function registerPruneCommand(program: Program) {
   program

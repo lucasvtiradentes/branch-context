@@ -2,7 +2,6 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, expect, vi } from 'vitest';
-import { setMultiSelectOverride } from '../src/cli/prompt';
 import { gitAdd, gitCommit, gitConfig, gitInit } from '../src/git';
 import { Config, copyInitTemplates, getBranchesDir, getTemplateDir } from '../src/index';
 
@@ -61,7 +60,6 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  setMultiSelectOverride(null);
   process.chdir(originalCwd);
   while (repos.length > 0) {
     const repo = repos.pop();

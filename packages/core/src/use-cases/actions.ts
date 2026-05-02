@@ -1,10 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { PromptYesNo } from '../cli/prompt';
 import { CONFIG_FILE, DEFAULT_SYMLINK, HookType } from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
-import { getCurrentBranch, installHook } from '../core/hooks';
+import { getCurrentBranch, installHook, type PromptYesNo } from '../core/hooks';
 import {
   archiveBranch,
   type CreateBranchContextResult,

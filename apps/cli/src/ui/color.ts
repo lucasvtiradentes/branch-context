@@ -26,7 +26,3 @@ export function green(text: string) {
 export function yellow(text: string) {
   return wrap('33', text);
 }
-
-export function dim(text: string) {
-  return wrap('2', text);
-}

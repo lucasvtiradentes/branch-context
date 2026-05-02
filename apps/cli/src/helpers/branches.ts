@@ -1,4 +1,5 @@
-import { type BranchInfo, green, red } from '@branch-context/core';
+import type { BranchInfo } from '@branch-context/core';
+import { green, red } from '../ui/color';
 
 export function printTable(allNames: Map<string, BranchInfo>, current: string | null) {
   if (allNames.size === 0) {

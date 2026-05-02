@@ -1,7 +1,6 @@
 import { stdin as input, stdout as output } from 'node:process';
 import readline from 'node:readline/promises';
 
-export type PromptYesNo = (question: string) => Promise<boolean>;
 const YES_PROMPT_ANSWERS: readonly string[] = ['y', 'yes'];
 const NO_PROMPT_ANSWERS: readonly string[] = ['n', 'no'];
 
@@ -13,21 +12,6 @@ export function setMultiSelectOverride(
   override: ((items: string[], labels?: string[]) => Promise<number[]> | number[]) | null,
 ) {
   multiSelectOverride = override;
-}
-
-export async function confirm(prompt: string) {
-  if (!input.isTTY) {
-    return false;
-  }
-  const rl = readline.createInterface({ input, output });
-  try {
-    return isYesAnswer(await rl.question(`${prompt} [y/N] `));
-  } catch {
-    output.write('\n');
-    return false;
-  } finally {
-    rl.close();
-  }
 }
 
 export async function promptYesNo(question: string) {

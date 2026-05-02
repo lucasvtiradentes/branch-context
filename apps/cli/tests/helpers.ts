@@ -9,9 +9,9 @@ import {
   gitCommit,
   gitConfig,
   gitInit,
-  setMultiSelectOverride,
 } from '@branch-context/core';
 import { afterEach, beforeEach, expect, vi } from 'vitest';
+import { setMultiSelectOverride } from '../src/ui/prompt';
 
 const repos: string[] = [];
 let originalCwd = process.cwd();

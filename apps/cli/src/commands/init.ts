@@ -20,6 +20,7 @@ import {
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
 import { requireGitRoot } from '../helpers/git-root';
+import { promptYesNo } from '../ui/prompt';
 
 const hookInstallMessages = {
   [HookInstallResult.Installed]: (hookName: string) => `Hook installed: ${hookName}`,
@@ -57,13 +58,13 @@ async function cmdInit(_args: string[]) {
     console.log(`  branches:  ${branchesDir}/ (gitignored)`);
   }
 
-  const checkoutResult = await installHook(gitRoot, HookType.PostCheckout);
+  const checkoutResult = await installHook(gitRoot, HookType.PostCheckout, promptYesNo);
   printHookInstallResult(checkoutResult, HOOK_POST_CHECKOUT);
   if (checkoutResult === HookInstallResult.AlreadyInstalled && alreadyInitialized) {
     console.log('Already initialized');
   }
 
-  const commitResult = await installHook(gitRoot, HookType.PostCommit);
+  const commitResult = await installHook(gitRoot, HookType.PostCommit, promptYesNo);
   printHookInstallResult(commitResult, HOOK_POST_COMMIT);
 
   addToGitignore(gitRoot, DEFAULT_SYMLINK);
