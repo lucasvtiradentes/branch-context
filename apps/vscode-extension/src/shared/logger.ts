@@ -71,5 +71,4 @@ class ExtensionLogger {
   }
 }
 
-export const extensionLogger = new ExtensionLogger();
-export const logger = extensionLogger;
+export const logger = new ExtensionLogger();

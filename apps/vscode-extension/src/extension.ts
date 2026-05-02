@@ -1,7 +1,7 @@
 import type * as vscode from 'vscode';
 import { initializeAgentIndexer } from './features/agent-sessions/indexer';
 import { initializeBranchContextWatcher } from './features/branch-context/watcher';
-import { initializeContextFileUx } from './features/context-file-ux';
+import { initializeContextFileUx } from './features/context-file-ux/initialize';
 import { initializeContextsGroupBy } from './features/other-branches/views/contexts';
 import { logger } from './shared/logger';
 import { registerCommands } from './vscode/commands/register';
