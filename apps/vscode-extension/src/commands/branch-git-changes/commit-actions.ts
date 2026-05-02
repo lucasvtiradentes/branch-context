@@ -1,11 +1,11 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import type { GitCommitSummary } from '@branch-context/core';
 import * as vscode from 'vscode';
-import { APP_NAME, commandIds } from '../constants';
-import { formatError } from '../lib/format/error';
-import { refreshBranchContextState } from '../state/state';
-import type { BranchContextTreeNodeDraft } from '../views/items';
-import { getInitializedState } from './helpers';
+import { APP_NAME, commandIds } from '../../constants';
+import { formatError } from '../../lib/format/error';
+import { refreshBranchContextState } from '../../state/state';
+import type { BranchContextTreeNodeDraft } from '../../views/items';
+import { getInitializedState } from '../shared/helpers';
 
 const GITHUB_HOST = 'github.com';
 const GITLAB_HOST = 'gitlab.com';

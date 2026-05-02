@@ -1,9 +1,9 @@
 import { getCurrentBase, setCurrentBase } from '@branch-context/core';
 import * as vscode from 'vscode';
-import { APP_NAME, commandIds } from '../constants';
-import { formatError } from '../lib/format/error';
-import { refreshBranchContextState } from '../state/state';
-import { formatActionError, getInitializedState } from './helpers';
+import { APP_NAME, commandIds } from '../../constants';
+import { formatError } from '../../lib/format/error';
+import { refreshBranchContextState } from '../../state/state';
+import { formatActionError, getInitializedState } from '../shared/helpers';
 
 export function registerSetBaseCommand(): vscode.Disposable {
   return vscode.commands.registerCommand(commandIds.setBase, async () => {

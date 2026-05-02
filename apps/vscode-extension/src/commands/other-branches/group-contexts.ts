@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
-import { APP_NAME, commandIds } from '../constants';
-import { formatError } from '../lib/format/error';
-import { refreshBranchContextState } from '../state/state';
+import { APP_NAME, commandIds } from '../../constants';
+import { formatError } from '../../lib/format/error';
+import { refreshBranchContextState } from '../../state/state';
 import {
   ContextsGroupBy,
   getContextsGroupBy,
   saveContextsGroupBy,
-} from '../views/other-branches/contexts';
-import { type GroupByOption, showGroupByQuickPick } from './group-options';
+} from '../../views/other-branches/contexts';
+import { type GroupByOption, showGroupByQuickPick } from '../shared/group-options';
 
 const groupByOptions: GroupByOption<ContextsGroupBy>[] = [
   { label: 'Flat', value: ContextsGroupBy.Flat },

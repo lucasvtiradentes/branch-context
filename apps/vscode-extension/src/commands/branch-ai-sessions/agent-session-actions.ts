@@ -2,11 +2,11 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { AgentSessionProvider } from '@branch-context/core';
 import * as vscode from 'vscode';
-import { commandIds } from '../constants';
-import { removeAgentSessionPin, upsertAgentSessionPin } from '../core/agent-sessions/pins';
-import { formatError } from '../lib/format/error';
-import { getBranchContextState, refreshBranchContextState } from '../state/state';
-import type { BranchContextTreeNodeDraft } from '../views/items';
+import { commandIds } from '../../constants';
+import { removeAgentSessionPin, upsertAgentSessionPin } from '../../core/agent-sessions/pins';
+import { formatError } from '../../lib/format/error';
+import { getBranchContextState, refreshBranchContextState } from '../../state/state';
+import type { BranchContextTreeNodeDraft } from '../../views/items';
 
 type CachedAgentSession = {
   provider: AgentSessionProvider;

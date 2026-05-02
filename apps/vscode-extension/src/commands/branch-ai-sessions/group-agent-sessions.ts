@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
-import { APP_NAME, commandIds } from '../constants';
-import { formatError } from '../lib/format/error';
-import { refreshBranchContextState } from '../state/state';
+import { APP_NAME, commandIds } from '../../constants';
+import { formatError } from '../../lib/format/error';
+import { refreshBranchContextState } from '../../state/state';
 import {
   AgentSessionsGroupBy,
   getAgentSessionsGroupBy,
   saveAgentSessionsGroupBy,
-} from '../views/branch-ai-sessions/agent-sessions';
-import { type GroupByOption, showGroupByQuickPick } from './group-options';
+} from '../../views/branch-ai-sessions/agent-sessions';
+import { type GroupByOption, showGroupByQuickPick } from '../shared/group-options';
 
 const groupByOptions: GroupByOption<AgentSessionsGroupBy>[] = [
   { label: 'Flat', value: AgentSessionsGroupBy.Flat },

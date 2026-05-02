@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
-import { commandIds } from '../constants';
-import { formatError } from '../lib/format/error';
-import { refreshBranchContextState } from '../state/state';
+import { commandIds } from '../../constants';
+import { formatError } from '../../lib/format/error';
+import { refreshBranchContextState } from '../../state/state';
 import {
   GitChangedFilesGroupBy,
   getGitChangedFilesGroupBy,
   saveGitChangedFilesGroupBy,
-} from '../views/branch-git-changes/git-changes';
-import { type GroupByOption, showGroupByQuickPick } from './group-options';
+} from '../../views/branch-git-changes/git-changes';
+import { type GroupByOption, showGroupByQuickPick } from '../shared/group-options';
 
 const groupByOptions: GroupByOption<GitChangedFilesGroupBy>[] = [
   { label: 'Flat', value: GitChangedFilesGroupBy.Flat },

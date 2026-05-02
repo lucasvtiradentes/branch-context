@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs';
 import * as vscode from 'vscode';
-import { APP_NAME, commandIds } from '../constants';
-import { formatError } from '../lib/format/error';
-import { getInitializedState, openPath } from './helpers';
+import { APP_NAME, commandIds } from '../../constants';
+import { formatError } from '../../lib/format/error';
+import { getInitializedState, openPath } from '../shared/helpers';
 
 export function registerOpenConfigCommand(): vscode.Disposable {
   return vscode.commands.registerCommand(commandIds.openConfig, async () => {

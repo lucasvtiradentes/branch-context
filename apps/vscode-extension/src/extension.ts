@@ -1,6 +1,5 @@
 import type * as vscode from 'vscode';
-import { registerCommands } from './commands';
-import { registerInternalCommands } from './commands/internal';
+import { registerCommands } from './commands/commands';
 import { initializeContextFileUx } from './context-file-ux';
 import { initializeAgentIndexer } from './core/agent-sessions/indexer';
 import { initializeGitDiffProvider } from './core/git-diff';
@@ -24,7 +23,6 @@ function initializeUi(context: vscode.ExtensionContext): void {
   initializeStatusBar(context);
   initializeTreeViews(context);
   registerCommands(context);
-  registerInternalCommands(context);
 }
 
 function initializeRuntime(context: vscode.ExtensionContext): void {

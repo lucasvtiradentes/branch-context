@@ -1,9 +1,9 @@
 import { type BranchGitSummary, BranchGitSummaryErrorReason } from '@branch-context/core';
 import * as vscode from 'vscode';
-import { APP_NAME, commandIds } from '../constants';
-import { openBranchChanges } from '../core/git-diff';
-import { formatError } from '../lib/format/error';
-import { getInitializedState } from './helpers';
+import { APP_NAME, commandIds } from '../../constants';
+import { openBranchChanges } from '../../core/git-diff';
+import { formatError } from '../../lib/format/error';
+import { getInitializedState } from '../shared/helpers';
 
 export function registerReviewDiffCommand(): vscode.Disposable {
   return vscode.commands.registerCommand(commandIds.reviewDiff, async () => {
