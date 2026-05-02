@@ -7,13 +7,9 @@ import {
   getAgentSessionsGroupBy,
   saveAgentSessionsGroupBy,
 } from '../tree-views/agent-sessions';
+import type { GroupByOption } from './group-options';
 
-type GroupByOption = {
-  label: string;
-  value: AgentSessionsGroupBy;
-};
-
-const groupByOptions: GroupByOption[] = [
+const groupByOptions: GroupByOption<AgentSessionsGroupBy>[] = [
   { label: 'Flat', value: 'flat' },
   { label: 'Provider', value: 'provider' },
   { label: 'Date', value: 'date' },

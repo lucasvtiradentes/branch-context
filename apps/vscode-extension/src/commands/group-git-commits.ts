@@ -7,13 +7,9 @@ import {
   getGitCommitsGroupBy,
   saveGitCommitsGroupBy,
 } from '../tree-views/git-changes';
+import type { GroupByOption } from './group-options';
 
-type GroupByOption = {
-  label: string;
-  value: GitCommitsGroupBy;
-};
-
-const groupByOptions: GroupByOption[] = [
+const groupByOptions: GroupByOption<GitCommitsGroupBy>[] = [
   { label: 'Flat', value: 'flat' },
   { label: 'Date', value: 'date' },
   { label: 'Author', value: 'author' },

@@ -61,6 +61,11 @@ type ParsedCodexSession = {
   updatedAt: string | null;
 };
 
+type SessionFileCandidate = {
+  path: string;
+  mtimeMs: number;
+};
+
 export type AgentSessionsResult =
   | {
       ok: true;
@@ -372,7 +377,7 @@ function listCodexSessionFiles(options: AgentSessionScanOptions) {
   }
 
   const maxFiles = options.maxFiles ?? DEFAULT_MAX_FILES;
-  const files: Array<{ path: string; mtimeMs: number }> = [];
+  const files: SessionFileCandidate[] = [];
 
   for (const year of listDirectoryNames(root).sort().reverse()) {
     for (const month of listDirectoryNames(join(root, year)).sort().reverse()) {

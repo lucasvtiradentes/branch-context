@@ -6,7 +6,7 @@ import { commandIds } from '../constants';
 import { removeAgentSessionPin, upsertAgentSessionPin } from '../core/agent-session-pins';
 import { getBranchContextState, refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
-import type { BranchContextTreeNode } from '../tree-views/items';
+import type { BranchContextTreeNodeDraft } from '../tree-views/items';
 
 type CachedAgentSession = {
   provider: AgentSessionProvider;
@@ -28,7 +28,7 @@ export function registerAgentSessionActionCommands(): vscode.Disposable[] {
 }
 
 async function pinAgentSession(node: unknown): Promise<void> {
-  const session = node as Partial<BranchContextTreeNode> | undefined;
+  const session = node as BranchContextTreeNodeDraft | undefined;
   if (!session?.agentProvider || !session.sessionId) {
     await vscode.window.showErrorMessage('Missing agent session metadata.');
     return;
@@ -52,7 +52,7 @@ async function pinAgentSession(node: unknown): Promise<void> {
 }
 
 async function unpinAgentSession(node: unknown): Promise<void> {
-  const session = node as Partial<BranchContextTreeNode> | undefined;
+  const session = node as BranchContextTreeNodeDraft | undefined;
   if (!session?.agentProvider || !session.sessionId) {
     await vscode.window.showErrorMessage('Missing agent session metadata.');
     return;
@@ -76,7 +76,7 @@ async function unpinAgentSession(node: unknown): Promise<void> {
 }
 
 async function copyAgentSessionId(node: unknown): Promise<void> {
-  const session = node as Partial<BranchContextTreeNode> | undefined;
+  const session = node as BranchContextTreeNodeDraft | undefined;
   if (!session?.sessionId) {
     await vscode.window.showErrorMessage('Missing agent session id.');
     return;
@@ -86,7 +86,7 @@ async function copyAgentSessionId(node: unknown): Promise<void> {
 }
 
 async function deleteAgentSession(node: unknown): Promise<void> {
-  const session = node as Partial<BranchContextTreeNode> | undefined;
+  const session = node as BranchContextTreeNodeDraft | undefined;
   if (!session?.agentProvider || !session.sessionId) {
     await vscode.window.showErrorMessage('Missing agent session metadata.');
     return;

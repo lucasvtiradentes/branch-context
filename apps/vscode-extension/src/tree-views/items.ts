@@ -47,6 +47,8 @@ export type BranchContextTreeNode = {
   children?: () => BranchContextTreeNode[];
 };
 
+export type BranchContextTreeNodeDraft = Partial<BranchContextTreeNode>;
+
 export class StateTreeProvider
   implements vscode.TreeDataProvider<BranchContextTreeNode>, vscode.Disposable
 {

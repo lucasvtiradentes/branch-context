@@ -7,13 +7,9 @@ import {
   getContextsGroupBy,
   saveContextsGroupBy,
 } from '../tree-views/contexts';
+import type { GroupByOption } from './group-options';
 
-type GroupByOption = {
-  label: string;
-  value: ContextsGroupBy;
-};
-
-const groupByOptions: GroupByOption[] = [
+const groupByOptions: GroupByOption<ContextsGroupBy>[] = [
   { label: 'Flat', value: 'flat' },
   { label: 'Status', value: 'status' },
   { label: 'Date', value: 'date' },

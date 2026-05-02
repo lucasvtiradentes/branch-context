@@ -18,6 +18,8 @@ export type GitCommitSummary = {
   authorName: string;
 };
 
+type GitChangedFileStats = Pick<GitChangedFileSummary, 'additions' | 'deletions'>;
+
 export function gitInit(path: string, branch?: string): SpawnSyncReturns<string> {
   const args = ['init'];
   if (branch) {
@@ -326,7 +328,7 @@ export function gitRefExists(path: string, ref: string): boolean {
 }
 
 function parseNumstat(output: string) {
-  const stats = new Map<string, Pick<GitChangedFileSummary, 'additions' | 'deletions'>>();
+  const stats = new Map<string, GitChangedFileStats>();
 
   for (const line of output.trim().split('\n').filter(Boolean)) {
     const parts = line.split('\t');
@@ -346,7 +348,7 @@ function parseNumstat(output: string) {
 
 function parseNameStatusLine(
   line: string,
-  stats: Map<string, Pick<GitChangedFileSummary, 'additions' | 'deletions'>>,
+  stats: Map<string, GitChangedFileStats>,
 ): GitChangedFileSummary[] {
   const parts = line.split('\t');
   const status = parts[0]?.[0];

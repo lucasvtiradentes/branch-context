@@ -33,6 +33,11 @@ type ContextViewItem = {
   remote: boolean;
 };
 
+type ContextViewGroup = {
+  label: string;
+  contexts: ContextViewItem[];
+};
+
 let contextsGroupBy: ContextsGroupBy = 'status';
 const contextsGroupByWorkspaceKey = 'contexts.groupBy';
 
@@ -139,7 +144,7 @@ function groupContexts(contexts: ContextViewItem[]) {
   );
 }
 
-function createContextGroupNodes(groups: Array<{ label: string; contexts: ContextViewItem[] }>) {
+function createContextGroupNodes(groups: ContextViewGroup[]) {
   return groups.map((group) =>
     createGroupNode(
       group.label,

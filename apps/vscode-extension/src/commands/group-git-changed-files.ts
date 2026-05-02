@@ -7,13 +7,9 @@ import {
   getGitChangedFilesGroupBy,
   saveGitChangedFilesGroupBy,
 } from '../tree-views/git-changes';
+import type { GroupByOption } from './group-options';
 
-type GroupByOption = {
-  label: string;
-  value: GitChangedFilesGroupBy;
-};
-
-const groupByOptions: GroupByOption[] = [
+const groupByOptions: GroupByOption<GitChangedFilesGroupBy>[] = [
   { label: 'Flat', value: 'flat' },
   { label: 'Change Type', value: 'changeType' },
 ];

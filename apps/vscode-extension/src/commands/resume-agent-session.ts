@@ -2,11 +2,11 @@ import { AgentSessionProvider } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../constants';
 import { markAgentSessionTerminalActive } from '../core/active-agent-sessions';
-import type { BranchContextTreeNode } from '../tree-views/items';
+import type { BranchContextTreeNodeDraft } from '../tree-views/items';
 
 export function registerResumeAgentSessionCommand(): vscode.Disposable {
   return vscode.commands.registerCommand(commandIds.resumeAgentSession, async (node) => {
-    const session = node as Partial<BranchContextTreeNode> | undefined;
+    const session = node as BranchContextTreeNodeDraft | undefined;
     if (!session?.agentProvider || !session.sessionId) {
       await vscode.window.showErrorMessage('Missing agent session metadata.');
       return;

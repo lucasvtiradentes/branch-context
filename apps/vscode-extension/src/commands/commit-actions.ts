@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
-import type { BranchContextTreeNode } from '../tree-views/items';
+import type { BranchContextTreeNodeDraft } from '../tree-views/items';
 import { getInitializedState } from './helpers';
 
 export function registerCommitActionCommands(): vscode.Disposable[] {
@@ -91,7 +91,7 @@ async function resetFilesToCommit(node: unknown): Promise<void> {
 }
 
 function getCommit(node: unknown): GitCommitSummary | null {
-  const treeNode = node as Partial<BranchContextTreeNode> | undefined;
+  const treeNode = node as BranchContextTreeNodeDraft | undefined;
   return treeNode?.commit ?? null;
 }
 

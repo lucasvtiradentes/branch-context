@@ -1,5 +1,7 @@
-import { getAgentSessions, getGitRoot } from '@branch-context/core';
+import { type AgentSession, getAgentSessions, getGitRoot } from '@branch-context/core';
 import type { Program } from '@caporal/core';
+
+type AgentSessionProviderSource = Pick<AgentSession, 'provider'>;
 
 export function registerAgentsStatusCommand(program: Program) {
   program.command('agents status', 'Show agent integration status').action(() => cmdAgentsStatus());
@@ -25,7 +27,7 @@ function cmdAgentsStatus() {
   return 0;
 }
 
-function formatProviders(sessions: Array<{ provider: string }>) {
+function formatProviders(sessions: AgentSessionProviderSource[]) {
   const providers = [...new Set(sessions.map((session) => session.provider))].sort();
   if (providers.length === 0) {
     return 'none';

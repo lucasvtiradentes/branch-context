@@ -14,17 +14,21 @@ type ActiveSessionRef = {
   path: string | null;
 };
 
+type AgentSessionKeySource = Pick<AgentSession, 'provider' | 'sessionId'>;
+type ActiveAgentSessionSource = AgentSessionKeySource & Pick<AgentSession, 'path'>;
+type TimeoutHandle = ReturnType<typeof setTimeout>;
+
 type PendingTerminalRef = {
   terminal: vscode.Terminal;
   execution: vscode.TerminalShellExecution;
-  timer: ReturnType<typeof setTimeout>;
+  timer: TimeoutHandle;
 };
 
 let refreshTree: (() => void) | undefined;
 const activeFilePaths = new Set<string>();
 const activeTerminalKeys = new Set<string>();
-const fileTimers = new Map<string, ReturnType<typeof setTimeout>>();
-const suppressedFileTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const fileTimers = new Map<string, TimeoutHandle>();
+const suppressedFileTimers = new Map<string, TimeoutHandle>();
 const terminalSessions = new Map<vscode.Terminal, ActiveSessionRef>();
 const terminalPaths = new Map<vscode.Terminal, string>();
 const executionSessions = new Map<vscode.TerminalShellExecution, ActiveSessionRef>();
@@ -178,7 +182,7 @@ export function markAgentSessionFileActive(path: string): void {
 
 export function markAgentSessionTerminalActive(
   terminal: vscode.Terminal,
-  session: Pick<AgentSession, 'provider' | 'sessionId' | 'path'>,
+  session: ActiveAgentSessionSource,
 ): void {
   const activeSession = getActiveSessionRef(session);
   logger.debug(
@@ -282,14 +286,14 @@ function getSessionFromCommandLine(commandLine: string): ActiveSessionRef | null
   return null;
 }
 
-function getActiveSessionRef(session: Pick<AgentSession, 'provider' | 'sessionId' | 'path'>) {
+function getActiveSessionRef(session: ActiveAgentSessionSource) {
   return {
     key: getSessionKey(session),
     path: session.path,
   };
 }
 
-function getSessionKey(session: Pick<AgentSession, 'provider' | 'sessionId'>): string {
+function getSessionKey(session: AgentSessionKeySource): string {
   return `${session.provider}:${session.sessionId}`;
 }
 
