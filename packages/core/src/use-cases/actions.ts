@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CONFIG_FILE, DEFAULT_SYMLINK, HookType } from '../constants';
+import { BRANCHES_DIR, CONFIG_DIR, CONFIG_FILE, DEFAULT_SYMLINK, HookType } from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
 import { getCurrentBranch, installHook, type PromptYesNo } from '../core/hooks';
@@ -147,7 +147,7 @@ export async function initProject(
   const commitHook = await installHook(gitRoot, HookType.PostCommit, ask);
 
   addToGitignore(gitRoot, DEFAULT_SYMLINK);
-  addToGitignore(gitRoot, '.bctx/branches/');
+  addToGitignore(gitRoot, `${CONFIG_DIR}/${BRANCHES_DIR}/`);
 
   return {
     ok: true,

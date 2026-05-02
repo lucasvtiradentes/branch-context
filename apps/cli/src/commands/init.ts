@@ -1,7 +1,9 @@
 import { mkdirSync } from 'node:fs';
 import {
   addToGitignore,
+  BRANCHES_DIR,
   CLI_NAME,
+  CONFIG_DIR,
   CONFIG_FILE,
   configExists,
   copyInitConfig,
@@ -68,7 +70,7 @@ async function cmdInit(_args: string[]) {
   printHookInstallResult(commitResult, HOOK_POST_COMMIT);
 
   addToGitignore(gitRoot, DEFAULT_SYMLINK);
-  addToGitignore(gitRoot, '.bctx/branches/');
+  addToGitignore(gitRoot, `${CONFIG_DIR}/${BRANCHES_DIR}/`);
 
   const branch = getCurrentBranch(gitRoot);
   if (branch) {

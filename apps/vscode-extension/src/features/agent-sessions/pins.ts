@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { type AgentSession, AgentSessionProvider } from '@branch-context/core';
+import { type AgentSession, AgentSessionProvider, DEFAULT_SYMLINK } from '@branch-context/core';
 import { branchContextState } from '../../vscode/state';
 
 const pinsFileName = 'agent-session-pins.json';
@@ -55,7 +55,7 @@ export function removeAgentSessionPin(provider: AgentSession['provider'], sessio
 
 function getAgentSessionPinsFilePath(): string | null {
   const workspaceRoot = branchContextState.get().workspaceRoot;
-  return workspaceRoot ? join(workspaceRoot, '_branch', pinsFileName) : null;
+  return workspaceRoot ? join(workspaceRoot, DEFAULT_SYMLINK, pinsFileName) : null;
 }
 
 function readAgentSessionPinsFile(path: string | null): AgentSessionPinsFile {

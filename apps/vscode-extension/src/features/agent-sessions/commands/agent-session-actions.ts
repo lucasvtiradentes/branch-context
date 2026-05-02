@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { AgentSessionProvider } from '@branch-context/core';
+import { AGENTS_FILE_NAME, AgentSessionProvider, DEFAULT_SYMLINK } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../../../constants';
 import { formatError } from '../../../shared/format/error';
@@ -119,7 +119,7 @@ function removeCachedAgentSession(provider: AgentSessionProvider, sessionId: str
     return;
   }
 
-  const agentsFilePath = join(state.workspaceRoot, '_branch', 'agents.json');
+  const agentsFilePath = join(state.workspaceRoot, DEFAULT_SYMLINK, AGENTS_FILE_NAME);
   const agentsFile = readCachedAgentsFile(agentsFilePath);
   const sessions = agentsFile.sessions.filter(
     (session) => session.provider !== provider || session.sessionId !== sessionId,

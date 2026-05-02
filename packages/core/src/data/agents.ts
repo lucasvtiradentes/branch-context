@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { AGENTS_FILE_NAME, DEFAULT_SYMLINK } from '../constants';
 import { getBranchDir, sanitizeBranchName } from '../core/sync';
+import { getBranchesDir } from './config';
 
 export enum AgentSessionProvider {
   Claude = 'claude',
@@ -53,7 +54,7 @@ export function getBranchAgentsFilePath(workspace: string, branch: string) {
 }
 
 export function getBranchAgentsFilePathByKey(workspace: string, branchKey: string) {
-  return join(workspace, '.bctx', 'branches', branchKey, AGENTS_FILE_NAME);
+  return join(getBranchesDir(workspace), branchKey, AGENTS_FILE_NAME);
 }
 
 export function createAgentSession(input: AgentSessionInput): AgentSession {
