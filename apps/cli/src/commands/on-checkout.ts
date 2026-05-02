@@ -9,6 +9,15 @@ import {
   updateBranchMeta,
   updateContextTags,
 } from '@branch-context/core';
+import type { Program } from '@caporal/core';
+
+export function registerOnCheckoutCommand(program: Program) {
+  program
+    .command('on-checkout', 'Run post-checkout hook callback', { visible: false })
+    .argument('<old-branch>', 'Old branch')
+    .argument('<new-branch>', 'New branch')
+    .action(({ args }) => cmdOnCheckout([String(args.oldBranch), String(args.newBranch)]));
+}
 
 export function cmdOnCheckout(args: string[]) {
   if (args.length < 2) {

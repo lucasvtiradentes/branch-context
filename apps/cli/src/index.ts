@@ -6,19 +6,16 @@ export { addToGitignore } from '@branch-context/core';
 import { runCli } from './cli';
 
 export { runCli } from './cli';
-export { cmdAgents } from './commands/agents';
-export {
-  getBashCompletion,
-  getFishCompletion,
-  getZshCompletion,
-  safeFuncName,
-} from './commands/completion';
-export { cmdInit } from './commands/init';
-export { cmdOnCheckout } from './commands/on-checkout';
-export { cmdOnCommit } from './commands/on-commit';
-export { cmdPrune } from './commands/prune';
-export { cmdStatus } from './commands/status';
-export { cmdTemplate } from './commands/template';
+export { cmdAgentsStatus, cmdAgentsSync, registerAgentsCommands } from './commands/agents';
+export { cmdBase, registerBaseCommand } from './commands/base';
+export { cmdInit, registerInitCommand } from './commands/init';
+export { cmdOnCheckout, registerOnCheckoutCommand } from './commands/on-checkout';
+export { cmdOnCommit, registerOnCommitCommand } from './commands/on-commit';
+export { cmdPrune, registerPruneCommand } from './commands/prune';
+export { cmdStatus, registerStatusCommand } from './commands/status';
+export { cmdSync, registerSyncCommand } from './commands/sync';
+export { cmdTemplate, registerTemplateCommand } from './commands/template';
+export { cmdUninstall, registerUninstallCommand } from './commands/uninstall';
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const exitCode = await runCli();

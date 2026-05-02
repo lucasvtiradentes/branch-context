@@ -17,6 +17,11 @@ import {
   installHook,
   syncBranch,
 } from '@branch-context/core';
+import type { Program } from '@caporal/core';
+
+export function registerInitCommand(program: Program) {
+  program.command('init', 'Initialize and install hook').action(() => cmdInit([]));
+}
 
 export async function cmdInit(_args: string[]) {
   const gitRoot = getGitRoot();

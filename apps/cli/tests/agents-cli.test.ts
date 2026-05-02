@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { cmdAgents, runCli } from '../src/index';
+import { runCli } from '../src/index';
 import { captureConsole, createGitRepo, initBctxWorkspace } from './helpers';
 
 describe('agents command', () => {
   it('prints help for invalid usage', async () => {
     const capture = captureConsole();
 
-    expect(await cmdAgents([])).toBe(1);
-    expect(capture.output).toContain('bctx agents status');
+    expect(await runCli(['agents'])).toBe(1);
+    expect(capture.output).toContain('Unknown command');
   });
 
   it('shows agent status through cli dispatch', async () => {

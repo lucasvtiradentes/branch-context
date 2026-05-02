@@ -1,4 +1,9 @@
 import { CLI_NAME, Config, getGitRoot, playSound, syncCurrentBranch } from '@branch-context/core';
+import type { Program } from '@caporal/core';
+
+export function registerSyncCommand(program: Program) {
+  program.command('sync', 'Sync context and update meta/tags').action(() => cmdSync([]));
+}
 
 export function cmdSync(_args: string[]) {
   const gitRoot = getGitRoot();

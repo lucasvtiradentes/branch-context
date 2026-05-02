@@ -1,60 +1,86 @@
+import { createRequire } from 'node:module';
 import { CLI_NAME, DIST_NAME, VERSION } from '@branch-context/core';
-import { COMMANDS, getAllCommandNames, getCommandHandler } from './cmd-registry';
+import type { Program as CaporalProgram } from '@caporal/core';
+import { registerAgentsCommands } from './commands/agents';
+import { registerBaseCommand } from './commands/base';
+import { registerInitCommand } from './commands/init';
+import { registerOnCheckoutCommand } from './commands/on-checkout';
+import { registerOnCommitCommand } from './commands/on-commit';
+import { registerPruneCommand } from './commands/prune';
+import { registerStatusCommand } from './commands/status';
+import { registerSyncCommand } from './commands/sync';
+import { registerTemplateCommand } from './commands/template';
+import { registerUninstallCommand } from './commands/uninstall';
 
 export function printHelp() {
-  const cmdLines = Object.entries(COMMANDS).map(([name, info]) => {
-    const args = info.args ? ` ${info.args}` : '';
-    const label = `${name}${args}`;
-    return `  ${label.padEnd(20)} ${info.desc}`;
-  });
-
-  console.log(`${CLI_NAME} - Git branch context manager
-
-Commands:
-${cmdLines.join('\n')}
-
-Options:
-  --help, -h           Show this help
-  --version, -v        Show version
-
-Examples:
-  ${CLI_NAME} init                             # initialize + install hook
-  ${CLI_NAME} status                           # show status, health, and branches
-  ${CLI_NAME} agents status                    # show agent integration status
-  ${CLI_NAME} prune                            # archive orphan contexts + delete branches
-  ${CLI_NAME} template                         # select template interactively
-  ${CLI_NAME} template feature                 # apply feature template
-  ${CLI_NAME} completion zsh                   # generate zsh completion
-
-Exit codes:
-  0 - success
-  1 - error`);
+  void createProgram().run(['--help']);
 }
 
 export async function runCli(args = process.argv.slice(2)) {
-  if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
-    printHelp();
-    return 0;
+  try {
+    const result = await createProgram().run(args);
+    return typeof result === 'number' && result > 0 ? result : 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.log(`error: ${message}`);
+    return 1;
   }
+}
 
-  if (args.includes('--version') || args.includes('-v')) {
-    console.log(VERSION);
-    return 0;
-  }
+function createProgram(): CaporalProgram {
+  const program = new (getProgramConstructor())()
+    .bin(process.env.BCTX_PROG_NAME ?? CLI_NAME)
+    .name(CLI_NAME)
+    .description('Git branch context manager')
+    .version(VERSION)
+    .disableGlobalOption('-v')
+    .disableGlobalOption('-V')
+    .option('-v, --version', 'Show version', {
+      global: true,
+      action: () => {
+        console.log(VERSION);
+        return false;
+      },
+    });
 
-  const cmd = args[0];
-  const cmdArgs = args.slice(1);
-  if (!cmd) {
-    printHelp();
-    return 0;
-  }
-  if (getAllCommandNames().has(cmd)) {
-    return await getCommandHandler(cmd)(cmdArgs);
-  }
+  registerBaseCommand(program);
+  registerInitCommand(program);
+  registerUninstallCommand(program);
+  registerSyncCommand(program);
+  registerStatusCommand(program);
+  registerAgentsCommands(program);
+  registerPruneCommand(program);
+  registerTemplateCommand(program);
+  registerOnCheckoutCommand(program);
+  registerOnCommitCommand(program);
 
-  console.log(`error: unknown command '${cmd}'`);
-  console.log(`Run '${CLI_NAME} --help' for usage`);
-  return 1;
+  program.help(
+    [
+      'Examples:',
+      `  ${CLI_NAME} init`,
+      `  ${CLI_NAME} status`,
+      `  ${CLI_NAME} agents status`,
+      `  ${CLI_NAME} prune`,
+      `  ${CLI_NAME} template`,
+      `  ${CLI_NAME} template feature`,
+      `  ${CLI_NAME} --install-completion`,
+    ].join('\n'),
+  );
+
+  return program;
+}
+
+function getProgramConstructor() {
+  const require = createRequire(import.meta.url);
+  const module = require('@caporal/core') as {
+    Program?: new () => CaporalProgram;
+    default?: { Program?: new () => CaporalProgram };
+  };
+  const Program = module.Program ?? module.default?.Program;
+  if (!Program) {
+    throw new Error('Caporal Program constructor not found');
+  }
+  return Program;
 }
 
 export { DIST_NAME };

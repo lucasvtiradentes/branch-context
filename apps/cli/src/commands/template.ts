@@ -7,6 +7,14 @@ import {
   getGitRoot,
   listAvailableTemplates,
 } from '@branch-context/core';
+import type { Program } from '@caporal/core';
+
+export function registerTemplateCommand(program: Program) {
+  program
+    .command('template', 'Apply template to current branch')
+    .argument('[name]', 'Template name')
+    .action(({ args }) => cmdTemplate(stringArgs(args.name)));
+}
 
 async function selectTemplate(templates: string[]) {
   console.log('Templates:\n');
@@ -33,6 +41,10 @@ async function selectTemplate(templates: string[]) {
   } finally {
     rl.close();
   }
+}
+
+function stringArgs(value: unknown) {
+  return value == null || value === '' ? [] : [String(value)];
 }
 
 export async function cmdTemplate(args: string[]) {

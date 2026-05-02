@@ -1,5 +1,12 @@
 import { relative } from 'node:path';
 import { getGitRoot, syncBranchAfterCommit } from '@branch-context/core';
+import type { Program } from '@caporal/core';
+
+export function registerOnCommitCommand(program: Program) {
+  program
+    .command('on-commit', 'Run post-commit hook callback', { visible: false })
+    .action(() => cmdOnCommit([]));
+}
 
 export function cmdOnCommit(_args: string[]) {
   const gitRoot = getGitRoot();

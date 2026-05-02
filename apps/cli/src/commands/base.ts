@@ -1,4 +1,12 @@
 import { CLI_NAME, getCurrentBase, getGitRoot, setCurrentBase } from '@branch-context/core';
+import type { Program } from '@caporal/core';
+
+export function registerBaseCommand(program: Program) {
+  program
+    .command('base', 'Show or set base branch')
+    .argument('[branch]', 'Base branch')
+    .action(({ args }) => cmdBase(stringArgs(args.branch)));
+}
 
 export function cmdBase(args: string[]) {
   const gitRoot = getGitRoot();
@@ -24,6 +32,10 @@ export function cmdBase(args: string[]) {
 
   console.log(`Base branch set to '${result.baseBranch}' for '${result.branch}'`);
   return 0;
+}
+
+function stringArgs(value: unknown) {
+  return value == null || value === '' ? [] : [String(value)];
 }
 
 function renderBaseError(result: { reason: string; message: string; branch?: string }) {

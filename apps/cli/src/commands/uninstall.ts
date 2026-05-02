@@ -6,6 +6,14 @@ import {
   uninstallHook,
   unsetGlobalHooksPath,
 } from '@branch-context/core';
+import type { Program } from '@caporal/core';
+
+export function registerUninstallCommand(program: Program) {
+  program
+    .command('uninstall', 'Remove hook from current repo')
+    .option('--global', 'Unset global hooks path')
+    .action(({ options }) => cmdUninstall(options.global ? ['--global'] : []));
+}
 
 export function cmdUninstall(args: string[]) {
   if (args.includes('--global')) {

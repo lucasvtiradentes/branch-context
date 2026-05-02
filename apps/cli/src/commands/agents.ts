@@ -1,21 +1,13 @@
 import { getAgentSessions, getGitRoot, syncAgentSessions } from '@branch-context/core';
+import type { Program } from '@caporal/core';
 
-export function cmdAgents(args: string[]): number {
-  const [subcommand] = args;
+export function registerAgentsCommands(program: Program): void {
+  program.command('agents status', 'Show agent integration status').action(() => cmdAgentsStatus());
 
-  if (subcommand === 'status') {
-    return cmdAgentsStatus();
-  }
-
-  if (subcommand === 'sync') {
-    return cmdAgentsSync();
-  }
-
-  printAgentsHelp();
-  return 1;
+  program.command('agents sync', 'Sync agent sessions').action(() => cmdAgentsSync());
 }
 
-function cmdAgentsStatus() {
+export function cmdAgentsStatus() {
   const gitRoot = getGitRoot();
   if (!gitRoot) {
     console.log('error: not a git repository');
@@ -35,7 +27,7 @@ function cmdAgentsStatus() {
   return 0;
 }
 
-function cmdAgentsSync() {
+export function cmdAgentsSync() {
   const gitRoot = getGitRoot();
   if (!gitRoot) {
     console.log('error: not a git repository');
@@ -51,12 +43,6 @@ function cmdAgentsSync() {
   console.log(`Synced agents: ${result.sessions.length}`);
   console.log(`Written:       ${result.written ? result.agentsFilePath : 'no'}`);
   return 0;
-}
-
-function printAgentsHelp() {
-  console.log(`usage:
-  bctx agents status
-  bctx agents sync`);
 }
 
 function formatProviders(sessions: Array<{ provider: string }>) {

@@ -10,11 +10,16 @@ import {
   red,
   yellow,
 } from '@branch-context/core';
+import type { Program } from '@caporal/core';
 import { printTable } from './_branches';
 
 const STATUS_OK = green('[ok]');
 const STATUS_ERROR = red('[!!]');
 const STATUS_WARN = yellow('[--]');
+
+export function registerStatusCommand(program: Program) {
+  program.command('status', 'Show status, health, and branches').action(() => cmdStatus([]));
+}
 
 export function cmdStatus(_args: string[]) {
   const gitRoot = getGitRoot();

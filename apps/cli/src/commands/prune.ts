@@ -13,7 +13,14 @@ import {
   sanitizeBranchName,
   yellow,
 } from '@branch-context/core';
+import type { Program } from '@caporal/core';
 import { printTable } from './_branches';
+
+export function registerPruneCommand(program: Program) {
+  program
+    .command('prune', 'Archive orphan contexts and delete branches')
+    .action(() => cmdPrune([]));
+}
 
 export async function cmdPrune(_args: string[]) {
   const gitRoot = getGitRoot();
