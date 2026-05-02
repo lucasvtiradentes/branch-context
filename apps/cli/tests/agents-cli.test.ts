@@ -3,6 +3,14 @@ import { runCli } from '../src/index';
 import { captureConsole, createGitRepo, initBctxWorkspace } from './helpers';
 
 describe('agents command', () => {
+  it('prints help when no command is provided', async () => {
+    const capture = captureConsole();
+
+    expect(await runCli([])).toBe(0);
+    expect(capture.output).toContain('Git branch context manager');
+    expect(capture.output).toContain('agents status');
+  });
+
   it('prints help for invalid usage', async () => {
     const capture = captureConsole();
 

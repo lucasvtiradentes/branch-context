@@ -18,7 +18,7 @@ let programInstance: CaporalProgram | undefined;
 
 export async function runCli(args = process.argv.slice(2)) {
   try {
-    const result = await getProgram().run(args);
+    const result = await getProgram().run(args.length === 0 ? ['--help'] : args);
     return typeof result === 'number' && result > 0 ? result : 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
