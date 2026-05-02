@@ -1,7 +1,7 @@
 {
   "name": "branch-context",
   "private": true,
-  "version": "0.3.2",
+  "version": "0.0.0",
   "bin": {
     "bctxd": "./scripts/bctxd"
   },
@@ -17,7 +17,7 @@
     "build:no-cache": "turbo run build --force",
     "changeset": "changeset",
     "changeset:version": "changeset version",
-    "release": "echo 'Release triggered by changesets'",
+    "release": "changeset publish",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "check": "biome check .",

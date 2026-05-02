@@ -2,40 +2,60 @@
 
 set -euo pipefail
 
-package_path="apps/vscode-extension/package.json"
-current_version="$(node -p "require('./apps/vscode-extension/package.json').version")"
-previous_package="$(mktemp)"
+read_current_version() {
+  node -p "require('./$1').version"
+}
+
+read_previous_version() {
+  git show "HEAD~1:$1" 2>/dev/null | node -e "const fs = require('node:fs'); try { const packageJson = JSON.parse(fs.readFileSync(0, 'utf8')); process.stdout.write(packageJson.version); } catch { process.stdout.write(''); }"
+}
+
+version_changed() {
+  local package_path="$1"
+  local current_version
+  local previous_version
+
+  current_version="$(read_current_version "$package_path")"
+  previous_version="$(read_previous_version "$package_path")"
+
+  [ -n "$previous_version" ] && [ "$current_version" != "$previous_version" ]
+}
+
+tag_missing() {
+  local tag="$1"
+
+  ! git ls-remote --tags origin 2>/dev/null | grep -q "refs/tags/$tag$"
+}
 
 write_result() {
+  local name="$1"
+  local value="$2"
+
   if [ -n "${GITHUB_OUTPUT:-}" ]; then
-    printf 'should_release=%s\n' "$1" >> "$GITHUB_OUTPUT"
+    printf '%s=%s\n' "$name" "$value" >> "$GITHUB_OUTPUT"
   else
-    printf 'should_release=%s\n' "$1"
+    printf '%s=%s\n' "$name" "$value"
   fi
 }
 
-cleanup() {
-  rm -f "$previous_package"
-}
+should_release_npm=false
+should_release_vscode=false
 
-trap cleanup EXIT
+if version_changed "apps/cli/package.json" || version_changed "packages/core/package.json"; then
+  should_release_npm=true
+fi
 
-if git show "HEAD~1:$package_path" > "$previous_package" 2>/dev/null; then
-  previous_version="$(node -e "const fs = require('node:fs'); const packageJson = JSON.parse(fs.readFileSync(process.argv[1], 'utf8')); process.stdout.write(packageJson.version);" "$previous_package")"
+vscode_version="$(read_current_version "apps/vscode-extension/package.json")"
+if version_changed "apps/vscode-extension/package.json" && tag_missing "vscode-extension-v$vscode_version"; then
+  should_release_vscode=true
+fi
+
+if [ "$should_release_npm" = "true" ] || [ "$should_release_vscode" = "true" ]; then
+  should_release=true
 else
-  previous_version="0.0.0"
+  should_release=false
 fi
 
-if [ "$current_version" = "$previous_version" ]; then
-  write_result false
-  exit 0
-fi
-
-tag="vscode-extension-v$current_version"
-
-if git ls-remote --tags origin 2>/dev/null | grep -q "refs/tags/$tag$"; then
-  write_result false
-  exit 0
-fi
-
-write_result true
+write_result should_release "$should_release"
+write_result should_release_npm "$should_release_npm"
+write_result should_release_vscode "$should_release_vscode"

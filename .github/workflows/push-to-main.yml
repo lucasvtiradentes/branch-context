@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
   pull-requests: write
 
 concurrency:
@@ -28,7 +29,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       has_changesets: ${{ steps.changesets.outputs.hasChangesets }}
-      published: ${{ steps.changesets.outputs.published }}
     env:
       HUSKY: 0
     steps:
@@ -41,15 +41,29 @@ jobs:
       - name: Create release pull request
         id: changesets
         uses: changesets/action@v1
-        with:
-          publish: pnpm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish_npm:
+    name: Release NPM Packages
+    needs: [ci, release]
+    if: needs.release.outputs.has_changesets == 'false' && needs.ci.outputs.should_release_npm == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+
+      - uses: ./.github/actions/setup-and-install
+
+      - uses: ./.github/actions/release-npm
+        with:
+          npm-token: ${{ secrets.NPM_TOKEN }}
 
   publish_vscode:
     name: Release VS Code Extension
     needs: [ci, release]
-    if: needs.release.outputs.published == 'true' && needs.ci.outputs.should_release == 'true'
+    if: needs.release.outputs.has_changesets == 'false' && needs.ci.outputs.should_release_vscode == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

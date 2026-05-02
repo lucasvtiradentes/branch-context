@@ -1,0 +1,25 @@
+name: Release NPM packages
+description: Publish public workspace packages to NPM with Changesets
+
+inputs:
+  npm-token:
+    description: NPM authentication token
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Build packages
+      shell: bash
+      run: pnpm run build
+      env:
+        CI: true
+
+    - name: Publish packages
+      shell: bash
+      run: |
+        echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+        pnpm changeset publish
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.npm-token }}
+        NPM_TOKEN: ${{ inputs.npm-token }}

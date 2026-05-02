@@ -1,10 +1,12 @@
 {
   "name": "@branch-context/core",
-  "version": "0.3.2",
-  "private": true,
+  "version": "0.0.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

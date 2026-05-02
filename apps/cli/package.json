@@ -1,9 +1,14 @@
 {
   "name": "@branch-context/cli",
-  "version": "0.3.2",
-  "private": true,
+  "version": "0.0.0",
   "type": "module",
   "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "bctx": "./dist/index.js",
     "branch-ctx": "./dist/index.js"
