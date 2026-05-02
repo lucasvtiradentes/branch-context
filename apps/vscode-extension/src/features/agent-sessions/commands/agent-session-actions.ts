@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import {
   type AgentSessionProvider,
+  getBranchAgentsFilePath,
   getCurrentAgentsFilePath,
   readAgentsFile,
   writeAgentsFile,
@@ -38,7 +39,13 @@ async function pinAgentSession(node: unknown): Promise<void> {
   }
 
   try {
-    upsertAgentSessionPin(session.agentProvider, session.sessionId, description.trim());
+    upsertAgentSessionPin(
+      session.agentProvider,
+      session.sessionId,
+      description.trim(),
+      session.branch,
+      session.agentsFilePath,
+    );
     branchContextState.refresh();
   } catch (error) {
     await vscode.window.showErrorMessage(formatError(error));
@@ -62,7 +69,12 @@ async function unpinAgentSession(node: unknown): Promise<void> {
   }
 
   try {
-    removeAgentSessionPin(session.agentProvider, session.sessionId);
+    removeAgentSessionPin(
+      session.agentProvider,
+      session.sessionId,
+      session.branch,
+      session.agentsFilePath,
+    );
     branchContextState.refresh();
   } catch (error) {
     await vscode.window.showErrorMessage(formatError(error));
@@ -99,7 +111,12 @@ async function deleteAgentSession(node: unknown): Promise<void> {
     if (session.path && existsSync(session.path)) {
       await vscode.workspace.fs.delete(vscode.Uri.file(session.path));
     }
-    removeCachedAgentSession(session.agentProvider, session.sessionId);
+    removeCachedAgentSession(
+      session.agentProvider,
+      session.sessionId,
+      session.branch,
+      session.agentsFilePath,
+    );
     await vscode.commands.executeCommand(commandIds.syncAgents);
     branchContextState.refresh();
   } catch (error) {
@@ -107,13 +124,22 @@ async function deleteAgentSession(node: unknown): Promise<void> {
   }
 }
 
-function removeCachedAgentSession(provider: AgentSessionProvider, sessionId: string): void {
+function removeCachedAgentSession(
+  provider: AgentSessionProvider,
+  sessionId: string,
+  branch?: string,
+  sourceAgentsFilePath?: string,
+): void {
   const state = branchContextState.get();
   if (!state.workspaceRoot) {
     return;
   }
 
-  const agentsFilePath = getCurrentAgentsFilePath(state.workspaceRoot);
+  const agentsFilePath =
+    sourceAgentsFilePath ??
+    (branch && branch !== state.currentBranch
+      ? getBranchAgentsFilePath(state.workspaceRoot, branch)
+      : getCurrentAgentsFilePath(state.workspaceRoot));
   const agentsFile = readAgentsFile(agentsFilePath);
   const sessions = agentsFile.sessions.filter(
     (session) => session.provider !== provider || session.sessionId !== sessionId,

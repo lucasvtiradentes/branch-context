@@ -204,6 +204,16 @@
         "icon": "$(list-tree)"
       },
       {
+        "command": "branch-context.toggleOtherBranchesMode",
+        "title": "Branch Context: Toggle Other Branches Mode",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "branch-context.moveAgentSessionToBranch",
+        "title": "Branch Context: Move Session To Branch",
+        "icon": "$(git-branch)"
+      },
+      {
         "command": "branch-context.checkoutContextBranch",
         "title": "Branch Context: Checkout Branch",
         "icon": "$(git-branch)"
@@ -359,6 +369,14 @@
           "when": "false"
         },
         {
+          "command": "branch-context.toggleOtherBranchesMode",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.moveAgentSessionToBranch",
+          "when": "false"
+        },
+        {
           "command": "branch-context.checkoutContextBranch",
           "when": "false"
         },
@@ -439,9 +457,14 @@
           "group": "navigation@1"
         },
         {
-          "command": "branch-context.groupContextsBy",
+          "command": "branch-context.toggleOtherBranchesMode",
           "when": "view == branch-context.contexts && branch-context.initialized",
           "group": "navigation@1"
+        },
+        {
+          "command": "branch-context.groupContextsBy",
+          "when": "view == branch-context.contexts && branch-context.initialized",
+          "group": "navigation@2"
         },
         {
           "command": "branch-context.openConfig",
@@ -482,47 +505,52 @@
         },
         {
           "command": "branch-context.resumeAgentSession",
-          "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "when": "(view == branch-context.agentSessions || view == branch-context.contexts) && viewItem =~ /branchContext\\.agentSession.*resumable/",
           "group": "inline@1"
         },
         {
           "command": "branch-context.showActiveAgentSession",
-          "when": "view == branch-context.agentSessions && viewItem =~ /active/",
+          "when": "(view == branch-context.agentSessions || view == branch-context.contexts) && viewItem =~ /branchContext\\.agentSession.*active/",
           "group": "inline@1"
         },
         {
           "command": "branch-context.pinAgentSession",
-          "when": "view == branch-context.agentSessions && viewItem =~ /pinnable/",
+          "when": "(view == branch-context.agentSessions || view == branch-context.contexts) && viewItem =~ /branchContext\\.agentSession.*pinnable/",
           "group": "inline@0"
         },
         {
           "command": "branch-context.unpinAgentSession",
-          "when": "view == branch-context.agentSessions && viewItem =~ /pinned/",
+          "when": "(view == branch-context.agentSessions || view == branch-context.contexts) && viewItem =~ /branchContext\\.agentSession.*pinned/",
           "group": "inline@0"
         },
         {
-          "command": "branch-context.resumeAgentSession",
-          "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "command": "branch-context.moveAgentSessionToBranch",
+          "when": "view == branch-context.contexts && viewItem =~ /movable/",
           "group": "navigation@1"
         },
         {
+          "command": "branch-context.resumeAgentSession",
+          "when": "(view == branch-context.agentSessions || view == branch-context.contexts) && viewItem =~ /branchContext\\.agentSession.*resumable/",
+          "group": "navigation@2"
+        },
+        {
           "command": "branch-context.pinAgentSession",
-          "when": "view == branch-context.agentSessions && viewItem =~ /pinnable/",
-          "group": "navigation@2"
-        },
-        {
-          "command": "branch-context.unpinAgentSession",
-          "when": "view == branch-context.agentSessions && viewItem =~ /pinned/",
-          "group": "navigation@2"
-        },
-        {
-          "command": "branch-context.copyAgentSessionId",
-          "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "when": "(view == branch-context.agentSessions || view == branch-context.contexts) && viewItem =~ /branchContext\\.agentSession.*pinnable/",
           "group": "navigation@3"
         },
         {
+          "command": "branch-context.unpinAgentSession",
+          "when": "(view == branch-context.agentSessions || view == branch-context.contexts) && viewItem =~ /branchContext\\.agentSession.*pinned/",
+          "group": "navigation@3"
+        },
+        {
+          "command": "branch-context.copyAgentSessionId",
+          "when": "(view == branch-context.agentSessions || view == branch-context.contexts) && viewItem =~ /branchContext\\.agentSession/",
+          "group": "navigation@4"
+        },
+        {
           "command": "branch-context.deleteAgentSession",
-          "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "when": "(view == branch-context.agentSessions || view == branch-context.contexts) && viewItem =~ /branchContext\\.agentSession/",
           "group": "9_destructive@1"
         },
         {

@@ -20,6 +20,8 @@ import { registerOpenCommitDiffCommand } from '../../features/git-changes/comman
 import { registerReviewDiffCommand } from '../../features/git-changes/commands/review-diff';
 import { registerToggleGitChangesModeCommand } from '../../features/git-changes/commands/toggle-git-changes-mode';
 import { registerGroupContextsCommand } from '../../features/other-branches/commands/group-contexts';
+import { registerMoveAgentSessionCommand } from '../../features/other-branches/commands/move-agent-session';
+import { registerToggleOtherBranchesModeCommand } from '../../features/other-branches/commands/toggle-other-branches-mode';
 import { registerShowLogsCommand } from './show-logs';
 
 export function registerCommands(context: vscode.ExtensionContext): void {
@@ -40,6 +42,8 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerGroupAgentSessionsCommand(context),
     registerToggleAgentSessionTextCommand(context),
     registerGroupContextsCommand(context),
+    registerToggleOtherBranchesModeCommand(context),
+    registerMoveAgentSessionCommand(),
     registerShowLogsCommand(),
     registerShowDetailsCommand(),
     registerSyncAgentsCommand(),

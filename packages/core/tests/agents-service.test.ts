@@ -7,9 +7,11 @@ import {
   AgentSessionScope,
   createAgentSession,
   getAgentSessions,
+  getBranchAgentsFilePath,
   getCachedAgentSessions,
   getClaudeProjectKey,
   getCurrentAgentsFilePath,
+  moveAgentSessionToBranch,
   readAgentsFile,
   syncAgentSessions,
   writeAgentsFile,
@@ -250,5 +252,104 @@ describe('agent session service', () => {
     }
     expect(result.agentsFilePath).toBeTruthy();
     expect(readAgentsFile(result.agentsFilePath ?? '').sessions[0]?.sessionId).toBe('codex-1');
+  });
+
+  it('moves a Codex session to another branch and patches jsonl metadata', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    const sessionFile = join(createTempDir(), 'codex.jsonl');
+    writeFileSync(
+      sessionFile,
+      [
+        JSON.stringify({
+          type: 'session_meta',
+          payload: {
+            id: 'codex-1',
+            timestamp: '2026-05-01T10:00:00.000Z',
+            cwd: repo,
+            source: 'cli',
+            git: { branch: 'feature/old' },
+          },
+        }),
+        JSON.stringify({ type: 'turn_context', payload: { cwd: repo, model: 'gpt-5.5' } }),
+      ].join('\n'),
+    );
+    writeAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'), {
+      version: 1,
+      sessions: [
+        {
+          provider: AgentSessionProvider.Codex,
+          sessionId: 'codex-1',
+          path: sessionFile,
+          model: 'gpt-5.5',
+          title: null,
+          startedAt: '2026-05-01T10:00:00.000Z',
+          updatedAt: '2026-05-01T10:00:00.000Z',
+          pinned: null,
+        },
+      ],
+    });
+
+    const result = moveAgentSessionToBranch({
+      repoRoot: repo,
+      provider: AgentSessionProvider.Codex,
+      sessionId: 'codex-1',
+      fromBranch: 'feature/old',
+      toBranch: 'feature/new',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/old')).sessions).toEqual([]);
+    expect(
+      readAgentsFile(getBranchAgentsFilePath(repo, 'feature/new')).sessions[0]?.sessionId,
+    ).toBe('codex-1');
+    expect(readFileSync(sessionFile, 'utf8')).toContain('"branch":"feature/new"');
+  });
+
+  it('moves a Claude session to another branch and patches jsonl metadata', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    const sessionFile = join(createTempDir(), 'claude.jsonl');
+    writeFileSync(
+      sessionFile,
+      JSON.stringify({
+        type: 'user',
+        cwd: repo,
+        sessionId: 'claude-1',
+        timestamp: '2026-05-01T10:00:00.000Z',
+        gitBranch: 'feature/old',
+        message: { role: 'user', content: 'hello' },
+      }),
+    );
+    writeAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'), {
+      version: 1,
+      sessions: [
+        {
+          provider: AgentSessionProvider.Claude,
+          sessionId: 'claude-1',
+          path: sessionFile,
+          model: null,
+          title: 'hello',
+          startedAt: '2026-05-01T10:00:00.000Z',
+          updatedAt: '2026-05-01T10:00:00.000Z',
+          pinned: null,
+        },
+      ],
+    });
+
+    const result = moveAgentSessionToBranch({
+      repoRoot: repo,
+      provider: AgentSessionProvider.Claude,
+      sessionId: 'claude-1',
+      fromBranch: 'feature/old',
+      toBranch: 'feature/new',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/old')).sessions).toEqual([]);
+    expect(
+      readAgentsFile(getBranchAgentsFilePath(repo, 'feature/new')).sessions[0]?.sessionId,
+    ).toBe('claude-1');
+    expect(readFileSync(sessionFile, 'utf8')).toContain('"gitBranch":"feature/new"');
   });
 });

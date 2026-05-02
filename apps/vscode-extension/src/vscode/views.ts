@@ -15,7 +15,10 @@ import {
   getGitChangesViewDescription,
   initializeGitChangesMode,
 } from '../features/git-changes/views/git-changes';
-import { createContextsProvider } from '../features/other-branches/views/contexts';
+import {
+  createContextsProvider,
+  getOtherBranchesViewDescription,
+} from '../features/other-branches/views/contexts';
 import { createTemplatesProvider } from '../features/templates/views/templates';
 import { initializeTreeItemDecorations } from '../shared/tree-items';
 
@@ -28,11 +31,12 @@ export function initializeTreeViews(context: vscode.ExtensionContext): void {
   const agentSessionsProvider = createAgentSessionsProvider();
   initializeActiveAgentSessions(context, () => agentSessionsProvider.refresh());
   const gitChangesProvider = createGitChangesProvider();
+  const contextsProvider = createContextsProvider();
   const providers = [
     [viewIds.currentContext, currentContextProvider],
     [viewIds.agentSessions, agentSessionsProvider],
     [viewIds.gitChanges, gitChangesProvider],
-    [viewIds.contexts, createContextsProvider()],
+    [viewIds.contexts, contextsProvider],
     [viewIds.templates, createTemplatesProvider()],
   ] as const;
 
@@ -63,6 +67,15 @@ export function initializeTreeViews(context: vscode.ExtensionContext): void {
       context.subscriptions.push(
         provider.onDidChangeTreeData(() => {
           view.description = getGitChangesViewDescription();
+        }),
+      );
+    }
+
+    if (viewId === viewIds.contexts) {
+      view.description = getOtherBranchesViewDescription();
+      context.subscriptions.push(
+        provider.onDidChangeTreeData(() => {
+          view.description = getOtherBranchesViewDescription();
         }),
       );
     }
