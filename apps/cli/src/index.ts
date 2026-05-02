@@ -51,6 +51,9 @@ function createProgram(binName: string): CaporalProgram {
     .name(binName)
     .description('Git branch context manager')
     .version(VERSION)
+    .disableGlobalOption('--no-color')
+    .disableGlobalOption('--quiet')
+    .disableGlobalOption('--silent')
     .disableGlobalOption('-v')
     .disableGlobalOption('-V')
     .option('-v, --version', 'Show version', {

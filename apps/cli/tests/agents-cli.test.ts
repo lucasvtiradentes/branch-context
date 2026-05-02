@@ -15,23 +15,45 @@ describe('agents command', () => {
     expect(capture.output).not.toContain('bctx init');
   });
 
-  it('completes dev agents subcommands independently', async () => {
+  it('generates dev zsh completion with agents subcommands', async () => {
     const capture = captureConsole();
 
-    await withEnv(
-      {
-        BCTX_PROG_NAME: 'bctxd',
-        COMP_CWORD: '2',
-        COMP_LINE: 'bctxd agents ',
-        COMP_POINT: String('bctxd agents '.length),
-      },
-      async () => {
-        expect(await runCli(['completion', '--', 'bctxd', 'agents'])).toBe(0);
-      },
-    );
+    await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
+      expect(await runCli(['completion', 'zsh'])).toBe(0);
+    });
 
-    expect(capture.output).toContain('status');
-    expect(capture.output).toContain('sync');
+    expect(capture.output).toContain('#compdef bctxd');
+    expect(capture.output).toContain("'status:Show agent integration status'");
+    expect(capture.output).toContain("'sync:Sync agent sessions'");
+    expect(capture.output).toContain('_bctxd_templates');
+    expect(capture.output).toContain('.bctx/templates');
+  });
+
+  it('generates bash completion with agents subcommands', async () => {
+    const capture = captureConsole();
+
+    await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
+      expect(await runCli(['completion', 'bash'])).toBe(0);
+    });
+
+    expect(capture.output).toContain('complete -F _bctxd_completion bctxd');
+    expect(capture.output).toContain('base init uninstall sync status agents prune template');
+    expect(capture.output).toContain('status sync');
+    expect(capture.output).toContain('.bctx/templates');
+  });
+
+  it('generates fish completion with agents subcommands', async () => {
+    const capture = captureConsole();
+
+    await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
+      expect(await runCli(['completion', 'fish'])).toBe(0);
+    });
+
+    expect(capture.output).toContain('complete -c bctxd -f');
+    expect(capture.output).toContain("-a 'agents' -d 'Agent integration commands'");
+    expect(capture.output).toContain("-a 'sync' -d 'Sync agent sessions'");
+    expect(capture.output).toContain('__bctxd_templates');
+    expect(capture.output).toContain('.bctx/templates');
   });
 
   it('prints help when no command is provided', async () => {

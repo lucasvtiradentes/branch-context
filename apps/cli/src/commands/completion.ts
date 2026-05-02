@@ -1,94 +1,279 @@
 import type { Command, Program } from '@caporal/core';
 
-type CompletionItem = {
-  current: string;
+type CompletionGroup = {
   description?: string;
   name: string;
 };
 
-const GLOBAL_OPTIONS = [
-  '--help',
-  '--version',
-  '--no-color',
-  '--quiet',
-  '--silent',
-  '--install-completion',
-  '--uninstall-completion',
-];
+const PARENT_DESCRIPTIONS: Record<string, string> = {
+  agents: 'Agent integration commands',
+};
 
 export function registerCompletionCommand(program: Program) {
   program
-    .command('completion', 'Shell completion plumbing', { visible: false })
+    .command('completion', 'Generate shell completion scripts')
+    .argument('[shell]', 'Shell to generate completion for')
     .strict(false)
-    .action(async ({ program }) => {
-      const items = await getCompletionItems(program);
-      for (const item of items.filter((item) => item.name.startsWith(item.current))) {
-        console.log(item.description ? `${item.name}:${item.description}` : item.name);
+    .action(async ({ args, program }) => {
+      const shell = args.shell ? String(args.shell) : '';
+      if (shell === 'zsh') {
+        console.log(await getCompletionScript(program, shell));
+        return 0;
       }
-      return 0;
+      if (shell === 'bash') {
+        console.log(await getCompletionScript(program, shell));
+        return 0;
+      }
+      if (shell === 'fish') {
+        console.log(await getCompletionScript(program, shell));
+        return 0;
+      }
+      console.log(`error: unsupported shell '${shell || '<empty>'}'`);
+      console.log('supported: zsh, bash, fish');
+      return 1;
     });
 }
 
-async function getCompletionItems(program: Program): Promise<CompletionItem[]> {
-  const state = getCompletionState(program.getBin());
-  if (state.current.startsWith('-')) {
-    return GLOBAL_OPTIONS.map((name) => ({ current: state.current, name }));
+async function getCompletionScript(program: Program, shell: 'bash' | 'fish' | 'zsh') {
+  const binName = program.getBin();
+  const commands = (await program.getAllCommands()).filter(
+    (command) => command.visible && command.name !== 'completion',
+  );
+  const roots = getRootCommands(commands);
+  const subcommands = getSubcommandGroups(commands);
+
+  if (shell === 'bash') {
+    return getBashCompletionScript(binName, roots, subcommands);
   }
-
-  const commands = (await program.getAllCommands()).filter((command) => command.visible);
-  const items =
-    state.previous.length === 0
-      ? getRootItems(commands)
-      : getSubcommandItems(commands, state.previous);
-
-  return items.map((item) => ({ ...item, current: state.current }));
+  if (shell === 'fish') {
+    return getFishCompletionScript(binName, roots, subcommands);
+  }
+  return getZshCompletionScript(binName, roots, subcommands);
 }
 
-function getRootItems(commands: Command[]) {
-  const seen = new Set<string>();
-  const items: Array<{ name: string; description?: string }> = [];
+function getZshCompletionScript(
+  binName: string,
+  roots: CompletionGroup[],
+  subcommands: Map<string, CompletionGroup[]>,
+) {
+  return `#compdef ${binName}
+
+_${binName}() {
+  local -a commands
+  local git_root templates_dir
+  commands=(
+${formatZshItems(roots)}
+  )
+${formatSubcommandArrays(subcommands)}
+
+  _${binName}_templates() {
+    git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
+    if [[ -n "$git_root" ]]; then
+      templates_dir="$git_root/.bctx/templates"
+      if [[ -d "$templates_dir" ]]; then
+        _values 'template' $(ls "$templates_dir" 2>/dev/null)
+      fi
+    fi
+  }
+
+  _arguments -C \\
+    '1:command:->command' \\
+    '2:subcommand:->subcommand' \\
+    '*::arg:->arg'
+
+  case $state in
+    command)
+      _describe '${binName} commands' commands
+      ;;
+    subcommand)
+      case $words[2] in
+${formatSubcommandCases(binName, subcommands)}
+        template)
+          _${binName}_templates
+          ;;
+      esac
+      ;;
+  esac
+}
+
+compdef _${binName} ${binName}`;
+}
+
+function getBashCompletionScript(
+  binName: string,
+  roots: CompletionGroup[],
+  subcommands: Map<string, CompletionGroup[]>,
+) {
+  return `_${binName}_completion() {
+  local cur git_root templates_dir
+  cur="\${COMP_WORDS[COMP_CWORD]}"
+  COMPREPLY=()
+
+  case "$COMP_CWORD" in
+    1)
+      COMPREPLY=($(compgen -W "${roots.map((item) => item.name).join(' ')}" -- "$cur"))
+      ;;
+    2)
+      case "\${COMP_WORDS[1]}" in
+        template)
+          git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
+          if [[ -n "$git_root" ]]; then
+            templates_dir="$git_root/.bctx/templates"
+            if [[ -d "$templates_dir" ]]; then
+              COMPREPLY=($(compgen -W "$(ls "$templates_dir" 2>/dev/null)" -- "$cur"))
+            fi
+          fi
+          ;;
+${formatBashSubcommandCases(subcommands)}
+      esac
+      ;;
+  esac
+}
+
+complete -F _${binName}_completion ${binName}`;
+}
+
+function getFishCompletionScript(
+  binName: string,
+  roots: CompletionGroup[],
+  subcommands: Map<string, CompletionGroup[]>,
+) {
+  const rootNames = roots.map((item) => item.name).join(' ');
+  return `function __${binName}_seen_command
+  set -l tokens (commandline -opc)
+  for token in $tokens[2..-1]
+    switch $token
+      case ${rootNames}
+        return 0
+    end
+  end
+  return 1
+end
+
+function __${binName}_using_command
+  set -l tokens (commandline -opc)
+  test (count $tokens) -ge 2; and test "$tokens[2]" = "$argv[1]"
+end
+
+function __${binName}_templates
+  set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
+  if test -n "$git_root"
+    set -l templates_dir "$git_root/.bctx/templates"
+    if test -d "$templates_dir"
+      ls "$templates_dir" 2>/dev/null
+    end
+  end
+end
+
+complete -c ${binName} -f
+${formatFishRootCompletions(binName, roots)}
+${formatFishSubcommandCompletions(binName, subcommands)}
+complete -c ${binName} -f -n "__${binName}_using_command 'template'" -a "(__${binName}_templates)"`;
+}
+
+function getRootCommands(commands: Command[]) {
+  const roots = new Map<string, CompletionGroup>();
 
   for (const command of commands) {
-    const [name] = command.name.split(' ');
-    if (!name || seen.has(name)) {
+    const parts = command.name.split(' ');
+    const root = parts[0];
+    if (!root || roots.has(root)) {
       continue;
     }
-    seen.add(name);
-    items.push({ name, description: command.name === name ? command.description : undefined });
+
+    roots.set(root, {
+      name: root,
+      description: parts.length === 1 ? command.description : getParentDescription(root),
+    });
   }
 
-  return items;
+  return [...roots.values()];
 }
 
-function getSubcommandItems(commands: Command[], previous: string[]) {
-  const prefix = previous.join(' ');
-  const prefixWithSpace = `${prefix} `;
-  return commands
-    .filter((command) => command.name.startsWith(prefixWithSpace))
-    .map((command) => ({
-      name: command.name.slice(prefixWithSpace.length).split(' ')[0] ?? '',
-      description: command.description,
-    }))
-    .filter(
-      (item, index, items) =>
-        item.name && items.findIndex((next) => next.name === item.name) === index,
-    );
+function getParentDescription(root: string) {
+  return PARENT_DESCRIPTIONS[root] ?? `${root} commands`;
 }
 
-function getCompletionState(binName: string) {
-  const line = process.env.COMP_LINE ?? '';
-  const point = Number(process.env.COMP_POINT ?? line.length);
-  const partial = line.slice(0, Number.isNaN(point) ? line.length : point);
-  const words = partial.trim().length > 0 ? partial.trim().split(/\s+/) : [];
+function getSubcommandGroups(commands: Command[]) {
+  const groups = new Map<string, CompletionGroup[]>();
 
-  if (words[0] === binName) {
-    words.shift();
+  for (const command of commands) {
+    const [root, subcommand] = command.name.split(' ');
+    if (!root || !subcommand) {
+      continue;
+    }
+
+    const group = groups.get(root) ?? [];
+    if (!group.some((item) => item.name === subcommand)) {
+      group.push({ name: subcommand, description: command.description });
+    }
+    groups.set(root, group);
   }
 
-  if (/\s$/.test(partial)) {
-    return { current: '', previous: words };
-  }
+  return groups;
+}
 
-  const current = words.pop() ?? '';
-  return { current, previous: words };
+function formatZshItems(items: CompletionGroup[]) {
+  return items.map((item) => `    '${escapeZshItem(item)}'`).join('\n');
+}
+
+function formatSubcommandArrays(groups: Map<string, CompletionGroup[]>) {
+  return [...groups.entries()]
+    .map(
+      ([root, items]) => `
+  local -a ${root}_commands
+  ${root}_commands=(
+${formatZshItems(items)}
+  )`,
+    )
+    .join('\n');
+}
+
+function formatSubcommandCases(binName: string, groups: Map<string, CompletionGroup[]>) {
+  return [...groups.keys()]
+    .map(
+      (root) => `        ${root})
+          _describe '${binName} ${root} commands' ${root}_commands
+          ;;`,
+    )
+    .join('\n');
+}
+
+function formatBashSubcommandCases(groups: Map<string, CompletionGroup[]>) {
+  return [...groups.entries()]
+    .map(
+      ([root, items]) => `        ${root})
+          COMPREPLY=($(compgen -W "${items.map((item) => item.name).join(' ')}" -- "$cur"))
+          ;;`,
+    )
+    .join('\n');
+}
+
+function formatFishRootCompletions(binName: string, roots: CompletionGroup[]) {
+  return roots
+    .map(
+      (item) =>
+        `complete -c ${binName} -f -n "not __${binName}_seen_command" -a ${quoteFish(item.name)} -d ${quoteFish(item.description ?? '')}`,
+    )
+    .join('\n');
+}
+
+function formatFishSubcommandCompletions(binName: string, groups: Map<string, CompletionGroup[]>) {
+  return [...groups.entries()]
+    .flatMap(([root, items]) =>
+      items.map(
+        (item) =>
+          `complete -c ${binName} -f -n "__${binName}_using_command ${quoteFish(root)}" -a ${quoteFish(item.name)} -d ${quoteFish(item.description ?? '')}`,
+      ),
+    )
+    .join('\n');
+}
+
+function escapeZshItem(item: CompletionGroup) {
+  const text = item.description ? `${item.name}:${item.description}` : item.name;
+  return text.replace(/'/g, "'\\''");
+}
+
+function quoteFish(value: string) {
+  return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 }
