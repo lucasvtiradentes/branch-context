@@ -4,7 +4,7 @@
   <img height="80" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/apps/vscode-extension/resources/icon-colored.png" alt="branch-context logo">
   <div>Branch Context</div>
   <br />
-  <a href="#-overview">Overview</a> • <a href="#-features">Features</a> • <a href="#-packages">Packages</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-commands">Commands</a> • <a href="#-configuration">Configuration</a> • <a href="#-development">Development</a> • <a href="#-license">License</a>
+  <a href="#-overview">Overview</a> • <a href="#-motivation">Motivation</a> • <a href="#-features">Features</a> • <a href="#-packages">Packages</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-commands">Commands</a> • <a href="#-configuration">Configuration</a> • <a href="#-development">Development</a> • <a href="#-license">License</a>
 </div>
 
 <div width="100%" align="center">
@@ -16,6 +16,12 @@
 Branch Context is a Git branch context manager. It keeps notes, metadata, templates, git summaries, and AI session references isolated per branch through `.bctx/` and the current `_branch/context.md` symlink.
 
 Use it to keep AI agents and developers aligned with the current branch intent, touched files, commits, tasks, and follow-up notes.
+
+## ❓ Motivation<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/up_arrow.png" width="22"></a>
+
+Switching branches usually means losing context: why the work started, what was decided, which files matter, and where the AI session left off. Notes in scratch files leak across branches, and `git log` only tells you what was committed — not what you intended.
+
+Branch Context pins that context to the branch itself. Each branch gets its own `context.md`, automatically created on checkout and kept in sync with commits and changed files, so both you and your AI agents resume work with the full picture.
 
 ## ⭐ Features<a href="#TOC"><img align="right" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/up_arrow.png" width="22"></a>
 
