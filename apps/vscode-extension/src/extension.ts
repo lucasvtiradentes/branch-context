@@ -1,19 +1,19 @@
 import type * as vscode from 'vscode';
-import { registerCommands } from './commands/commands';
-import { initializeContextFileUx } from './context-file-ux';
-import { initializeAgentIndexer } from './core/agent-sessions/indexer';
-import { initializeGitDiffProvider } from './core/git-diff';
-import { getLogFilePath, initializeLogging, logger } from './core/logger';
-import { initializeBranchContextState } from './state/state';
-import { initializeStatusBar } from './status-bar/status-bar';
-import { initializeContextsGroupBy } from './views/other-branches/contexts';
-import { initializeTreeViews } from './views/views';
-import { initializeBranchContextWatcher } from './watchers/branch-context';
+import { initializeAgentIndexer } from './features/agent-sessions/indexer';
+import { initializeBranchContextWatcher } from './features/branch-context/watcher';
+import { initializeContextFileUx } from './features/context-file-ux';
+import { initializeContextsGroupBy } from './features/other-branches/views/contexts';
+import { initializeStatusBar } from './features/status-bar/status-bar';
+import { getLogFilePath, initializeLogging, logger } from './shared/lib/logger';
+import { registerCommands } from './vscode/commands/register';
+import { initializeGitDiffProvider } from './vscode/git-diff';
+import { branchContextState } from './vscode/state';
+import { initializeTreeViews } from './vscode/views';
 
 function initializeCore(context: vscode.ExtensionContext): void {
   initializeLogging();
   logger.info(`extension activated; log file reset at ${getLogFilePath()}`);
-  initializeBranchContextState(context);
+  branchContextState.initialize(context);
   initializeContextsGroupBy(context);
 }
 
