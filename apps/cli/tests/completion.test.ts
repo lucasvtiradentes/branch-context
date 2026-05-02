@@ -90,4 +90,27 @@ describe('completion', () => {
       expect(output).toContain(cmd);
     }
   });
+
+  it('includes agents subcommands in zsh completion', () => {
+    const output = getZshCompletion('bctxd');
+    expect(output).toContain(
+      "agents) _values 'agents command' 'status:Show agent integration status' 'sync:Sync agent sessions' ;;",
+    );
+  });
+
+  it('includes agents subcommands in bash completion', () => {
+    const output = getBashCompletion('bctxd');
+    expect(output).toContain('agents)');
+    expect(output).toContain('compgen -W "status sync"');
+  });
+
+  it('includes agents subcommands in fish completion', () => {
+    const output = getFishCompletion('bctxd');
+    expect(output).toContain(
+      'complete -c bctxd -n "__fish_seen_subcommand_from agents; and not __fish_seen_subcommand_from status sync" -a status -d "Show agent integration status"',
+    );
+    expect(output).toContain(
+      'complete -c bctxd -n "__fish_seen_subcommand_from agents; and not __fish_seen_subcommand_from status sync" -a sync -d "Sync agent sessions"',
+    );
+  });
 });

@@ -13,6 +13,7 @@ import { cmdUninstall } from './commands/uninstall';
 type CommandInfo = {
   desc: string;
   args: string;
+  subcommands?: Record<string, string>;
 };
 
 export const COMMANDS: Record<string, CommandInfo> = {
@@ -21,7 +22,14 @@ export const COMMANDS: Record<string, CommandInfo> = {
   uninstall: { desc: 'Remove hook from current repo', args: '' },
   sync: { desc: 'Sync context and update meta/tags', args: '' },
   status: { desc: 'Show status, health, and branches', args: '' },
-  agents: { desc: 'Manage AI agent session integration', args: '<command>' },
+  agents: {
+    desc: 'Manage AI agent session integration',
+    args: '<command>',
+    subcommands: {
+      status: 'Show agent integration status',
+      sync: 'Sync agent sessions',
+    },
+  },
   prune: { desc: 'Archive orphan contexts and delete branches', args: '' },
   template: { desc: 'Apply template to current branch', args: '[name]' },
   completion: { desc: 'Generate shell completion', args: '<shell>' },

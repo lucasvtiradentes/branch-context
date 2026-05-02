@@ -10,6 +10,15 @@ export function getZshCompletion(prog: string) {
   const cmdLines = Object.entries(commands)
     .map(([name, info]) => `'${name}:${info.desc}'`)
     .join('\n        ');
+  const subcommandLines = Object.entries(commands)
+    .filter(([, info]) => info.subcommands)
+    .map(([name, info]) => {
+      const values = Object.entries(info.subcommands ?? {})
+        .map(([subcommand, desc]) => `'${subcommand}:${desc}'`)
+        .join(' ');
+      return `        ${name}) _values '${name} command' ${values} ;;`;
+    })
+    .join('\n');
   const func = safeFuncName(prog);
 
   return `#compdef ${prog}
@@ -43,6 +52,7 @@ _${func}() {
                 _values 'shell' 'zsh' 'bash' 'fish'
             fi
             ;;
+${subcommandLines}
         *)
             if (( CURRENT == 2 )); then
                 _describe -t commands 'command' commands
@@ -58,6 +68,13 @@ compdef _${func} ${prog}
 export function getBashCompletion(prog: string) {
   const commands = getPublicCommands();
   const cmdNames = Object.keys(commands).join(' ');
+  const subcommandCases = Object.entries(commands)
+    .filter(([, info]) => info.subcommands)
+    .map(
+      ([name, info]) =>
+        `        ${name})\n            COMPREPLY=( $(compgen -W "${Object.keys(info.subcommands ?? {}).join(' ')}" -- "$cur") )\n            return 0\n            ;;`,
+    )
+    .join('\n');
   const func = safeFuncName(prog);
 
   return `_${func}() {
@@ -82,6 +99,7 @@ export function getBashCompletion(prog: string) {
             COMPREPLY=( $(compgen -W "zsh bash fish" -- "$cur") )
             return 0
             ;;
+${subcommandCases}
         ${prog})
             COMPREPLY=( $(compgen -W "$commands" -- "$cur") )
             return 0
@@ -103,12 +121,23 @@ export function getFishCompletion(prog: string) {
     .join('\n');
   const completionLines = `complete -c ${prog} -n "__fish_seen_subcommand_from completion" -a "zsh bash fish"`;
   const templateLines = `complete -c ${prog} -n "__fish_seen_subcommand_from template" -a "(__branchctx_templates)"`;
+  const subcommandLines = Object.entries(commands)
+    .filter(([, info]) => info.subcommands)
+    .flatMap(([name, info]) =>
+      Object.entries(info.subcommands ?? {}).map(
+        ([subcommand, desc]) =>
+          `complete -c ${prog} -n "__fish_seen_subcommand_from ${name}; and not __fish_seen_subcommand_from ${Object.keys(info.subcommands ?? {}).join(' ')}" -a ${subcommand} -d "${desc}"`,
+      ),
+    )
+    .join('\n');
 
   return `complete -c ${prog} -f
 
 ${cmdLines}
 
 ${completionLines}
+
+${subcommandLines}
 
 function __branchctx_templates
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
