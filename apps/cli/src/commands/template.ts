@@ -10,6 +10,8 @@ import {
 import type { Program } from '@caporal/core';
 import { requireGitRoot } from '../helpers/git-root';
 
+const CANCEL_TEMPLATE_SELECTION_INPUTS = new Set(['c', 'cancel']);
+
 export function registerTemplateCommand(program: Program) {
   program
     .command('template', 'Apply template to current branch')
@@ -27,7 +29,7 @@ async function selectTemplate(templates: string[]) {
   const rl = readline.createInterface({ input, output: process.stdout });
   try {
     const choice = (await rl.question(`Select [1-${templates.length}, c=cancel]: `)).trim();
-    if (!choice || choice.toLowerCase() === 'c' || choice.toLowerCase() === 'cancel') {
+    if (!choice || CANCEL_TEMPLATE_SELECTION_INPUTS.has(choice.toLowerCase())) {
       return null;
     }
     const index = Number.parseInt(choice, 10) - 1;

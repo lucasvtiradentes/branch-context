@@ -1,7 +1,13 @@
 import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { AgentSessionProvider, AgentSessionScope } from '../src/index';
+import {
+  AgentMessageRole,
+  AgentSessionProvider,
+  AgentSessionScope,
+  CodexPayloadType,
+  CodexSessionEventType,
+} from '../src/index';
 import {
   getClaudeProjectKey,
   parseClaudeSessionFile,
@@ -49,7 +55,7 @@ describe('agent provider parsers', () => {
       sessionPath,
       [
         JSON.stringify({
-          type: 'session_meta',
+          type: CodexSessionEventType.SessionMeta,
           payload: {
             id: 'codex-5',
             timestamp: '2026-05-01T14:24:16.417Z',
@@ -59,10 +65,10 @@ describe('agent provider parsers', () => {
           },
         }),
         JSON.stringify({
-          type: 'response_item',
+          type: CodexSessionEventType.ResponseItem,
           payload: {
             type: 'message',
-            role: 'user',
+            role: AgentMessageRole.User,
             content: [{ type: 'input_text', text: '# AGENTS.md instructions for /repo/project' }],
           },
         }),
@@ -103,7 +109,7 @@ describe('agent provider parsers', () => {
       join(oldDir, 'codex-old.jsonl'),
       [
         JSON.stringify({
-          type: 'session_meta',
+          type: CodexSessionEventType.SessionMeta,
           payload: {
             id: 'codex-old',
             timestamp: '2026-04-10T14:21:16.417Z',
@@ -113,8 +119,8 @@ describe('agent provider parsers', () => {
           },
         }),
         JSON.stringify({
-          type: 'event_msg',
-          payload: { type: 'user_message', message: 'old codex prompt' },
+          type: CodexSessionEventType.EventMessage,
+          payload: { type: CodexPayloadType.UserMessage, message: 'old codex prompt' },
         }),
       ].join('\n'),
     );

@@ -12,6 +12,9 @@ import { formatRelativeTime } from '../lib/format-relative-time';
 import { formatLogError, logger } from '../lib/logging';
 import { escapeMarkdown, markdownTooltipLine } from '../lib/markdown';
 
+const PROMPT_YES = 'Yes';
+const PROMPT_NO = 'No';
+
 let item: vscode.StatusBarItem | undefined;
 
 export function initializeStatusBar(context: vscode.ExtensionContext): void {
@@ -75,10 +78,10 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
   logger.info(`init prompt shown: workspace=${state.workspaceRoot}`);
   const selected = await vscode.window.showInformationMessage(
     'Do you want to init bctx in the current project?',
-    'Yes',
-    'No',
+    PROMPT_YES,
+    PROMPT_NO,
   );
-  if (selected !== 'Yes') {
+  if (selected !== PROMPT_YES) {
     logger.info(`init prompt dismissed: selected=${selected ?? 'none'}`);
     return;
   }
@@ -86,9 +89,14 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
   logger.info(`init project started: workspace=${state.workspaceRoot}`);
   const result = await initProject(state.workspaceRoot, async (question) => {
     logger.warning(`init hook prompt shown: question=${question}`);
-    const answer = await vscode.window.showWarningMessage(question, { modal: true }, 'Yes', 'No');
+    const answer = await vscode.window.showWarningMessage(
+      question,
+      { modal: true },
+      PROMPT_YES,
+      PROMPT_NO,
+    );
     logger.warning(`init hook prompt answered: answer=${answer ?? 'none'}`);
-    return answer === 'Yes';
+    return answer === PROMPT_YES;
   });
   if (!result.ok) {
     logger.warning(`init project failed: reason=${result.reason} message=${result.message}`);

@@ -3,16 +3,16 @@ import { commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
 import {
-  type GitCommitsGroupBy,
+  GitCommitsGroupBy,
   getGitCommitsGroupBy,
   saveGitCommitsGroupBy,
 } from '../tree-views/git-changes';
 import type { GroupByOption } from './group-options';
 
 const groupByOptions: GroupByOption<GitCommitsGroupBy>[] = [
-  { label: 'Flat', value: 'flat' },
-  { label: 'Date', value: 'date' },
-  { label: 'Author', value: 'author' },
+  { label: 'Flat', value: GitCommitsGroupBy.Flat },
+  { label: 'Date', value: GitCommitsGroupBy.Date },
+  { label: 'Author', value: GitCommitsGroupBy.Author },
 ];
 
 export function registerGroupGitCommitsCommand(

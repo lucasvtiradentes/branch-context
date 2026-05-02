@@ -34,6 +34,18 @@ import {
 import { copyInitTemplatesResource, getResourcesDir } from '../resources';
 import { getTemplateVariables, renderTemplateContent } from '../utils/template';
 
+enum Platform {
+  Darwin = 'darwin',
+  Linux = 'linux',
+  Windows = 'win32',
+}
+
+const SOUND_COMMANDS = {
+  [Platform.Darwin]: 'afplay',
+  [Platform.Linux]: 'paplay',
+  [Platform.Windows]: 'powershell',
+} as const;
+
 export enum CreateBranchContextResult {
   Exists = 'exists',
   RepairedFromTemplate = 'repaired_from_template',
@@ -71,12 +83,15 @@ export function playSound(soundFile?: string | null) {
     } catch {}
   };
 
-  if (process.platform === 'darwin') {
-    spawnSilent('afplay', [file]);
-  } else if (process.platform === 'linux') {
-    spawnSilent('paplay', [file]);
-  } else if (process.platform === 'win32') {
-    spawnSilent('powershell', ['-c', `(New-Object Media.SoundPlayer '${file}').Play()`]);
+  if (process.platform === Platform.Darwin) {
+    spawnSilent(SOUND_COMMANDS[Platform.Darwin], [file]);
+  } else if (process.platform === Platform.Linux) {
+    spawnSilent(SOUND_COMMANDS[Platform.Linux], [file]);
+  } else if (process.platform === Platform.Windows) {
+    spawnSilent(SOUND_COMMANDS[Platform.Windows], [
+      '-c',
+      `(New-Object Media.SoundPlayer '${file}').Play()`,
+    ]);
   }
 }
 

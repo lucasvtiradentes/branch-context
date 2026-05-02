@@ -3,15 +3,15 @@ import { commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
 import {
-  type GitChangedFilesGroupBy,
+  GitChangedFilesGroupBy,
   getGitChangedFilesGroupBy,
   saveGitChangedFilesGroupBy,
 } from '../tree-views/git-changes';
 import type { GroupByOption } from './group-options';
 
 const groupByOptions: GroupByOption<GitChangedFilesGroupBy>[] = [
-  { label: 'Flat', value: 'flat' },
-  { label: 'Change Type', value: 'changeType' },
+  { label: 'Flat', value: GitChangedFilesGroupBy.Flat },
+  { label: 'Change Type', value: GitChangedFilesGroupBy.ChangeType },
 ];
 
 export function registerGroupGitChangedFilesCommand(

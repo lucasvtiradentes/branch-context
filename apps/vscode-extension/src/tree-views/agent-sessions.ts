@@ -1,5 +1,13 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { type AgentSession, AgentSessionProvider, asRecord, asString } from '@branch-context/core';
+import {
+  AgentMessageRole,
+  type AgentSession,
+  AgentSessionProvider,
+  asRecord,
+  asString,
+  CodexPayloadType,
+  CodexSessionEventType,
+} from '@branch-context/core';
 import * as vscode from 'vscode';
 import { isAgentSessionActive } from '../core/active-agent-sessions';
 import { type AgentSessionPin, readAgentSessionPins } from '../core/agent-session-pins';
@@ -15,15 +23,62 @@ import {
   StateTreeProvider,
 } from './items';
 
-const agentSessionsGroupByValues = ['flat', 'provider', 'date', 'size'] as const;
-const agentSessionTextModeValues = ['initial', 'last'] as const;
+export enum AgentSessionsGroupBy {
+  Flat = 'flat',
+  Provider = 'provider',
+  Date = 'date',
+  Size = 'size',
+}
+
+enum LegacyAgentSessionsGroupBy {
+  Recent = 'recent',
+}
+
+enum AgentSessionTextMode {
+  Initial = 'initial',
+  Last = 'last',
+}
+
+const agentSessionsGroupByValues = Object.values(AgentSessionsGroupBy);
+const agentSessionTextModeValues = Object.values(AgentSessionTextMode);
 const agentSessionsGroupByWorkspaceKey = 'agentSessions.groupBy';
 const agentSessionTextModeWorkspaceKey = 'agentSessions.textMode';
 const MAX_SESSION_FILE_BYTES = 2 * 1024 * 1024;
 
-export type AgentSessionsGroupBy = (typeof agentSessionsGroupByValues)[number];
-type AgentSessionTextMode = (typeof agentSessionTextModeValues)[number];
-type SavedAgentSessionsGroupBy = AgentSessionsGroupBy | 'recent';
+type SavedAgentSessionsGroupBy = AgentSessionsGroupBy | LegacyAgentSessionsGroupBy;
+
+enum AgentSessionViewEventType {
+  LastPrompt = 'last-prompt',
+  User = 'user',
+}
+
+enum ProviderIconLabel {
+  Claude = 'CC',
+  Codex = 'CX',
+}
+
+const providerSortOrder = {
+  [AgentSessionProvider.Codex]: 0,
+  [AgentSessionProvider.Claude]: 1,
+} as const;
+const providerNames = {
+  [AgentSessionProvider.Codex]: 'Codex',
+  [AgentSessionProvider.Claude]: 'Claude Code',
+} as const;
+const providerIconLabels = {
+  [AgentSessionProvider.Codex]: ProviderIconLabel.Codex,
+  [AgentSessionProvider.Claude]: ProviderIconLabel.Claude,
+} as const;
+const providerIconColors = {
+  [ProviderIconLabel.Claude]: {
+    active: '#f0883e',
+    inactive: '#a3714d',
+  },
+  [ProviderIconLabel.Codex]: {
+    active: '#58a6ff',
+    inactive: '#6e8fb8',
+  },
+} as const;
 
 type AgentSessionViewItem = {
   session: AgentSession;
@@ -43,8 +98,8 @@ type UserMessageExtraction = {
   lastOnly?: boolean;
 };
 
-let agentSessionsGroupBy: AgentSessionsGroupBy = 'provider';
-let agentSessionTextMode: AgentSessionTextMode = 'initial';
+let agentSessionsGroupBy: AgentSessionsGroupBy = AgentSessionsGroupBy.Provider;
+let agentSessionTextMode: AgentSessionTextMode = AgentSessionTextMode.Initial;
 
 export function initializeAgentSessionsViewState(context: vscode.ExtensionContext): void {
   const savedGroupBy = context.workspaceState.get<unknown>(agentSessionsGroupByWorkspaceKey);
@@ -63,7 +118,7 @@ export function getAgentSessionsGroupBy(): AgentSessionsGroupBy {
 }
 
 export function getAgentSessionsViewDescription(): string {
-  if (agentSessionTextMode === 'last') {
+  if (agentSessionTextMode === AgentSessionTextMode.Last) {
     return 'last message';
   }
 
@@ -83,7 +138,8 @@ export async function toggleAgentSessionTextMode(
 ): Promise<AgentSessionTextMode> {
   const currentIndex = agentSessionTextModeValues.indexOf(agentSessionTextMode);
   const nextMode =
-    agentSessionTextModeValues[(currentIndex + 1) % agentSessionTextModeValues.length] ?? 'initial';
+    agentSessionTextModeValues[(currentIndex + 1) % agentSessionTextModeValues.length] ??
+    AgentSessionTextMode.Initial;
   agentSessionTextMode = nextMode;
   await context.workspaceState.update(agentSessionTextModeWorkspaceKey, nextMode);
   return nextMode;
@@ -209,11 +265,11 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
 }
 
 function groupUnpinnedAgentSessions(items: AgentSessionViewItem[]) {
-  if (agentSessionsGroupBy === 'flat') {
+  if (agentSessionsGroupBy === AgentSessionsGroupBy.Flat) {
     return items.map((item) => createAgentSessionNode(item));
   }
 
-  if (agentSessionsGroupBy === 'date') {
+  if (agentSessionsGroupBy === AgentSessionsGroupBy.Date) {
     return groupByDate(items, (item) => item.session.updatedAt ?? item.session.startedAt).map(
       (group) =>
         createAgentSessionGroupNode(
@@ -227,7 +283,7 @@ function groupUnpinnedAgentSessions(items: AgentSessionViewItem[]) {
     );
   }
 
-  if (agentSessionsGroupBy === 'size') {
+  if (agentSessionsGroupBy === AgentSessionsGroupBy.Size) {
     return createOrderedGroups(items, ['Small', 'Medium', 'Large'], getSizeGroup, 'database').map(
       (group) => createAgentSessionGroupNode(group, vscode.TreeItemCollapsibleState.Expanded),
     );
@@ -323,7 +379,7 @@ function getSizeGroup(item: AgentSessionViewItem) {
 }
 
 function getSessionDisplayText(item: AgentSessionViewItem) {
-  if (agentSessionTextMode === 'last') {
+  if (agentSessionTextMode === AgentSessionTextMode.Last) {
     return firstText(
       item.details.lastMessage,
       item.details.initialMessage,
@@ -389,20 +445,28 @@ function readSessionDetails(path: string | null): AgentSessionDetails {
 }
 
 function extractUserMessage(data: Record<string, unknown>): UserMessageExtraction | null {
-  if (data.type === 'last-prompt') {
+  if (data.type === AgentSessionViewEventType.LastPrompt) {
     return toUserMessage(asString(data.lastPrompt), { lastOnly: true });
   }
 
-  if (data.type === 'user') {
+  if (data.type === AgentSessionViewEventType.User) {
     return toUserMessage(extractContentTitle(asRecord(data.message)?.content));
   }
 
   const payload = asRecord(data.payload);
-  if (data.type === 'event_msg' && payload?.type === 'user_message') {
+  if (
+    data.type === CodexSessionEventType.EventMessage &&
+    payload &&
+    payload?.type === CodexPayloadType.UserMessage
+  ) {
     return toUserMessage(asString(payload.message));
   }
 
-  if (data.type === 'response_item' && payload?.role === 'user') {
+  if (
+    data.type === CodexSessionEventType.ResponseItem &&
+    payload &&
+    payload.role === AgentMessageRole.User
+  ) {
     return toUserMessage(extractContentTitle(payload.content), { fallback: true });
   }
 
@@ -462,11 +526,11 @@ function getSessionSize(path: string | null) {
 }
 
 function isAgentSessionsGroupBy(value: unknown): value is SavedAgentSessionsGroupBy {
-  return isStringValue([...agentSessionsGroupByValues, 'recent'], value);
+  return isStringValue([...agentSessionsGroupByValues, LegacyAgentSessionsGroupBy.Recent], value);
 }
 
 function normalizeAgentSessionsGroupBy(value: SavedAgentSessionsGroupBy): AgentSessionsGroupBy {
-  return value === 'recent' ? 'date' : value;
+  return value === LegacyAgentSessionsGroupBy.Recent ? AgentSessionsGroupBy.Date : value;
 }
 
 function isAgentSessionTextMode(value: unknown): value is AgentSessionTextMode {
@@ -483,61 +547,39 @@ function parseJsonObject(line: string) {
 }
 
 function getProviderSort(provider: AgentSession['provider']) {
-  if (provider === AgentSessionProvider.Codex) {
-    return 0;
-  }
-
-  if (provider === AgentSessionProvider.Claude) {
-    return 1;
-  }
-
-  return 2;
+  return providerSortOrder[provider] ?? 2;
 }
 
 function formatProviderName(provider: AgentSession['provider']) {
-  if (provider === AgentSessionProvider.Codex) {
-    return 'Codex';
-  }
-
-  if (provider === AgentSessionProvider.Claude) {
-    return 'Claude Code';
-  }
-
-  return provider;
+  return providerNames[provider] ?? provider;
 }
 
 function getProviderIcon(provider: AgentSession['provider'], active: boolean) {
-  if (provider === AgentSessionProvider.Codex) {
-    return createLetterIcon('CX', active);
-  }
-
-  if (provider === AgentSessionProvider.Claude) {
-    return createLetterIcon('CC', active);
+  const label = providerIconLabels[provider];
+  if (label) {
+    return createLetterIcon(label, active);
   }
 
   return new vscode.ThemeIcon('account');
 }
 
-function createLetterIcon(label: string, active: boolean) {
+function createLetterIcon(label: ProviderIconLabel, active: boolean) {
   const color = getProviderIconColor(label, active);
   return vscode.Uri.parse(
     `data:image/svg+xml;utf8,${encodeURIComponent(createLetterIconSvg(label, color))}`,
   );
 }
 
-function getProviderIconColor(label: string, active: boolean) {
-  if (label === 'CC') {
-    return active ? '#f0883e' : '#a3714d';
-  }
-
-  if (label === 'CX') {
-    return active ? '#58a6ff' : '#6e8fb8';
+function getProviderIconColor(label: ProviderIconLabel, active: boolean) {
+  const colors = providerIconColors[label];
+  if (colors) {
+    return active ? colors.active : colors.inactive;
   }
 
   return active ? '#f0883e' : '#8b949e';
 }
 
-function createLetterIconSvg(label: string, color: string) {
+function createLetterIconSvg(label: ProviderIconLabel, color: string) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><text x="8" y="11.5" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="8.5" font-weight="700" fill="${color}">${label}</text></svg>`;
 }
 

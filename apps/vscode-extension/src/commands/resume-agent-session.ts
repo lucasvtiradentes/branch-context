@@ -4,6 +4,13 @@ import { commandIds } from '../constants';
 import { markAgentSessionTerminalActive } from '../core/active-agent-sessions';
 import type { BranchContextTreeNodeDraft } from '../tree-views/items';
 
+const resumeCommandBuilders: Record<AgentSessionProvider, (sessionId: string) => string> = {
+  [AgentSessionProvider.Claude]: (sessionId) =>
+    `"${process.env.HOME ?? '~'}/.local/bin/claude" --dangerously-skip-permissions --resume ${shellQuote(sessionId)}`,
+  [AgentSessionProvider.Codex]: (sessionId) =>
+    `codex --dangerously-bypass-approvals-and-sandbox resume ${shellQuote(sessionId)}`,
+};
+
 export function registerResumeAgentSessionCommand(): vscode.Disposable {
   return vscode.commands.registerCommand(commandIds.resumeAgentSession, async (node) => {
     const session = node as BranchContextTreeNodeDraft | undefined;
@@ -26,11 +33,7 @@ export function registerResumeAgentSessionCommand(): vscode.Disposable {
 }
 
 function getResumeCommand(provider: AgentSessionProvider, sessionId: string) {
-  if (provider === AgentSessionProvider.Claude) {
-    return `"${process.env.HOME ?? '~'}/.local/bin/claude" --dangerously-skip-permissions --resume ${shellQuote(sessionId)}`;
-  }
-
-  return `codex --dangerously-bypass-approvals-and-sandbox resume ${shellQuote(sessionId)}`;
+  return resumeCommandBuilders[provider](sessionId);
 }
 
 function shellQuote(value: string) {

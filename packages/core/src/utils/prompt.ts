@@ -2,6 +2,9 @@ import { stdin as input, stdout as output } from 'node:process';
 import readline from 'node:readline/promises';
 
 export type PromptYesNo = (question: string) => Promise<boolean>;
+const YES_PROMPT_ANSWERS: readonly string[] = ['y', 'yes'];
+const NO_PROMPT_ANSWERS: readonly string[] = ['n', 'no'];
+
 let multiSelectOverride:
   | ((items: string[], labels?: string[]) => Promise<number[]> | number[])
   | null = null;
@@ -56,12 +59,12 @@ function normalizePromptAnswer(answer: string) {
 
 function isYesAnswer(answer: string) {
   const normalized = normalizePromptAnswer(answer);
-  return normalized === 'y' || normalized === 'yes';
+  return YES_PROMPT_ANSWERS.includes(normalized);
 }
 
 function isNoAnswer(answer: string) {
   const normalized = normalizePromptAnswer(answer);
-  return normalized === 'n' || normalized === 'no';
+  return NO_PROMPT_ANSWERS.includes(normalized);
 }
 
 export async function multiSelect(items: string[], labels?: string[]) {

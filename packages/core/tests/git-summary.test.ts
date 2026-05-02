@@ -1,7 +1,13 @@
 import { renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { getGitBranchSummary, gitChangedFileSummaries, gitCommitSummaries } from '../src/index';
+import {
+  BranchGitSummaryErrorReason,
+  GitFileStatus,
+  getGitBranchSummary,
+  gitChangedFileSummaries,
+  gitCommitSummaries,
+} from '../src/index';
 import { gitAdd, gitCheckout, gitCommit } from '../src/utils/git';
 import { createGitRepo, expectOk, initBctxWorkspace } from './helpers';
 
@@ -22,7 +28,7 @@ describe('git branch summary', () => {
     if (summary.ok) {
       expect(summary.commits[0]?.subject).toBe('feat: add summary file');
       expect(summary.changedFiles[0]).toMatchObject({
-        status: 'A',
+        status: GitFileStatus.Added,
         path: 'feature.ts',
         additions: 1,
         deletions: 0,
@@ -36,11 +42,11 @@ describe('git branch summary', () => {
 
     expect(getGitBranchSummary(repo, null)).toMatchObject({
       ok: false,
-      reason: 'missing_base',
+      reason: BranchGitSummaryErrorReason.MissingBase,
     });
     expect(getGitBranchSummary(repo, 'origin/main')).toMatchObject({
       ok: false,
-      reason: 'base_not_found',
+      reason: BranchGitSummaryErrorReason.BaseNotFound,
       baseBranch: 'origin/main',
     });
   });
@@ -57,7 +63,7 @@ describe('git branch summary', () => {
     expectOk(gitCommit(repo, 'refactor: rename file'));
 
     expect(gitChangedFileSummaries(repo, 'main')[0]).toMatchObject({
-      status: 'R',
+      status: GitFileStatus.Renamed,
       path: 'new.ts',
       oldPath: 'old.ts',
     });

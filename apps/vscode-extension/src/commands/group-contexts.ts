@@ -2,19 +2,15 @@ import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
-import {
-  type ContextsGroupBy,
-  getContextsGroupBy,
-  saveContextsGroupBy,
-} from '../tree-views/contexts';
+import { ContextsGroupBy, getContextsGroupBy, saveContextsGroupBy } from '../tree-views/contexts';
 import type { GroupByOption } from './group-options';
 
 const groupByOptions: GroupByOption<ContextsGroupBy>[] = [
-  { label: 'Flat', value: 'flat' },
-  { label: 'Status', value: 'status' },
-  { label: 'Date', value: 'date' },
-  { label: 'Size', value: 'size' },
-  { label: 'Template', value: 'template' },
+  { label: 'Flat', value: ContextsGroupBy.Flat },
+  { label: 'Status', value: ContextsGroupBy.Status },
+  { label: 'Date', value: ContextsGroupBy.Date },
+  { label: 'Size', value: ContextsGroupBy.Size },
+  { label: 'Template', value: ContextsGroupBy.Template },
 ];
 
 export function registerGroupContextsCommand(context: vscode.ExtensionContext): vscode.Disposable {

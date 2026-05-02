@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { ARCHIVED_DIR, META_FILE } from '../constants';
-import { gitDiff, gitLog, gitRefExists, gitUserName } from '../utils/git';
+import { GitFileStatus, gitDiff, gitLog, gitRefExists, gitUserName } from '../utils/git';
 import { getBranchesDir } from './config';
 
 export const BASE_BRANCH_NOT_FOUND_TEMPLATE = 'Base branch not found: {base_branch}';
@@ -143,7 +143,7 @@ export function getChangedFiles(workspace: string, baseBranch: string) {
       if (!status) {
         continue;
       }
-      if (status === 'R' && parts.length >= 3) {
+      if (status === GitFileStatus.Renamed && parts.length >= 3) {
         const oldPath = parts[1];
         const newPath = parts[2];
         if (!oldPath || !newPath) {
@@ -164,7 +164,9 @@ export function getChangedFiles(workspace: string, baseBranch: string) {
   }
 
   const displayPath = (file: (typeof files)[number]) =>
-    file.status === 'R' && file.oldPath ? `${file.filepath}  <-  ${file.oldPath}` : file.filepath;
+    file.status === GitFileStatus.Renamed && file.oldPath
+      ? `${file.filepath}  <-  ${file.oldPath}`
+      : file.filepath;
 
   const maxDisplayLength = Math.max(...files.map((file) => displayPath(file).length));
   return files

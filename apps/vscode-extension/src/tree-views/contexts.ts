@@ -16,9 +16,20 @@ import {
   StateTreeProvider,
 } from './items';
 
-const contextsGroupByValues = ['flat', 'status', 'date', 'size', 'template'] as const;
-export type ContextsGroupBy = (typeof contextsGroupByValues)[number];
-type SavedContextsGroupBy = ContextsGroupBy | 'recent';
+export enum ContextsGroupBy {
+  Flat = 'flat',
+  Status = 'status',
+  Date = 'date',
+  Size = 'size',
+  Template = 'template',
+}
+
+enum LegacyContextsGroupBy {
+  Recent = 'recent',
+}
+
+const contextsGroupByValues = Object.values(ContextsGroupBy);
+type SavedContextsGroupBy = ContextsGroupBy | LegacyContextsGroupBy;
 
 type ContextViewItem = {
   branch: string;
@@ -40,7 +51,7 @@ type ContextViewGroup = {
   contexts: ContextViewItem[];
 };
 
-let contextsGroupBy: ContextsGroupBy = 'status';
+let contextsGroupBy: ContextsGroupBy = ContextsGroupBy.Status;
 const contextsGroupByWorkspaceKey = 'contexts.groupBy';
 
 export function initializeContextsGroupBy(context: vscode.ExtensionContext): void {
@@ -63,11 +74,11 @@ export async function saveContextsGroupBy(
 }
 
 function isContextsGroupBy(value: unknown): value is SavedContextsGroupBy {
-  return isStringValue([...contextsGroupByValues, 'recent'], value);
+  return isStringValue([...contextsGroupByValues, LegacyContextsGroupBy.Recent], value);
 }
 
 function normalizeContextsGroupBy(value: SavedContextsGroupBy): ContextsGroupBy {
-  return value === 'recent' ? 'date' : value;
+  return value === LegacyContextsGroupBy.Recent ? ContextsGroupBy.Date : value;
 }
 
 export function createContextsProvider(): StateTreeProvider {
@@ -111,11 +122,11 @@ function toArchivedContext(context: BranchContextArchivedContextSummary): Contex
 }
 
 function groupContexts(contexts: ContextViewItem[]) {
-  if (contextsGroupBy === 'flat') {
+  if (contextsGroupBy === ContextsGroupBy.Flat) {
     return contexts.map(createContextTreeNode);
   }
 
-  if (contextsGroupBy === 'date') {
+  if (contextsGroupBy === ContextsGroupBy.Date) {
     return createContextGroupNodes(
       groupByDate(contexts, (context) => context.updatedAt).map((group) => ({
         label: group.label,
@@ -124,13 +135,13 @@ function groupContexts(contexts: ContextViewItem[]) {
     );
   }
 
-  if (contextsGroupBy === 'size') {
+  if (contextsGroupBy === ContextsGroupBy.Size) {
     return createContextGroupNodes(
       createOrderedGroups(contexts, ['Small', 'Medium', 'Large'], getSizeGroup),
     );
   }
 
-  if (contextsGroupBy === 'template') {
+  if (contextsGroupBy === ContextsGroupBy.Template) {
     return createContextGroupNodes(
       createSortedGroups(contexts, (context) => context.template || 'Unknown'),
     );

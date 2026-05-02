@@ -2,8 +2,19 @@ import { execFileSync, type SpawnSyncReturns, spawnSync } from 'node:child_proce
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+export enum GitFileStatus {
+  Added = 'A',
+  Modified = 'M',
+  Deleted = 'D',
+  Renamed = 'R',
+}
+
+export const GIT_CONFIG_SCOPE_GLOBAL = 'global';
+
+export type GitConfigScope = typeof GIT_CONFIG_SCOPE_GLOBAL;
+
 export type GitChangedFileSummary = {
-  status: string;
+  status: GitFileStatus | string;
   path: string;
   oldPath: string | null;
   additions: number | null;
@@ -88,10 +99,10 @@ export function gitRoot(path = process.cwd()): string | null {
 
 export function gitConfigGet(
   key: string,
-  options: { scope?: 'global'; path?: string } = {},
+  options: { scope?: GitConfigScope; path?: string } = {},
 ): string | null {
   const args = ['config'];
-  if (options.scope === 'global') {
+  if (options.scope === GIT_CONFIG_SCOPE_GLOBAL) {
     args.push('--global');
   }
   args.push(key);
@@ -112,9 +123,9 @@ export function gitUserName(path?: string): string | null {
   return gitConfigGet('user.name', { path });
 }
 
-export function gitConfigUnset(key: string, scope?: 'global'): boolean {
+export function gitConfigUnset(key: string, scope?: GitConfigScope): boolean {
   const args = ['config', '--unset'];
-  if (scope === 'global') {
+  if (scope === GIT_CONFIG_SCOPE_GLOBAL) {
     args.splice(1, 0, '--global');
   }
   args.push(key);
@@ -356,7 +367,7 @@ function parseNameStatusLine(
     return [];
   }
 
-  if (status === 'R' && parts.length >= 3) {
+  if (status === GitFileStatus.Renamed && parts.length >= 3) {
     const oldPath = parts[1];
     const newPath = parts[2];
     if (!oldPath || !newPath) {

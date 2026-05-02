@@ -7,6 +7,9 @@ import { formatError } from '../lib/format-error';
 import type { BranchContextTreeNodeDraft } from '../tree-views/items';
 import { getInitializedState } from './helpers';
 
+const GITHUB_HOST = 'github.com';
+const GITLAB_HOST = 'gitlab.com';
+
 export function registerCommitActionCommands(): vscode.Disposable[] {
   return [
     vscode.commands.registerCommand(commandIds.copyCommitHash, copyCommitHash),
@@ -114,12 +117,12 @@ function getCommitOriginUrl(workspaceRoot: string, hash: string): string | null 
     return null;
   }
 
-  if (normalized.host === 'github.com') {
-    return `https://github.com/${normalized.owner}/${normalized.repo}/commit/${hash}`;
+  if (normalized.host === GITHUB_HOST) {
+    return `https://${GITHUB_HOST}/${normalized.owner}/${normalized.repo}/commit/${hash}`;
   }
 
-  if (normalized.host === 'gitlab.com') {
-    return `https://gitlab.com/${normalized.owner}/${normalized.repo}/-/commit/${hash}`;
+  if (normalized.host === GITLAB_HOST) {
+    return `https://${GITLAB_HOST}/${normalized.owner}/${normalized.repo}/-/commit/${hash}`;
   }
 
   return null;

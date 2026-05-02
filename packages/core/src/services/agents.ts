@@ -67,6 +67,27 @@ type SessionFileCandidate = {
   mtimeMs: number;
 };
 
+export enum ClaudeSessionEventType {
+  User = 'user',
+  Assistant = 'assistant',
+  CustomTitle = 'custom-title',
+}
+
+export enum CodexSessionEventType {
+  SessionMeta = 'session_meta',
+  TurnContext = 'turn_context',
+  EventMessage = 'event_msg',
+  ResponseItem = 'response_item',
+}
+
+export enum CodexPayloadType {
+  UserMessage = 'user_message',
+}
+
+export enum AgentMessageRole {
+  User = 'user',
+}
+
 export type AgentSessionsResult =
   | {
       ok: true;
@@ -229,16 +250,16 @@ export function parseClaudeSessionFile(
       continue;
     }
 
-    if (data.type === 'user') {
+    if (data.type === ClaudeSessionEventType.User) {
       parsed.sessionId ??= asString(data.sessionId);
       parsed.cwd ??= asString(data.cwd);
       parsed.branch ??= asString(data.gitBranch);
       parsed.startedAt ??= asString(data.timestamp);
       parsed.title ??= extractMessageTitle(data.message);
-    } else if (data.type === 'assistant') {
+    } else if (data.type === ClaudeSessionEventType.Assistant) {
       const message = asRecord(data.message);
       parsed.model ??= asString(message?.model);
-    } else if (data.type === 'custom-title') {
+    } else if (data.type === ClaudeSessionEventType.CustomTitle) {
       parsed.title = asString(data.customTitle) ?? parsed.title;
     }
   }
@@ -269,18 +290,24 @@ export function parseCodexSessionFile(
     }
 
     const payload = asRecord(data.payload);
-    if (data.type === 'session_meta' && payload) {
+    if (data.type === CodexSessionEventType.SessionMeta && payload) {
       parsed.sessionId ??= asString(payload.id);
       parsed.cwd ??= asString(payload.cwd);
       parsed.startedAt ??= asString(payload.timestamp);
       parsed.source ??= formatSource(payload.source);
       parsed.branch ??= asString(asRecord(payload.git)?.branch);
-    } else if (data.type === 'turn_context' && payload) {
+    } else if (data.type === CodexSessionEventType.TurnContext && payload) {
       parsed.model ??= asString(payload.model);
       parsed.cwd ??= asString(payload.cwd);
-    } else if (data.type === 'event_msg' && payload?.type === 'user_message') {
+    } else if (
+      data.type === CodexSessionEventType.EventMessage &&
+      payload?.type === CodexPayloadType.UserMessage
+    ) {
       parsed.title ??= asString(payload.message);
-    } else if (data.type === 'response_item' && payload?.role === 'user') {
+    } else if (
+      data.type === CodexSessionEventType.ResponseItem &&
+      payload?.role === AgentMessageRole.User
+    ) {
       responseItemTitle ??= extractContentTitle(payload.content);
     }
   }

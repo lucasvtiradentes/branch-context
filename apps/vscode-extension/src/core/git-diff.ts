@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import type { GitChangedFileSummary, GitCommitSummary } from '@branch-context/core';
 import {
+  GitFileStatus,
   gitChangedFileSummariesBetween,
   gitCommitParentRef,
   gitFileContent,
@@ -86,7 +87,7 @@ function createChangeResource(
   file: GitChangedFileSummary,
 ): ChangeResource {
   const leftPath = file.oldPath ?? file.path;
-  const labelPath = file.status === 'D' ? leftPath : file.path;
+  const labelPath = file.status === GitFileStatus.Deleted ? leftPath : file.path;
   return [
     vscode.Uri.file(join(workspaceRoot, labelPath)),
     createGitContentUri(workspaceRoot, leftRef, leftPath),

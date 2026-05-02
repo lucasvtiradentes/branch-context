@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   archiveBranch,
+  CodexSessionEventType,
   DEFAULT_SYMLINK,
   getBranchMeta,
   getConfigDir,
@@ -145,7 +146,7 @@ function initCodexHome(repo: string) {
     join(sessionDir, 'codex.jsonl'),
     [
       JSON.stringify({
-        type: 'session_meta',
+        type: CodexSessionEventType.SessionMeta,
         payload: {
           id: 'codex-1',
           timestamp: now.toISOString(),
@@ -155,7 +156,7 @@ function initCodexHome(repo: string) {
         },
       }),
       JSON.stringify({
-        type: 'turn_context',
+        type: CodexSessionEventType.TurnContext,
         payload: { cwd: repo, model: 'gpt-5.5' },
       }),
     ].join('\n'),

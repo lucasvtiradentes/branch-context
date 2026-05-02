@@ -3,17 +3,17 @@ import { APP_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
 import {
-  type AgentSessionsGroupBy,
+  AgentSessionsGroupBy,
   getAgentSessionsGroupBy,
   saveAgentSessionsGroupBy,
 } from '../tree-views/agent-sessions';
 import type { GroupByOption } from './group-options';
 
 const groupByOptions: GroupByOption<AgentSessionsGroupBy>[] = [
-  { label: 'Flat', value: 'flat' },
-  { label: 'Provider', value: 'provider' },
-  { label: 'Date', value: 'date' },
-  { label: 'Size', value: 'size' },
+  { label: 'Flat', value: AgentSessionsGroupBy.Flat },
+  { label: 'Provider', value: AgentSessionsGroupBy.Provider },
+  { label: 'Date', value: AgentSessionsGroupBy.Date },
+  { label: 'Size', value: AgentSessionsGroupBy.Size },
 ];
 
 export function registerGroupAgentSessionsCommand(

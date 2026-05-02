@@ -1,4 +1,4 @@
-import type { BranchGitSummary } from '@branch-context/core';
+import { type BranchGitSummary, BranchGitSummaryErrorReason } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { openBranchChanges } from '../core/git-diff';
@@ -39,7 +39,7 @@ export function registerReviewDiffCommand(): vscode.Disposable {
 }
 
 function formatGitSummaryError(summary: BranchGitSummary) {
-  if (!summary.ok && summary.reason === 'base_not_found') {
+  if (!summary.ok && summary.reason === BranchGitSummaryErrorReason.BaseNotFound) {
     return `${APP_NAME}: base branch not found: ${summary.baseBranch ?? 'unknown'}`;
   }
 

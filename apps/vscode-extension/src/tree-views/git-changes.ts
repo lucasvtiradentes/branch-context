@@ -5,6 +5,7 @@ import type {
   GitChangedFileSummary,
   GitCommitSummary,
 } from '@branch-context/core';
+import { BranchGitSummaryErrorReason, GitFileStatus } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds, contextKeys } from '../constants';
 import { type BranchContextExtensionState, getBranchContextState } from '../core/state';
@@ -20,20 +21,48 @@ import {
   StateTreeProvider,
 } from './items';
 
-const gitChangesModeValues = ['files', 'commits'] as const;
-const gitChangedFilesGroupByValues = ['flat', 'changeType'] as const;
-const gitCommitsGroupByValues = ['flat', 'date', 'author'] as const;
+enum GitChangesMode {
+  Files = 'files',
+  Commits = 'commits',
+}
+
+export enum GitChangedFilesGroupBy {
+  Flat = 'flat',
+  ChangeType = 'changeType',
+}
+
+export enum GitCommitsGroupBy {
+  Flat = 'flat',
+  Date = 'date',
+  Author = 'author',
+}
+
+const gitChangesModeValues = Object.values(GitChangesMode);
+const gitChangedFilesGroupByValues = Object.values(GitChangedFilesGroupBy);
+const gitCommitsGroupByValues = Object.values(GitCommitsGroupBy);
+const gitChangesViewDescriptions = {
+  [GitChangesMode.Files]: 'changed files',
+  [GitChangesMode.Commits]: 'commits',
+} as const;
+const changedFileThemeIcons = {
+  [GitFileStatus.Added]: 'diff-added',
+  [GitFileStatus.Deleted]: 'diff-removed',
+  [GitFileStatus.Renamed]: 'diff-renamed',
+  [GitFileStatus.Modified]: 'diff-modified',
+} as const;
+const changedFileLetterColors = {
+  [GitFileStatus.Added]: '#3fb950',
+  [GitFileStatus.Modified]: '#d29922',
+  [GitFileStatus.Deleted]: '#f85149',
+  [GitFileStatus.Renamed]: '#58a6ff',
+} as const;
 const gitChangesModeWorkspaceKey = 'gitChanges.mode';
 const gitChangedFilesGroupByWorkspaceKey = 'gitChanges.filesGroupBy';
 const gitCommitsGroupByWorkspaceKey = 'gitChanges.commitsGroupBy';
 
-type GitChangesMode = (typeof gitChangesModeValues)[number];
-export type GitChangedFilesGroupBy = (typeof gitChangedFilesGroupByValues)[number];
-export type GitCommitsGroupBy = (typeof gitCommitsGroupByValues)[number];
-
-let gitChangesMode: GitChangesMode = 'files';
-let gitChangedFilesGroupBy: GitChangedFilesGroupBy = 'flat';
-let gitCommitsGroupBy: GitCommitsGroupBy = 'flat';
+let gitChangesMode: GitChangesMode = GitChangesMode.Files;
+let gitChangedFilesGroupBy: GitChangedFilesGroupBy = GitChangedFilesGroupBy.Flat;
+let gitCommitsGroupBy: GitCommitsGroupBy = GitCommitsGroupBy.Flat;
 
 export function initializeGitChangesMode(context: vscode.ExtensionContext): void {
   const savedMode = context.workspaceState.get<unknown>(gitChangesModeWorkspaceKey);
@@ -57,7 +86,7 @@ export function initializeGitChangesMode(context: vscode.ExtensionContext): void
 }
 
 export function getGitChangesViewDescription(): string {
-  return gitChangesMode === 'files' ? 'changed files' : 'commits';
+  return gitChangesViewDescriptions[gitChangesMode];
 }
 
 export function getGitChangedFilesGroupBy(): GitChangedFilesGroupBy {
@@ -87,7 +116,8 @@ export async function saveGitCommitsGroupBy(
 export async function toggleGitChangesMode(
   context: vscode.ExtensionContext,
 ): Promise<GitChangesMode> {
-  const nextMode = gitChangesMode === 'files' ? 'commits' : 'files';
+  const nextMode =
+    gitChangesMode === GitChangesMode.Files ? GitChangesMode.Commits : GitChangesMode.Files;
   gitChangesMode = nextMode;
   await context.workspaceState.update(gitChangesModeWorkspaceKey, nextMode);
   updateGitChangesModeContext();
@@ -101,7 +131,7 @@ export function createGitChangesProvider(): StateTreeProvider {
       return [createMessageNode('No .bctx config')];
     }
 
-    return gitChangesMode === 'files'
+    return gitChangesMode === GitChangesMode.Files
       ? createChangedFileNodes(state)
       : createCommitNodes(state.gitSummary);
   });
@@ -134,13 +164,13 @@ function createCommitNodes(gitSummary: BranchGitSummary | null) {
 }
 
 function groupCommitNodes(commits: GitCommitSummary[]) {
-  if (gitCommitsGroupBy === 'date') {
+  if (gitCommitsGroupBy === GitCommitsGroupBy.Date) {
     return groupByDate(commits, (commit) => commit.authoredAt).map((group) =>
       createGroupNode(group.label, group.items.map(createCommitNode), String(group.items.length)),
     );
   }
 
-  if (gitCommitsGroupBy === 'author') {
+  if (gitCommitsGroupBy === GitCommitsGroupBy.Author) {
     return createSortedCommitGroups(commits, (commit) => commit.authorName);
   }
 
@@ -148,15 +178,39 @@ function groupCommitNodes(commits: GitCommitSummary[]) {
 }
 
 function groupChangedFileNodes(workspaceRoot: string | null, files: GitChangedFileSummary[]) {
-  if (gitChangedFilesGroupBy !== 'changeType') {
+  if (gitChangedFilesGroupBy !== GitChangedFilesGroupBy.ChangeType) {
     return files.map((file) => createChangedFileNode(workspaceRoot, file));
   }
 
   return [
-    createChangedFileGroup(workspaceRoot, files, 'Added', ['A'], getChangedFileIcon('A')),
-    createChangedFileGroup(workspaceRoot, files, 'Modified', ['M'], getChangedFileIcon('M')),
-    createChangedFileGroup(workspaceRoot, files, 'Renamed', ['R'], getChangedFileIcon('R')),
-    createChangedFileGroup(workspaceRoot, files, 'Deleted', ['D'], getChangedFileIcon('D')),
+    createChangedFileGroup(
+      workspaceRoot,
+      files,
+      'Added',
+      [GitFileStatus.Added],
+      getChangedFileIcon(GitFileStatus.Added),
+    ),
+    createChangedFileGroup(
+      workspaceRoot,
+      files,
+      'Modified',
+      [GitFileStatus.Modified],
+      getChangedFileIcon(GitFileStatus.Modified),
+    ),
+    createChangedFileGroup(
+      workspaceRoot,
+      files,
+      'Renamed',
+      [GitFileStatus.Renamed],
+      getChangedFileIcon(GitFileStatus.Renamed),
+    ),
+    createChangedFileGroup(
+      workspaceRoot,
+      files,
+      'Deleted',
+      [GitFileStatus.Deleted],
+      getChangedFileIcon(GitFileStatus.Deleted),
+    ),
     createChangedFileGroup(workspaceRoot, files, 'Other', [], new vscode.ThemeIcon('diff')),
   ].filter((group) => group.children?.().length);
 }
@@ -171,7 +225,7 @@ function createChangedFileGroup(
   const groupedFiles = files.filter((file) =>
     statuses.length > 0
       ? statuses.includes(file.status)
-      : !['A', 'M', 'R', 'D'].includes(file.status),
+      : !Object.values(GitFileStatus).includes(file.status as GitFileStatus),
   );
 
   return createGroupNode(
@@ -284,7 +338,7 @@ function getGitSummaryChildren(
 }
 
 function formatGitSummaryError(gitSummary: Extract<BranchGitSummary, { ok: false }>) {
-  if (gitSummary.reason === 'base_not_found') {
+  if (gitSummary.reason === BranchGitSummaryErrorReason.BaseNotFound) {
     return `Base not found: ${gitSummary.baseBranch ?? 'unknown'}`;
   }
 
@@ -297,19 +351,9 @@ function getChangedFileIcon(status: string) {
     return icon;
   }
 
-  if (status === 'A') {
-    return new vscode.ThemeIcon('diff-added');
-  }
-
-  if (status === 'D') {
-    return new vscode.ThemeIcon('diff-removed');
-  }
-
-  if (status === 'R') {
-    return new vscode.ThemeIcon('diff-renamed');
-  }
-
-  return new vscode.ThemeIcon('diff-modified');
+  return new vscode.ThemeIcon(
+    changedFileThemeIcons[status as GitFileStatus] ?? changedFileThemeIcons[GitFileStatus.Modified],
+  );
 }
 
 function getChangedFileLetterIcon(status: string) {
@@ -318,13 +362,7 @@ function getChangedFileLetterIcon(status: string) {
     return null;
   }
 
-  const colorByStatus: Record<string, string> = {
-    A: '#3fb950',
-    M: '#d29922',
-    D: '#f85149',
-    R: '#58a6ff',
-  };
-  const color = colorByStatus[normalizedStatus];
+  const color = changedFileLetterColors[normalizedStatus as GitFileStatus];
   if (!color) {
     return null;
   }
