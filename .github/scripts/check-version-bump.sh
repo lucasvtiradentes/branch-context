@@ -18,7 +18,14 @@ version_increased() {
   current_version="$(read_current_version "$package_path")"
   previous_version="$(read_previous_version "$package_path")"
 
-  [ -n "$previous_version" ] && node -e "
+  printf 'Checking %s: current=%s previous=%s\n' "$package_path" "$current_version" "${previous_version:-missing}"
+
+  if [ -z "$previous_version" ]; then
+    printf 'No previous version found for %s\n' "$package_path"
+    return 1
+  fi
+
+  node -e "
 const current = process.argv[1];
 const previous = process.argv[2];
 const parse = (value) => value.split('-')[0].split('.').map((part) => Number(part));
@@ -55,11 +62,13 @@ should_release_vscode=false
 if version_increased "apps/cli/package.json"; then
   should_release_npm=true
 fi
+printf 'should_release_npm=%s\n' "$should_release_npm"
 
 vscode_version="$(read_current_version "apps/vscode-extension/package.json")"
 if version_increased "apps/vscode-extension/package.json" && tag_missing "vscode-extension-v$vscode_version"; then
   should_release_vscode=true
 fi
+printf 'should_release_vscode=%s\n' "$should_release_vscode"
 
 if [ "$should_release_npm" = "true" ] || [ "$should_release_vscode" = "true" ]; then
   should_release=true
