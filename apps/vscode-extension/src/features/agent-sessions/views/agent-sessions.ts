@@ -214,7 +214,7 @@ function createAgentSessionNode(
     icon: showIcon ? getProviderIcon(session.provider, active) : new vscode.ThemeIcon('blank'),
     resourceUri: active ? undefined : createInactiveAgentSessionResourceUri(session.sessionId),
     useResourceUri: showIcon,
-    contextValue: createAgentSessionContextValue(pinned),
+    contextValue: createAgentSessionContextValue({ active, pinned }),
     command: path
       ? {
           command: 'vscode.open',
@@ -340,8 +340,10 @@ function getAgentSessionKey(provider: AgentSession['provider'], sessionId: strin
   return `${provider}:${sessionId}`;
 }
 
-function createAgentSessionContextValue(pinned: boolean) {
-  return `branchContext.agentSession.resumable.${pinned ? 'pinned' : 'pinnable'}`;
+function createAgentSessionContextValue(options: { active: boolean; pinned: boolean }) {
+  return `branchContext.agentSession.${options.active ? 'active' : 'resumable'}.${
+    options.pinned ? 'pinned' : 'pinnable'
+  }`;
 }
 
 function createAgentSessionGroupNode(

@@ -2,7 +2,7 @@ import { AgentSessionProvider } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../../../constants';
 import type { BranchContextTreeNodeDraft } from '../../../shared/tree-items';
-import { markAgentSessionTerminalActive } from '../active';
+import { isAgentSessionActive, markAgentSessionTerminalActive } from '../active';
 
 const resumeCommandBuilders: Record<AgentSessionProvider, (sessionId: string) => string> = {
   [AgentSessionProvider.Claude]: (sessionId) =>
@@ -12,24 +12,50 @@ const resumeCommandBuilders: Record<AgentSessionProvider, (sessionId: string) =>
 };
 
 export function registerResumeAgentSessionCommand(): vscode.Disposable {
-  return vscode.commands.registerCommand(commandIds.resumeAgentSession, async (node) => {
-    const session = node as BranchContextTreeNodeDraft | undefined;
-    if (!session?.agentProvider || !session.sessionId) {
-      await vscode.window.showErrorMessage('Missing agent session metadata.');
-      return;
-    }
+  return vscode.Disposable.from(
+    vscode.commands.registerCommand(commandIds.resumeAgentSession, async (node) => {
+      const session = node as BranchContextTreeNodeDraft | undefined;
+      if (!session?.agentProvider || !session.sessionId) {
+        await vscode.window.showErrorMessage('Missing agent session metadata.');
+        return;
+      }
 
-    const terminal = vscode.window.createTerminal({
-      name: `bctx ${session.agentProvider} ${session.sessionId.slice(0, 7)}`,
-    });
-    terminal.show();
-    markAgentSessionTerminalActive(terminal, {
-      provider: session.agentProvider,
-      sessionId: session.sessionId,
-      path: session.path ?? null,
-    });
-    terminal.sendText(getResumeCommand(session.agentProvider, session.sessionId));
-  });
+      if (
+        isAgentSessionActive({
+          provider: session.agentProvider,
+          sessionId: session.sessionId,
+          path: session.path ?? null,
+        })
+      ) {
+        await showActiveAgentSessionMessage();
+        return;
+      }
+
+      const terminal = vscode.window.createTerminal({
+        name: `bctx ${session.agentProvider} ${session.sessionId.slice(0, 7)}`,
+      });
+      terminal.show();
+      markAgentSessionTerminalActive(terminal, {
+        provider: session.agentProvider,
+        sessionId: session.sessionId,
+        path: session.path ?? null,
+      });
+      terminal.sendText(getResumeCommand(session.agentProvider, session.sessionId));
+    }),
+    vscode.commands.registerCommand(commandIds.showActiveAgentSession, async (node) => {
+      const session = node as BranchContextTreeNodeDraft | undefined;
+      if (!session?.agentProvider || !session.sessionId) {
+        await vscode.window.showErrorMessage('Missing agent session metadata.');
+        return;
+      }
+
+      await showActiveAgentSessionMessage();
+    }),
+  );
+}
+
+async function showActiveAgentSessionMessage(): Promise<void> {
+  await vscode.window.showInformationMessage('This agent session is already active.');
 }
 
 function getResumeCommand(provider: AgentSessionProvider, sessionId: string) {

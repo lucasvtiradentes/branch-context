@@ -142,7 +142,7 @@ export function initializeActiveAgentSessions(
   );
 }
 
-export function isAgentSessionActive(session: AgentSession): boolean {
+export function isAgentSessionActive(session: ActiveAgentSessionSource): boolean {
   const key = getSessionKey(session);
   const path = session.path ?? '';
   return (

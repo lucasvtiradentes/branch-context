@@ -174,6 +174,11 @@
         "icon": "$(debug-continue)"
       },
       {
+        "command": "branch-context.showActiveAgentSession",
+        "title": "Branch Context: Agent Session Active",
+        "icon": "$(circle-filled)"
+      },
+      {
         "command": "branch-context.pinAgentSession",
         "title": "Branch Context: Pin Agent Session",
         "icon": "$(pinned)"
@@ -478,6 +483,11 @@
         {
           "command": "branch-context.resumeAgentSession",
           "when": "view == branch-context.agentSessions && viewItem =~ /resumable/",
+          "group": "inline@1"
+        },
+        {
+          "command": "branch-context.showActiveAgentSession",
+          "when": "view == branch-context.agentSessions && viewItem =~ /active/",
           "group": "inline@1"
         },
         {
