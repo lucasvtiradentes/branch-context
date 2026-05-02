@@ -1,10 +1,13 @@
 #!/usr/bin/env node
+import { realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { pathToFileURL } from 'node:url';
+import { basename } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CLI_NAME, VERSION } from '@branch-context/core';
 import type { Program as CaporalProgram } from '@caporal/core';
 import { registerAgentsCommands } from './commands/agents';
 import { registerBaseCommand } from './commands/base';
+import { registerCompletionCommand } from './commands/completion';
 import { registerInitCommand } from './commands/init';
 import { registerOnCheckoutCommand } from './commands/on-checkout';
 import { registerOnCommitCommand } from './commands/on-commit';
@@ -15,6 +18,7 @@ import { registerTemplateCommand } from './commands/template';
 import { registerUninstallCommand } from './commands/uninstall';
 
 let programInstance: CaporalProgram | undefined;
+let programInstanceBin: string | undefined;
 
 export async function runCli(args = process.argv.slice(2)) {
   try {
@@ -28,19 +32,23 @@ export async function runCli(args = process.argv.slice(2)) {
 }
 
 function getProgram(): CaporalProgram {
-  programInstance ??= createProgram();
+  const binName = getProgramBin();
+  if (!programInstance || programInstanceBin !== binName) {
+    programInstance = createProgram(binName);
+    programInstanceBin = binName;
+  }
   return programInstance;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isDirectRun()) {
   const exitCode = await runCli();
   process.exit(exitCode);
 }
 
-function createProgram(): CaporalProgram {
+function createProgram(binName: string): CaporalProgram {
   const program = new (getProgramConstructor())()
-    .bin(process.env.BCTX_PROG_NAME ?? CLI_NAME)
-    .name(CLI_NAME)
+    .bin(binName)
+    .name(binName)
     .description('Git branch context manager')
     .version(VERSION)
     .disableGlobalOption('-v')
@@ -63,21 +71,44 @@ function createProgram(): CaporalProgram {
   registerTemplateCommand(program);
   registerOnCheckoutCommand(program);
   registerOnCommitCommand(program);
+  registerCompletionCommand(program);
 
   program.help(
     [
       'Examples:',
-      `  ${CLI_NAME} init`,
-      `  ${CLI_NAME} status`,
-      `  ${CLI_NAME} agents status`,
-      `  ${CLI_NAME} prune`,
-      `  ${CLI_NAME} template`,
-      `  ${CLI_NAME} template feature`,
-      `  ${CLI_NAME} --install-completion`,
+      `  ${binName} init`,
+      `  ${binName} status`,
+      `  ${binName} agents status`,
+      `  ${binName} prune`,
+      `  ${binName} template`,
+      `  ${binName} template feature`,
+      `  ${binName} --install-completion`,
     ].join('\n'),
   );
 
   return program;
+}
+
+function getProgramBin() {
+  if (process.env.BCTX_PROG_NAME) {
+    return process.env.BCTX_PROG_NAME;
+  }
+  if (isDirectRun() && process.argv[1]) {
+    return basename(process.argv[1]);
+  }
+  return CLI_NAME;
+}
+
+function isDirectRun() {
+  if (!process.argv[1]) {
+    return false;
+  }
+
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return import.meta.url === pathToFileURL(process.argv[1]).href;
+  }
 }
 
 function getProgramConstructor() {
