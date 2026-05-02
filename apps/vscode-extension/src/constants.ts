@@ -6,6 +6,7 @@ export { CONTEXT_FILE_NAME } from '@branch-context/core';
 const APP_ID = 'branch-context';
 const APP_LOG_FILENAME = 'extension.log';
 export const APP_NAME = 'Branch Context';
+export const IS_DEV_EXTENSION = APP_ID.endsWith('-dev');
 export const STATUS_BAR_PRIORITY = 10;
 
 export const commandIds = {

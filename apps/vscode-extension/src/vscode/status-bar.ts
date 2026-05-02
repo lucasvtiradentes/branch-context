@@ -11,7 +11,6 @@ const PROMPT_YES = 'Yes';
 const PROMPT_NO = 'No';
 const PROMPT_UPDATE_CLI = 'Update CLI';
 const PROMPT_IGNORE = 'Ignore';
-const CLI_UPDATE_COMMAND = 'npm install -g branch-context@latest';
 
 let item: vscode.StatusBarItem | undefined;
 let cliCompatibilityPromptShown = false;
@@ -263,7 +262,7 @@ async function promptCliUpdate(state: BranchContextExtensionState): Promise<void
 
   const terminal = vscode.window.createTerminal(`${APP_NAME}: Update CLI`);
   terminal.show();
-  terminal.sendText(CLI_UPDATE_COMMAND, true);
+  terminal.sendText(cli.updateCommand, true);
 }
 
 function getIssueTooltipLines(state: BranchContextExtensionState): string[] {

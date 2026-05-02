@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -22,7 +23,10 @@ type PackageJson = {
 
 const APP_ID = 'branch-context';
 const DEV_APP_ID = `${APP_ID}-dev`;
+const REPO_ROOT_PLACEHOLDER = '__BCTX_REPO_ROOT__';
+const PACKAGE_SCOPE_PLACEHOLDER = '__BCTX_PACKAGE_SCOPE__';
 const EXTENSION_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const REPO_ROOT = path.resolve(EXTENSION_DIR, '../..');
 const DIST_DIR = path.join(EXTENSION_DIR, 'dist-dev');
 const PACKAGE_JSON_PATH = path.join(EXTENSION_DIR, 'package.json');
 const DIST_JS_PATH = path.join(DIST_DIR, 'dist', 'extension.js');
@@ -36,6 +40,7 @@ function main() {
   setupDistDir();
   copyBuildArtifacts();
   patchDevFiles();
+  installDevCli();
   installIntoEditors();
 }
 
@@ -311,11 +316,39 @@ function patchFile(filePath: string) {
     return;
   }
 
-  fs.writeFileSync(filePath, replaceAppId(fs.readFileSync(filePath, 'utf8')));
+  fs.writeFileSync(filePath, patchDevContent(fs.readFileSync(filePath, 'utf8')));
 }
 
-function replaceAppId(content: string) {
-  return content.split(APP_ID).join(DEV_APP_ID);
+function patchDevContent(content: string) {
+  return content
+    .split('@branch-context/')
+    .join(PACKAGE_SCOPE_PLACEHOLDER)
+    .split('"@branch-context"')
+    .join(`"${PACKAGE_SCOPE_PLACEHOLDER}"`)
+    .split(APP_ID)
+    .join(DEV_APP_ID)
+    .split(REPO_ROOT_PLACEHOLDER)
+    .join(REPO_ROOT)
+    .split(`"${PACKAGE_SCOPE_PLACEHOLDER}"`)
+    .join('"@branch-context"')
+    .split(PACKAGE_SCOPE_PLACEHOLDER)
+    .join('@branch-context/');
+}
+
+function installDevCli() {
+  const result = spawnSync(
+    'pnpm',
+    ['--dir', REPO_ROOT, '--filter', 'branch-context', 'bctxd:install'],
+    {
+      encoding: 'utf8',
+      stdio: 'inherit',
+      windowsHide: true,
+    },
+  );
+
+  if (result.status !== 0) {
+    throw new Error('failed to install bctxd dev CLI');
+  }
 }
 
 function copyIfExists(source: string, target: string) {
