@@ -1,5 +1,5 @@
 {
-  "name": "@branch-context/cli",
+  "name": "branch-context",
   "version": "0.0.0",
   "type": "module",
   "main": "./dist/index.js",
