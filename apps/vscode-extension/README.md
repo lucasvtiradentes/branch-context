@@ -9,7 +9,7 @@
   <a href="https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode"><img src="https://img.shields.io/badge/VS%20Code-Extension-blue.svg" alt="VS Marketplace"></a>
   <a href="https://open-vsx.org/extension/lucasvtiradentes/branch-context-vscode"><img src="https://img.shields.io/open-vsx/v/lucasvtiradentes/branch-context-vscode?label=Open%20VSX&labelColor=a60ee5&color=374151" alt="Open VSX"></a>
   <br /><br />
-  <a href="#-overview">Overview</a> • <a href="#-features">Features</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-configuration">Configuration</a> • <a href="#-license">License</a>
+  <a href="#-overview">Overview</a> • <a href="#-demo">Demo</a> • <a href="#-features">Features</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-configuration">Configuration</a> • <a href="#-license">License</a>
 </div>
 
 <!-- <DYNFIELD:TOP_DIVIDER> -->
@@ -21,6 +21,10 @@
 ## 🎯 Overview
 
 VS Code extension for [Branch Context](https://github.com/lucasvtiradentes/branch-context). Adds a sidebar with the current branch's context, git changes, templates, and AI session pointers, all scoped to the active branch.
+
+## 📸 Demo
+
+![Branch Context VS Code extension demo](https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/demo.png)
 
 ## ⭐ Features
 
