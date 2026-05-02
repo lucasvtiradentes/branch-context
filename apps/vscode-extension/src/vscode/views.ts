@@ -17,7 +17,7 @@ import {
 } from '../features/git-changes/views/git-changes';
 import { createContextsProvider } from '../features/other-branches/views/contexts';
 import { createTemplatesProvider } from '../features/templates/views/templates';
-import { initializeTreeItemDecorations } from '../shared/tree/items';
+import { initializeTreeItemDecorations } from '../shared/tree-items';
 
 export function initializeTreeViews(context: vscode.ExtensionContext): void {
   initializeTreeItemDecorations(context);

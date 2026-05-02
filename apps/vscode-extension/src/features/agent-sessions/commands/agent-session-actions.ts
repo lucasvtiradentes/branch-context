@@ -3,8 +3,8 @@ import { join } from 'node:path';
 import { AgentSessionProvider } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../../../constants';
-import { formatError } from '../../../shared/lib/format/error';
-import type { BranchContextTreeNodeDraft } from '../../../shared/tree/items';
+import { formatError } from '../../../shared/format/error';
+import type { BranchContextTreeNodeDraft } from '../../../shared/tree-items';
 import { branchContextState } from '../../../vscode/state';
 import { removeAgentSessionPin, upsertAgentSessionPin } from '../pins';
 

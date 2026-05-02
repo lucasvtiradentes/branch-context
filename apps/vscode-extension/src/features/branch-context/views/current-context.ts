@@ -5,7 +5,7 @@ import {
   createMessageNode,
   readDirectoryNodes,
   StateTreeProvider,
-} from '../../../shared/tree/items';
+} from '../../../shared/tree-items';
 import { type BranchContextExtensionState, branchContextState } from '../../../vscode/state';
 
 export function createCurrentContextProvider(): StateTreeProvider {

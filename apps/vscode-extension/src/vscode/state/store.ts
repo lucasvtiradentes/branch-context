@@ -6,7 +6,7 @@ import {
 } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { contextKeys } from '../../constants';
-import { formatLogError, logger } from '../../shared/lib/logger';
+import { logger } from '../../shared/logger';
 import { getWorkspaceInfo } from '../workspace';
 import type { BranchContextExtensionState } from './types';
 
@@ -68,7 +68,7 @@ class BranchContextStateStore {
       };
     } catch (error) {
       logger.error(
-        `state read failed: workspace=${workspace.workspaceRoot} error=${formatLogError(error)}`,
+        `state read failed: workspace=${workspace.workspaceRoot} error=${logger.formatError(error)}`,
       );
       return {
         ...this.createEmptyState(),

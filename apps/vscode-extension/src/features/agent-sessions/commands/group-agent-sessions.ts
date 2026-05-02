@@ -1,7 +1,10 @@
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../../../constants';
-import { type GroupByOption, showGroupByQuickPick } from '../../../shared/commands/group-options';
-import { formatError } from '../../../shared/lib/format/error';
+import {
+  type GroupByOption,
+  showGroupByQuickPick,
+} from '../../../shared/command-utils/group-options';
+import { formatError } from '../../../shared/format/error';
 import { branchContextState } from '../../../vscode/state';
 import {
   AgentSessionsGroupBy,

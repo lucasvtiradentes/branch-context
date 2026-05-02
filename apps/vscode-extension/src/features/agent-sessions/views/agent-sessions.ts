@@ -12,17 +12,17 @@ import {
   parseJsonRecord,
 } from '@branch-context/core';
 import * as vscode from 'vscode';
-import { formatBytes } from '../../../shared/lib/format/bytes';
-import { formatRelativeTime } from '../../../shared/lib/format/relative-time';
-import { createOrderedGroups, groupByDate } from '../../../shared/lib/groups';
-import { isStringValue } from '../../../shared/lib/is-string-value';
-import { markdownTooltipLine } from '../../../shared/lib/markdown';
+import { formatBytes } from '../../../shared/format/bytes';
+import { markdownTooltipLine } from '../../../shared/format/markdown';
+import { formatRelativeTime } from '../../../shared/format/relative-time';
+import { createOrderedGroups, groupByDate } from '../../../shared/groups';
+import { isStringValue } from '../../../shared/is-string-value';
 import {
   BranchContextTreeNodeKind,
   createInactiveAgentSessionResourceUri,
   createMessageNode,
   StateTreeProvider,
-} from '../../../shared/tree/items';
+} from '../../../shared/tree-items';
 import { branchContextState } from '../../../vscode/state';
 import { isAgentSessionActive } from '../active';
 import { type AgentSessionPin, readAgentSessionPins } from '../pins';

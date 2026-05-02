@@ -1,9 +1,9 @@
 import { CreateBranchContextResult, syncCurrentBranch } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../../../constants';
-import { formatActionError, getInitializedState } from '../../../shared/commands/helpers';
-import { formatError } from '../../../shared/lib/format/error';
-import { formatLogError, logger } from '../../../shared/lib/logger';
+import { formatActionError, getInitializedState } from '../../../shared/command-utils/helpers';
+import { formatError } from '../../../shared/format/error';
+import { logger } from '../../../shared/logger';
 import { branchContextState } from '../../../vscode/state';
 
 export function registerSyncCommand(): vscode.Disposable {
@@ -54,7 +54,7 @@ export function registerSyncCommand(): vscode.Disposable {
         `${APP_NAME}: ${status} '${result.branch}' (${result.updates.length} tag updates)`,
       );
     } catch (error) {
-      logger.error(`sync command error: ${formatLogError(error)}`);
+      logger.error(`sync command error: ${logger.formatError(error)}`);
       await vscode.window.showErrorMessage(formatError(error));
     }
   });

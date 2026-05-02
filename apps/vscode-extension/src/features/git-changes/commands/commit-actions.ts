@@ -2,9 +2,9 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import type { GitCommitSummary } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../../../constants';
-import { getInitializedState } from '../../../shared/commands/helpers';
-import { formatError } from '../../../shared/lib/format/error';
-import type { BranchContextTreeNodeDraft } from '../../../shared/tree/items';
+import { getInitializedState } from '../../../shared/command-utils/helpers';
+import { formatError } from '../../../shared/format/error';
+import type { BranchContextTreeNodeDraft } from '../../../shared/tree-items';
 import { branchContextState } from '../../../vscode/state';
 
 const GITHUB_HOST = 'github.com';

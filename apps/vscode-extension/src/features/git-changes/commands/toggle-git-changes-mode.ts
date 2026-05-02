@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { commandIds } from '../../../constants';
-import { formatError } from '../../../shared/lib/format/error';
+import { formatError } from '../../../shared/format/error';
 import { branchContextState } from '../../../vscode/state';
 import { toggleGitChangesMode } from '../views/git-changes';
 

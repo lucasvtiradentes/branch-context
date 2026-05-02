@@ -1,10 +1,10 @@
 import { BranchContextStatusIssueLevel, initProject } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds, STATUS_BAR_PRIORITY } from '../../constants';
-import { formatError } from '../../shared/lib/format/error';
-import { formatRelativeTime } from '../../shared/lib/format/relative-time';
-import { formatLogError, logger } from '../../shared/lib/logger';
-import { escapeMarkdown, markdownTooltipLine } from '../../shared/lib/markdown';
+import { formatError } from '../../shared/format/error';
+import { escapeMarkdown, markdownTooltipLine } from '../../shared/format/markdown';
+import { formatRelativeTime } from '../../shared/format/relative-time';
+import { logger } from '../../shared/logger';
 import { type BranchContextExtensionState, branchContextState } from '../../vscode/state';
 
 const PROMPT_YES = 'Yes';
@@ -59,7 +59,7 @@ async function showStatusBarActions(): Promise<void> {
 
     await vscode.commands.executeCommand(commandIds.openCurrentContext);
   } catch (error) {
-    logger.error(`status bar action error: ${formatLogError(error)}`);
+    logger.error(`status bar action error: ${logger.formatError(error)}`);
     await vscode.window.showErrorMessage(formatError(error));
   }
 }

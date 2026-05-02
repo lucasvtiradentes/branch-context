@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../../../constants';
-import { getInitializedState, openPath } from '../../../shared/commands/helpers';
-import { formatError } from '../../../shared/lib/format/error';
+import { getInitializedState, openPath } from '../../../shared/command-utils/helpers';
+import { formatError } from '../../../shared/format/error';
 
 export function registerOpenCurrentContextCommand(): vscode.Disposable {
   return vscode.commands.registerCommand(commandIds.openCurrentContext, async () => {

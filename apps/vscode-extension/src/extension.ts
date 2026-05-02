@@ -4,15 +4,15 @@ import { initializeBranchContextWatcher } from './features/branch-context/watche
 import { initializeContextFileUx } from './features/context-file-ux';
 import { initializeContextsGroupBy } from './features/other-branches/views/contexts';
 import { initializeStatusBar } from './features/status-bar/status-bar';
-import { getLogFilePath, initializeLogging, logger } from './shared/lib/logger';
+import { logger } from './shared/logger';
 import { registerCommands } from './vscode/commands/register';
 import { initializeGitDiffProvider } from './vscode/git-diff';
 import { branchContextState } from './vscode/state';
 import { initializeTreeViews } from './vscode/views';
 
 function initializeCore(context: vscode.ExtensionContext): void {
-  initializeLogging();
-  logger.info(`extension activated; log file reset at ${getLogFilePath()}`);
+  logger.initialize();
+  logger.info(`extension activated; log file reset at ${logger.getLogFilePath()}`);
   branchContextState.initialize(context);
   initializeContextsGroupBy(context);
 }

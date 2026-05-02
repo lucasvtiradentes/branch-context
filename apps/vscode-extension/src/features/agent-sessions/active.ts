@@ -1,7 +1,7 @@
 import { type ExecFileException, execFile } from 'node:child_process';
 import type { AgentSession } from '@branch-context/core';
 import * as vscode from 'vscode';
-import { logger } from '../../shared/lib/logger';
+import { logger } from '../../shared/logger';
 import { branchContextState } from '../../vscode/state';
 
 const FILE_ACTIVITY_TTL_MS = 30_000;

@@ -14,14 +14,14 @@ import {
   getInitializedState,
   openExternalFolder,
   openPath,
-} from '../../../shared/commands/helpers';
-import { formatError } from '../../../shared/lib/format/error';
-import { formatLogError, logger } from '../../../shared/lib/logger';
+} from '../../../shared/command-utils/helpers';
+import { formatError } from '../../../shared/format/error';
+import { logger } from '../../../shared/logger';
 import {
   type BranchContextTreeNode,
   type BranchContextTreeNodeDraft,
   BranchContextTreeNodeKind,
-} from '../../../shared/tree/items';
+} from '../../../shared/tree-items';
 import { branchContextState } from '../../../vscode/state';
 
 type ContextTreeNode = BranchContextTreeNode & {
@@ -113,7 +113,7 @@ async function checkoutContextBranch(node: unknown): Promise<void> {
     branchContextState.refresh();
     await vscode.window.showInformationMessage(`${APP_NAME}: checked out '${contextNode.branch}'`);
   } catch (error) {
-    logger.error(`checkout context error: ${formatLogError(error)}`);
+    logger.error(`checkout context error: ${logger.formatError(error)}`);
     await vscode.window.showErrorMessage(formatError(error));
   }
 }

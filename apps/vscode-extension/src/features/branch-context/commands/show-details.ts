@@ -1,7 +1,7 @@
 import { BranchContextStatusIssueLevel } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../../../constants';
-import { formatError } from '../../../shared/lib/format/error';
+import { formatError } from '../../../shared/format/error';
 import { branchContextState } from '../../../vscode/state';
 
 export function registerShowDetailsCommand(): vscode.Disposable {

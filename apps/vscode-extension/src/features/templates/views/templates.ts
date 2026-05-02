@@ -3,7 +3,7 @@ import {
   createMessageNode,
   createTemplateNode,
   StateTreeProvider,
-} from '../../../shared/tree/items';
+} from '../../../shared/tree-items';
 import { branchContextState } from '../../../vscode/state';
 import { getWorkspaceInfo } from '../../../vscode/workspace';
 

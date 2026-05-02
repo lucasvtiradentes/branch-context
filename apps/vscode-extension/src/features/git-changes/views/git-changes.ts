@@ -8,17 +8,17 @@ import type {
 import { BranchGitSummaryErrorReason, GitFileStatus } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds, contextKeys } from '../../../constants';
-import { formatRelativeTime } from '../../../shared/lib/format/relative-time';
-import { groupByDate } from '../../../shared/lib/groups';
-import { isStringValue } from '../../../shared/lib/is-string-value';
-import { markdownTooltipLine } from '../../../shared/lib/markdown';
+import { markdownTooltipLine } from '../../../shared/format/markdown';
+import { formatRelativeTime } from '../../../shared/format/relative-time';
+import { groupByDate } from '../../../shared/groups';
+import { isStringValue } from '../../../shared/is-string-value';
 import {
   type BranchContextTreeNode,
   BranchContextTreeNodeKind,
   createGroupNode,
   createMessageNode,
   StateTreeProvider,
-} from '../../../shared/tree/items';
+} from '../../../shared/tree-items';
 import { type BranchContextExtensionState, branchContextState } from '../../../vscode/state';
 
 enum GitChangesMode {
