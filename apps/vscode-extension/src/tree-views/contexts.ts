@@ -5,7 +5,9 @@ import type {
 import * as vscode from 'vscode';
 import { getBranchContextState } from '../core/state';
 import { groupByDate } from '../lib/date-groups';
+import { formatBytes } from '../lib/format-bytes';
 import { formatRelativeTime } from '../lib/format-relative-time';
+import { createOrderedGroups } from '../lib/groups';
 import { markdownTooltipLine } from '../lib/markdown';
 import { isStringValue } from '../lib/string-values';
 import {
@@ -137,7 +139,9 @@ function groupContexts(contexts: ContextViewItem[]) {
 
   if (contextsGroupBy === ContextsGroupBy.Size) {
     return createContextGroupNodes(
-      createOrderedGroups(contexts, ['Small', 'Medium', 'Large'], getSizeGroup),
+      createOrderedGroups(contexts, ['Small', 'Medium', 'Large'], getSizeGroup).map(
+        contextGroupFromItems,
+      ),
     );
   }
 
@@ -150,8 +154,12 @@ function groupContexts(contexts: ContextViewItem[]) {
   return createContextGroupNodes(
     createOrderedGroups(contexts, ['Active', 'Archived'], (context) =>
       context.archived ? 'Archived' : 'Active',
-    ),
+    ).map(contextGroupFromItems),
   );
+}
+
+function contextGroupFromItems(group: { label: string; items: ContextViewItem[] }) {
+  return { label: group.label, contexts: group.items };
 }
 
 function createContextGroupNodes(groups: ContextViewGroup[]) {
@@ -162,19 +170,6 @@ function createContextGroupNodes(groups: ContextViewGroup[]) {
       `${group.contexts.length}`,
     ),
   );
-}
-
-function createOrderedGroups(
-  contexts: ContextViewItem[],
-  labels: string[],
-  getLabel: (context: ContextViewItem) => string,
-) {
-  return labels
-    .map((label) => ({
-      label,
-      contexts: contexts.filter((context) => getLabel(context) === label),
-    }))
-    .filter((group) => group.contexts.length > 0);
 }
 
 function createSortedGroups(
@@ -260,7 +255,7 @@ function createContextTooltip(context: ContextViewItem) {
       markdownTooltipLine('updated', formatRelativeTime(context.updatedAt)),
       markdownTooltipLine('commits', String(context.commitCount)),
       markdownTooltipLine('changed files', String(context.changedFileCount)),
-      markdownTooltipLine('size', formatBytes(context.sizeBytes)),
+      markdownTooltipLine('size', formatBytes(context.sizeBytes, 0)),
     ].join('  \n'),
   );
 }
@@ -275,18 +270,6 @@ function getSizeGroup(context: ContextViewItem) {
   }
 
   return 'Large';
-}
-
-function formatBytes(bytes: number) {
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-
-  if (bytes < 1024 * 1024) {
-    return `${Math.round(bytes / 1024)} KB`;
-  }
-
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function compareByUpdatedAt(left: ContextViewItem, right: ContextViewItem) {

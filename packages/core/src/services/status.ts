@@ -74,6 +74,8 @@ export type BranchContextArchivedContextSummary = {
   sizeBytes: number;
 };
 
+type ContextSummaryOrderSource = Pick<BranchContextContextSummary, 'branch' | 'updatedAt'>;
+
 export type BranchContextStatus = {
   gitRoot: string;
   initialized: boolean;
@@ -407,14 +409,19 @@ function compareContexts(
   left: BranchContextContextSummary,
   right: BranchContextContextSummary,
 ): number {
-  return (
-    compareUpdatedAt(left.updatedAt, right.updatedAt) || left.branch.localeCompare(right.branch)
-  );
+  return compareContextSummaryOrder(left, right);
 }
 
 function compareArchivedContexts(
   left: BranchContextArchivedContextSummary,
   right: BranchContextArchivedContextSummary,
+): number {
+  return compareContextSummaryOrder(left, right);
+}
+
+function compareContextSummaryOrder(
+  left: ContextSummaryOrderSource,
+  right: ContextSummaryOrderSource,
 ): number {
   return (
     compareUpdatedAt(left.updatedAt, right.updatedAt) || left.branch.localeCompare(right.branch)

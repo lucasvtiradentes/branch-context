@@ -7,7 +7,7 @@ import {
   getGitChangedFilesGroupBy,
   saveGitChangedFilesGroupBy,
 } from '../tree-views/git-changes';
-import type { GroupByOption } from './group-options';
+import { type GroupByOption, showGroupByQuickPick } from './group-options';
 
 const groupByOptions: GroupByOption<GitChangedFilesGroupBy>[] = [
   { label: 'Flat', value: GitChangedFilesGroupBy.Flat },
@@ -20,15 +20,10 @@ export function registerGroupGitChangedFilesCommand(
   return vscode.commands.registerCommand(commandIds.groupGitChangedFilesBy, async () => {
     try {
       const current = getGitChangedFilesGroupBy();
-      const selected = await vscode.window.showQuickPick(
-        groupByOptions.map((option) => ({
-          label: option.label,
-          description: option.value === current ? 'current' : undefined,
-          value: option.value,
-        })),
-        {
-          placeHolder: 'Group changed files by',
-        },
+      const selected = await showGroupByQuickPick(
+        groupByOptions,
+        current,
+        'Group changed files by',
       );
 
       if (!selected) {

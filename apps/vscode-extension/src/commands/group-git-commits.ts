@@ -7,7 +7,7 @@ import {
   getGitCommitsGroupBy,
   saveGitCommitsGroupBy,
 } from '../tree-views/git-changes';
-import type { GroupByOption } from './group-options';
+import { type GroupByOption, showGroupByQuickPick } from './group-options';
 
 const groupByOptions: GroupByOption<GitCommitsGroupBy>[] = [
   { label: 'Flat', value: GitCommitsGroupBy.Flat },
@@ -21,16 +21,7 @@ export function registerGroupGitCommitsCommand(
   return vscode.commands.registerCommand(commandIds.groupGitCommitsBy, async () => {
     try {
       const current = getGitCommitsGroupBy();
-      const selected = await vscode.window.showQuickPick(
-        groupByOptions.map((option) => ({
-          label: option.label,
-          description: option.value === current ? 'current' : undefined,
-          value: option.value,
-        })),
-        {
-          placeHolder: 'Group commits by',
-        },
-      );
+      const selected = await showGroupByQuickPick(groupByOptions, current, 'Group commits by');
 
       if (!selected) {
         return;

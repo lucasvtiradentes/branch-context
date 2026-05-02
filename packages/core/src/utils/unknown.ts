@@ -7,3 +7,12 @@ export function asRecord(value: unknown): Record<string, unknown> | null {
     ? (value as Record<string, unknown>)
     : null;
 }
+
+export function parseJsonRecord(line: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(line) as unknown;
+    return asRecord(parsed);
+  } catch {
+    return null;
+  }
+}

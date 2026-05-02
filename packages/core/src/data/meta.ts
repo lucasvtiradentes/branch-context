@@ -232,47 +232,40 @@ export function updateBranchMeta(
 }
 
 export function archiveBranchMeta(workspace: string, branchKey: string) {
-  const meta = loadBranchMeta(workspace);
+  moveMetaEntry(branchKey, getMetaPath(workspace), getArchivedMetaPath(workspace));
+}
+
+export function unarchiveBranchMeta(workspace: string, branchKey: string) {
+  moveMetaEntry(branchKey, getArchivedMetaPath(workspace), getMetaPath(workspace));
+}
+
+export function deleteBranchMeta(workspace: string, branchKey: string) {
+  deleteMetaEntry(getMetaPath(workspace), branchKey);
+}
+
+export function deleteArchivedBranchMeta(workspace: string, branchKey: string) {
+  deleteMetaEntry(getArchivedMetaPath(workspace), branchKey);
+}
+
+function moveMetaEntry(branchKey: string, fromPath: string, toPath: string) {
+  const meta = loadMeta(fromPath);
   const branchData = meta[branchKey];
   if (!branchData) {
     return;
   }
 
   delete meta[branchKey];
-  saveMeta(getMetaPath(workspace), meta);
+  saveMeta(fromPath, meta);
 
-  const archived = loadArchivedMeta(workspace);
-  archived[branchKey] = branchData;
-  saveMeta(getArchivedMetaPath(workspace), archived);
+  const targetMeta = loadMeta(toPath);
+  targetMeta[branchKey] = branchData;
+  saveMeta(toPath, targetMeta);
 }
 
-export function unarchiveBranchMeta(workspace: string, branchKey: string) {
-  const archived = loadArchivedMeta(workspace);
-  const branchData = archived[branchKey];
-  if (!branchData) {
-    return;
-  }
-
-  delete archived[branchKey];
-  saveMeta(getArchivedMetaPath(workspace), archived);
-
-  const meta = loadBranchMeta(workspace);
-  meta[branchKey] = branchData;
-  saveMeta(getMetaPath(workspace), meta);
-}
-
-export function deleteBranchMeta(workspace: string, branchKey: string) {
-  const meta = loadBranchMeta(workspace);
+function deleteMetaEntry(path: string, branchKey: string) {
+  const meta = loadMeta(path);
   if (branchKey in meta) {
     delete meta[branchKey];
-    saveMeta(getMetaPath(workspace), meta);
-  }
-}
-
-export function deleteArchivedBranchMeta(workspace: string, branchKey: string) {
-  const archived = loadArchivedMeta(workspace);
-  if (branchKey in archived) {
-    delete archived[branchKey];
-    saveMeta(getArchivedMetaPath(workspace), archived);
+    saveMeta(path, meta);
   }
 }

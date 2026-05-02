@@ -3,7 +3,7 @@ import { APP_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
 import { ContextsGroupBy, getContextsGroupBy, saveContextsGroupBy } from '../tree-views/contexts';
-import type { GroupByOption } from './group-options';
+import { type GroupByOption, showGroupByQuickPick } from './group-options';
 
 const groupByOptions: GroupByOption<ContextsGroupBy>[] = [
   { label: 'Flat', value: ContextsGroupBy.Flat },
@@ -17,15 +17,10 @@ export function registerGroupContextsCommand(context: vscode.ExtensionContext): 
   return vscode.commands.registerCommand(commandIds.groupContextsBy, async () => {
     try {
       const current = getContextsGroupBy();
-      const selected = await vscode.window.showQuickPick(
-        groupByOptions.map((option) => ({
-          label: option.label,
-          description: option.value === current ? 'current' : undefined,
-          value: option.value,
-        })),
-        {
-          placeHolder: 'Group other branches by',
-        },
+      const selected = await showGroupByQuickPick(
+        groupByOptions,
+        current,
+        'Group other branches by',
       );
 
       if (!selected) {

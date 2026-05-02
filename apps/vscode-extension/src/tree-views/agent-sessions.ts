@@ -7,13 +7,18 @@ import {
   asString,
   CodexPayloadType,
   CodexSessionEventType,
+  extractAgentContentTitle,
+  isInternalAgentUserMessage,
+  parseJsonRecord,
 } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { isAgentSessionActive } from '../core/active-agent-sessions';
 import { type AgentSessionPin, readAgentSessionPins } from '../core/agent-session-pins';
 import { getBranchContextState } from '../core/state';
 import { groupByDate } from '../lib/date-groups';
+import { formatBytes } from '../lib/format-bytes';
 import { formatRelativeTime } from '../lib/format-relative-time';
+import { createOrderedGroups } from '../lib/groups';
 import { markdownTooltipLine } from '../lib/markdown';
 import { isStringValue } from '../lib/string-values';
 import {
@@ -284,8 +289,15 @@ function groupUnpinnedAgentSessions(items: AgentSessionViewItem[]) {
   }
 
   if (agentSessionsGroupBy === AgentSessionsGroupBy.Size) {
-    return createOrderedGroups(items, ['Small', 'Medium', 'Large'], getSizeGroup, 'database').map(
-      (group) => createAgentSessionGroupNode(group, vscode.TreeItemCollapsibleState.Expanded),
+    return createOrderedGroups(items, ['Small', 'Medium', 'Large'], getSizeGroup).map((group) =>
+      createAgentSessionGroupNode(
+        {
+          label: group.label,
+          sessions: group.items,
+          icon: new vscode.ThemeIcon('database'),
+        },
+        vscode.TreeItemCollapsibleState.Expanded,
+      ),
     );
   }
 
@@ -351,21 +363,6 @@ function createAgentSessionGroupNode(
   );
 }
 
-function createOrderedGroups(
-  items: AgentSessionViewItem[],
-  labels: string[],
-  getLabel: (item: AgentSessionViewItem) => string,
-  icon: string,
-) {
-  return labels
-    .map((label) => ({
-      label,
-      sessions: items.filter((item) => getLabel(item) === label),
-      icon: new vscode.ThemeIcon(icon),
-    }))
-    .filter((group) => group.sessions.length > 0);
-}
-
 function getSizeGroup(item: AgentSessionViewItem) {
   if (item.sizeBytes < 100 * 1024) {
     return 'Small';
@@ -414,7 +411,7 @@ function readSessionDetails(path: string | null): AgentSessionDetails {
 
   try {
     for (const line of readFileSync(path, 'utf8').split(/\r?\n/)) {
-      const data = parseJsonObject(line);
+      const data = parseJsonRecord(line);
       if (!data) {
         continue;
       }
@@ -450,7 +447,7 @@ function extractUserMessage(data: Record<string, unknown>): UserMessageExtractio
   }
 
   if (data.type === AgentSessionViewEventType.User) {
-    return toUserMessage(extractContentTitle(asRecord(data.message)?.content));
+    return toUserMessage(extractAgentContentTitle(asRecord(data.message)?.content, 160));
   }
 
   const payload = asRecord(data.payload);
@@ -467,7 +464,7 @@ function extractUserMessage(data: Record<string, unknown>): UserMessageExtractio
     payload &&
     payload.role === AgentMessageRole.User
   ) {
-    return toUserMessage(extractContentTitle(payload.content), { fallback: true });
+    return toUserMessage(extractAgentContentTitle(payload.content, 160), { fallback: true });
   }
 
   return null;
@@ -477,40 +474,11 @@ function toUserMessage(
   text: string | null,
   options?: Pick<UserMessageExtraction, 'fallback' | 'lastOnly'>,
 ): UserMessageExtraction | null {
-  if (!text || isInternalUserMessage(text)) {
+  if (!text || isInternalAgentUserMessage(text)) {
     return null;
   }
 
   return { text, ...options };
-}
-
-function isInternalUserMessage(text: string) {
-  return text.startsWith('# AGENTS.md instructions for ');
-}
-
-function extractContentTitle(content: unknown) {
-  if (typeof content === 'string') {
-    return cleanTitle(content);
-  }
-
-  if (!Array.isArray(content)) {
-    return null;
-  }
-
-  const text = content
-    .map((item) => asString(asRecord(item)?.text))
-    .filter(Boolean)
-    .join(' ');
-
-  return cleanTitle(text);
-}
-
-function cleanTitle(value: string | null) {
-  const title = value?.trim().replace(/\s+/g, ' ') ?? '';
-  if (!title) {
-    return null;
-  }
-  return title.length > 160 ? `${title.slice(0, 157)}...` : title;
 }
 
 function getSessionSize(path: string | null) {
@@ -535,15 +503,6 @@ function normalizeAgentSessionsGroupBy(value: SavedAgentSessionsGroupBy): AgentS
 
 function isAgentSessionTextMode(value: unknown): value is AgentSessionTextMode {
   return isStringValue(agentSessionTextModeValues, value);
-}
-
-function parseJsonObject(line: string) {
-  try {
-    const parsed = JSON.parse(line) as unknown;
-    return asRecord(parsed);
-  } catch {
-    return null;
-  }
 }
 
 function getProviderSort(provider: AgentSession['provider']) {
@@ -603,16 +562,4 @@ function createAgentTooltip(item: AgentSessionViewItem) {
 
 function getShortSessionId(sessionId: string) {
   return sessionId.slice(0, 7);
-}
-
-function formatBytes(value: number) {
-  if (value < 1024) {
-    return `${value} B`;
-  }
-
-  if (value < 1024 * 1024) {
-    return `${(value / 1024).toFixed(1)} KB`;
-  }
-
-  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }

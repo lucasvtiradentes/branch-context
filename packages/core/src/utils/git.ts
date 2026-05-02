@@ -30,6 +30,9 @@ export type GitCommitSummary = {
 };
 
 type GitChangedFileStats = Pick<GitChangedFileSummary, 'additions' | 'deletions'>;
+type GitOutputOptions = {
+  maxBuffer?: number;
+};
 
 export function gitInit(path: string, branch?: string): SpawnSyncReturns<string> {
   const args = ['init'];
@@ -209,32 +212,22 @@ export function gitInfoExcludeAdd(path: string, pattern: string): boolean {
 }
 
 export function gitLog(path: string, args: string[]): string | null {
-  const result = spawnSync('git', ['log', ...args], {
-    cwd: path,
-    encoding: 'utf8',
-  });
-  if (result.status !== 0) {
-    return null;
-  }
-  return result.stdout;
+  return gitOutput(path, ['log', ...args]);
 }
 
 export function gitDiff(path: string, args: string[]): string | null {
-  const result = spawnSync('git', ['diff', ...args], {
-    cwd: path,
-    encoding: 'utf8',
-  });
-  if (result.status !== 0) {
-    return null;
-  }
-  return result.stdout;
+  return gitOutput(path, ['diff', ...args]);
 }
 
 export function gitShow(path: string, args: string[]): string | null {
-  const result = spawnSync('git', ['show', ...args], {
+  return gitOutput(path, ['show', ...args], { maxBuffer: 20 * 1024 * 1024 });
+}
+
+function gitOutput(path: string, args: string[], options: GitOutputOptions = {}): string | null {
+  const result = spawnSync('git', args, {
     cwd: path,
     encoding: 'utf8',
-    maxBuffer: 20 * 1024 * 1024,
+    ...options,
   });
   if (result.status !== 0) {
     return null;
@@ -260,14 +253,7 @@ export function gitCommitParentRef(path: string, commitHash: string): string | n
 }
 
 export function gitMergeBase(path: string, leftRef: string, rightRef = 'HEAD'): string | null {
-  const result = spawnSync('git', ['merge-base', leftRef, rightRef], {
-    cwd: path,
-    encoding: 'utf8',
-  });
-  if (result.status !== 0) {
-    return null;
-  }
-  return result.stdout.trim() || null;
+  return gitOutput(path, ['merge-base', leftRef, rightRef])?.trim() || null;
 }
 
 export function gitChangedFileSummaries(path: string, baseRef: string): GitChangedFileSummary[] {

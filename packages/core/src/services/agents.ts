@@ -22,7 +22,7 @@ import {
 } from '../data/agents';
 import { configExists } from '../data/config';
 import { gitCurrentBranch } from '../utils/git';
-import { asRecord, asString } from '../utils/unknown';
+import { asRecord, asString, parseJsonRecord } from '../utils/unknown';
 import { syncCurrentBranch } from './actions';
 
 export type { AgentSession };
@@ -245,7 +245,7 @@ export function parseClaudeSessionFile(
   };
 
   for (const line of readJsonLines(path, maxBytes)) {
-    const data = parseJsonObject(line);
+    const data = parseJsonRecord(line);
     if (!data) {
       continue;
     }
@@ -284,7 +284,7 @@ export function parseCodexSessionFile(
   let responseItemTitle: string | null = null;
 
   for (const line of readJsonLines(path, maxBytes)) {
-    const data = parseJsonObject(line);
+    const data = parseJsonRecord(line);
     if (!data) {
       continue;
     }
@@ -308,7 +308,7 @@ export function parseCodexSessionFile(
       data.type === CodexSessionEventType.ResponseItem &&
       payload?.role === AgentMessageRole.User
     ) {
-      responseItemTitle ??= extractContentTitle(payload.content);
+      responseItemTitle ??= extractAgentContentTitle(payload.content);
     }
   }
 
@@ -484,15 +484,6 @@ function getFileUpdatedAt(path: string) {
   }
 }
 
-function parseJsonObject(line: string) {
-  try {
-    const parsed = JSON.parse(line) as unknown;
-    return asRecord(parsed);
-  } catch {
-    return null;
-  }
-}
-
 function matchesRepo(cwd: string | null, repoRoot: string) {
   if (!cwd) {
     return false;
@@ -517,12 +508,12 @@ function extractMessageTitle(message: unknown) {
   if (!data) {
     return null;
   }
-  return extractContentTitle(data.content);
+  return extractAgentContentTitle(data.content);
 }
 
-function extractContentTitle(content: unknown) {
+export function extractAgentContentTitle(content: unknown, maxLength = 120) {
   if (typeof content === 'string') {
-    return cleanTitle(content);
+    return cleanAgentTitle(content, maxLength);
   }
 
   if (!Array.isArray(content)) {
@@ -534,18 +525,18 @@ function extractContentTitle(content: unknown) {
     .filter(Boolean)
     .join(' ');
 
-  return cleanTitle(text);
+  return cleanAgentTitle(text, maxLength);
 }
 
-function cleanTitle(value: string | null) {
+export function cleanAgentTitle(value: string | null, maxLength = 120) {
   const title = value?.trim().replace(/\s+/g, ' ') ?? '';
-  if (!title || isInternalUserMessage(title)) {
+  if (!title || isInternalAgentUserMessage(title)) {
     return null;
   }
-  return title.length > 120 ? `${title.slice(0, 117)}...` : title;
+  return title.length > maxLength ? `${title.slice(0, maxLength - 3)}...` : title;
 }
 
-function isInternalUserMessage(text: string) {
+export function isInternalAgentUserMessage(text: string) {
   return text.startsWith('# AGENTS.md instructions for ');
 }
 

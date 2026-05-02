@@ -7,7 +7,7 @@ import {
   getAgentSessionsGroupBy,
   saveAgentSessionsGroupBy,
 } from '../tree-views/agent-sessions';
-import type { GroupByOption } from './group-options';
+import { type GroupByOption, showGroupByQuickPick } from './group-options';
 
 const groupByOptions: GroupByOption<AgentSessionsGroupBy>[] = [
   { label: 'Flat', value: AgentSessionsGroupBy.Flat },
@@ -22,15 +22,10 @@ export function registerGroupAgentSessionsCommand(
   return vscode.commands.registerCommand(commandIds.groupAgentSessionsBy, async () => {
     try {
       const current = getAgentSessionsGroupBy();
-      const selected = await vscode.window.showQuickPick(
-        groupByOptions.map((option) => ({
-          label: option.label,
-          description: option.value === current ? 'current' : undefined,
-          value: option.value,
-        })),
-        {
-          placeHolder: 'Group agent sessions by',
-        },
+      const selected = await showGroupByQuickPick(
+        groupByOptions,
+        current,
+        'Group agent sessions by',
       );
 
       if (!selected) {
