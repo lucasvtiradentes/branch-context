@@ -28,6 +28,7 @@ export function createGroupNode(
     kind: BranchContextTreeNodeKind.Group,
     description: options.description,
     icon: options.icon ?? new vscode.ThemeIcon('folder'),
+    resourceUri: options.resourceUri,
     collapsibleState: options.collapsibleState,
     children: () => children,
   };
@@ -36,6 +37,7 @@ export function createGroupNode(
 type GroupNodeOptions = {
   description?: string;
   icon?: vscode.TreeItem['iconPath'];
+  resourceUri?: vscode.Uri;
   collapsibleState?: vscode.TreeItemCollapsibleState;
 };
 

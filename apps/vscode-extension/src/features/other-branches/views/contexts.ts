@@ -281,6 +281,9 @@ function createBranchAgentSessionGroupNode({ context, sessions }: BranchAgentSes
     {
       description: String(sessions.length),
       icon: context.archived ? new vscode.ThemeIcon('archive') : new vscode.ThemeIcon('git-branch'),
+      resourceUri: context.archived
+        ? createArchivedContextResourceUri(context.branchKey)
+        : undefined,
     },
   );
 }
