@@ -6,6 +6,7 @@ export { CONTEXT_FILE_NAME } from '@branch-context/core';
 const APP_ID = 'branch-context';
 const APP_LOG_FILENAME = 'extension.log';
 export const APP_NAME = 'Branch Context';
+export const IS_DEV_EXTENSION = APP_ID.endsWith('-dev');
 export const STATUS_BAR_PRIORITY = 10;
 
 export const commandIds = {
@@ -27,6 +28,7 @@ export const commandIds = {
   groupAgentSessionsBy: `${APP_ID}.groupAgentSessionsBy`,
   toggleAgentSessionText: `${APP_ID}.toggleAgentSessionText`,
   resumeAgentSession: `${APP_ID}.resumeAgentSession`,
+  showActiveAgentSession: `${APP_ID}.showActiveAgentSession`,
   pinAgentSession: `${APP_ID}.pinAgentSession`,
   unpinAgentSession: `${APP_ID}.unpinAgentSession`,
   copyAgentSessionId: `${APP_ID}.copyAgentSessionId`,

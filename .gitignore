@@ -2,6 +2,8 @@ node_modules
 dist
 build
 .turbo
+.DS_Store
+**/.DS_Store
 *.tsbuildinfo
 *.vsix
 dist-dev

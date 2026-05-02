@@ -1,20 +1,19 @@
 import type * as vscode from 'vscode';
-import { registerCommands } from './commands';
-import { registerInternalCommands } from './commands/internal';
-import { initializeContextFileUx } from './context-file-ux';
-import { initializeAgentIndexer } from './core/agent-indexer';
-import { initializeGitDiffProvider } from './core/git-diff';
-import { initializeBranchContextState } from './core/state';
-import { initializeBranchContextWatcher } from './core/watcher';
-import { getLogFilePath, initializeLogging, logger } from './lib/logging';
-import { initializeStatusBar } from './status-bar';
-import { initializeTreeViews } from './tree-views';
-import { initializeContextsGroupBy } from './tree-views/contexts';
+import { initializeAgentIndexer } from './features/agent-sessions/indexer';
+import { initializeBranchContextWatcher } from './features/branch-context/watcher';
+import { initializeContextFileUx } from './features/context-file-ux/initialize';
+import { initializeContextsGroupBy } from './features/other-branches/views/contexts';
+import { logger } from './shared/logger';
+import { registerCommands } from './vscode/commands/register';
+import { initializeGitDiffProvider } from './vscode/git-diff';
+import { branchContextState } from './vscode/state';
+import { initializeStatusBar } from './vscode/status-bar';
+import { initializeTreeViews } from './vscode/views';
 
 function initializeCore(context: vscode.ExtensionContext): void {
-  initializeLogging();
-  logger.info(`extension activated; log file reset at ${getLogFilePath()}`);
-  initializeBranchContextState(context);
+  logger.initialize();
+  logger.info(`extension activated; log file reset at ${logger.getLogFilePath()}`);
+  branchContextState.initialize(context);
   initializeContextsGroupBy(context);
 }
 
@@ -24,7 +23,6 @@ function initializeUi(context: vscode.ExtensionContext): void {
   initializeStatusBar(context);
   initializeTreeViews(context);
   registerCommands(context);
-  registerInternalCommands(context);
 }
 
 function initializeRuntime(context: vscode.ExtensionContext): void {

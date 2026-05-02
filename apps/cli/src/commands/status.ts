@@ -5,15 +5,13 @@ import {
   DEFAULT_SYMLINK,
   DEFAULT_TEMPLATE,
   getStatus,
-  green,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
-  red,
-  yellow,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
 import { printTable } from '../helpers/branches';
 import { requireGitRoot } from '../helpers/git-root';
+import { green, red, yellow } from '../ui/color';
 
 const STATUS_OK = green('[ok]');
 const STATUS_ERROR = red('[!!]');

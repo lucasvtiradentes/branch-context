@@ -1,11 +1,9 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { CONFIG_DIR, CONFIG_FILE, HookType } from './constants';
+import { CONFIG_DIR, CONFIG_FILE, HookType, TEMPLATES_DIR } from './constants';
 import type { BranchContextConfigFile } from './data/config-schema';
 
-const RESOURCE_CONFIG_FILE = 'config.json';
 const RESOURCE_HOOKS_DIR = 'hooks';
-const RESOURCE_TEMPLATES_DIR = 'templates';
 const RESOURCE_HOOK_FILES = {
   [HookType.PostCheckout]: 'post-checkout.sh',
   [HookType.PostCommit]: 'post-commit.sh',
@@ -16,7 +14,7 @@ export function getResourcesDir() {
     let current = startDir;
     for (let index = 0; index < 10; index += 1) {
       for (const candidate of getResourceCandidates(current)) {
-        if (existsSync(join(candidate, RESOURCE_CONFIG_FILE))) {
+        if (existsSync(join(candidate, CONFIG_FILE))) {
           return candidate;
         }
       }
@@ -32,11 +30,11 @@ export function getResourcesDir() {
 }
 
 export function getDefaultConfigResourcePath() {
-  return join(getResourcesDir(), RESOURCE_CONFIG_FILE);
+  return join(getResourcesDir(), CONFIG_FILE);
 }
 
 export function getDefaultTemplatesResourceDir() {
-  return join(getResourcesDir(), RESOURCE_TEMPLATES_DIR);
+  return join(getResourcesDir(), TEMPLATES_DIR);
 }
 
 export function loadHookTemplateResource(hookType: HookType) {

@@ -9,7 +9,7 @@
   <a href="https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode"><img src="https://img.shields.io/badge/VS%20Code-Extension-blue.svg" alt="VS Marketplace"></a>
   <a href="https://open-vsx.org/extension/lucasvtiradentes/branch-context-vscode"><img src="https://img.shields.io/open-vsx/v/lucasvtiradentes/branch-context-vscode?label=Open%20VSX&labelColor=a60ee5&color=374151" alt="Open VSX"></a>
   <br /><br />
-  <a href="#-overview">Overview</a> • <a href="#-features">Features</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-configuration">Configuration</a> • <a href="#-license">License</a>
+  <a href="#-overview">Overview</a> • <a href="#-demo">Demo</a> • <a href="#-features">Features</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-configuration">Configuration</a> • <a href="#-license">License</a>
 </div>
 
 <!-- <DYNFIELD:TOP_DIVIDER> -->
@@ -22,17 +22,22 @@
 
 VS Code extension for [Branch Context](https://github.com/lucasvtiradentes/branch-context). Adds a sidebar with the current branch's context, git changes, templates, and AI session pointers, all scoped to the active branch.
 
+## 📸 Demo
+
+![Branch Context VS Code extension demo](https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/demo.png)
+
 ## ⭐ Features
 
 - Sidebar (activity bar) with five views:
   - Branch Context, current `context.md` outline and quick actions
-  - Branch AI Sessions, indexed Codex / Claude Code session pointers
+  - Branch AI Sessions, indexed Codex / Claude Code sessions with resume, active state, pinning, grouping, source-file open, and delete actions
   - Branch Git Changes, files and commits on the current branch
   - Other Branches, list, checkout, archive, and restore contexts
   - Templates, apply per-branch templates
 - Status bar entry with current branch and context state
 - CodeLens, decorations, and document symbols inside `context.md`
 - Commands for sync, status, set base, apply template, review diff, and more
+- CLI compatibility checks with update prompts when the installed CLI does not match the extension
 
 ## 🚀 Quick Start
 

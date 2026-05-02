@@ -2,9 +2,6 @@
   "name": "branch-context-monorepo",
   "private": true,
   "version": "0.0.0",
-  "bin": {
-    "bctxd": "./apps/cli/scripts/bctxd"
-  },
   "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=22",
@@ -15,7 +12,7 @@
     "postinstall": "turbo run build --filter='./packages/*'",
     "build": "turbo run build",
     "build:no-cache": "turbo run build --force",
-    "postbuild": "tsx scripts/update-docs/index.ts",
+    "postbuild": "tsx scripts/update-docs/run.ts",
     "changeset": "changeset",
     "changeset:version": "changeset version",
     "release": "changeset publish",
@@ -24,9 +21,7 @@
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "knip": "knip",
-    "update-docs": "tsx scripts/update-docs/index.ts",
-    "bctxd:install": "mkdir -p ~/.local/bin && ln -sf \"$PWD/apps/cli/scripts/bctxd\" ~/.local/bin/bctxd",
-    "bctxd:uninstall": "rm -f ~/.local/bin/bctxd"
+    "update-docs": "tsx scripts/update-docs/run.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",

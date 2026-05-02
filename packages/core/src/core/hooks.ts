@@ -9,15 +9,10 @@ import {
 } from 'node:fs';
 import { basename, delimiter, dirname, isAbsolute, join, relative } from 'node:path';
 import { CLI_NAME, GIT_DIR, HOOK_MARKER, HookType } from '../constants';
+import { gitConfigUnset, gitCurrentBranch, gitHooksPath, gitInfoExcludeAdd, gitRoot } from '../git';
 import { loadHookTemplateResource } from '../resources';
-import {
-  gitConfigUnset,
-  gitCurrentBranch,
-  gitHooksPath,
-  gitInfoExcludeAdd,
-  gitRoot,
-} from '../utils/git';
-import type { PromptYesNo } from '../utils/prompt';
+
+export type PromptYesNo = (question: string) => Promise<boolean>;
 
 export enum HookInstallResult {
   Installed = 'installed',
@@ -40,6 +35,7 @@ const hookCallbacks = {
   [HookType.PostCheckout]: 'on-checkout',
   [HookType.PostCommit]: 'on-commit',
 } as const satisfies Record<HookType, string>;
+const noPrompt: PromptYesNo = async () => false;
 
 export function resetConfirmationState() {
   customHooksConfirmed.clear();
@@ -174,7 +170,7 @@ export async function installHook(
   hookType: HookType = HookType.PostCheckout,
   ask?: PromptYesNo,
 ): Promise<HookInstallResult> {
-  const prompt = ask ?? (await import('../utils/prompt')).promptYesNo;
+  const prompt = ask ?? noPrompt;
   const customHooksDir = getCustomHooksDir(gitRootPath);
   let useCustom = false;
 

@@ -1,22 +1,6 @@
-import {
-  CLI_NAME,
-  Config,
-  CreateBranchContextResult,
-  configExists,
-  getBaseBranch,
-  sanitizeBranchName,
-  syncBranch,
-  updateBranchMeta,
-  updateContextTags,
-} from '@branch-context/core';
+import { CLI_NAME, syncBranchAfterCheckout } from '@branch-context/core';
 import type { Program } from '@caporal/core';
 import { requireGitRoot } from '../helpers/git-root';
-
-const checkoutStatuses: Partial<Record<CreateBranchContextResult, string>> = {
-  [CreateBranchContextResult.RestoredFromArchive]: 'restored',
-  [CreateBranchContextResult.RepairedFromTemplate]: 'repaired',
-  [CreateBranchContextResult.Exists]: 'synced',
-};
 
 export function registerOnCheckoutCommand(program: Program) {
   program
@@ -39,22 +23,12 @@ function cmdOnCheckout(args: string[]) {
     return 1;
   }
 
-  if (!configExists(gitRoot)) {
+  const result = syncBranchAfterCheckout(gitRoot, newBranch);
+  if (result.skipped) {
     console.log(`Branch: ${oldBranch} -> ${newBranch}`);
     return 0;
   }
 
-  const result = syncBranch(gitRoot, newBranch);
-  const branchKey = sanitizeBranchName(newBranch);
-  const contextDir = result.branch_dir;
-  const baseBranch = getBaseBranch(gitRoot, contextDir);
-  const config = Config.load(gitRoot);
-
-  updateBranchMeta(gitRoot, branchKey, baseBranch, config.commitDescription);
-  updateContextTags(gitRoot, contextDir, branchKey, baseBranch);
-
-  const createResult = result.create_result;
-  const status = checkoutStatuses[createResult] ?? 'new';
-  console.log(`Branch: ${oldBranch} -> ${newBranch} (${status})`);
+  console.log(`Branch: ${oldBranch} -> ${newBranch} (${result.status})`);
   return 0;
 }

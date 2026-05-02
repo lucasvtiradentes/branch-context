@@ -5,7 +5,7 @@ import { basename } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CLI_NAME, VERSION } from '@branch-context/core';
 import type { Program as CaporalProgram } from '@caporal/core';
-import { registerAgentsCommands } from './commands/agents';
+import { registerAgentsCommands } from './commands/agents/register';
 import { registerBaseCommand } from './commands/base';
 import { registerCompletionCommand } from './commands/completion';
 import { registerInitCommand } from './commands/init';

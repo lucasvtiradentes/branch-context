@@ -8,6 +8,7 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { gitAdd, gitCheckout, gitCommit } from '../src/git';
 import {
   archiveBranch,
   BranchContextActionErrorReason,
@@ -31,7 +32,6 @@ import {
   UpdateSymlinkResult,
   updateSymlink,
 } from '../src/index';
-import { gitAdd, gitCheckout, gitCommit } from '../src/utils/git';
 import {
   createGitRepo,
   createWorkspace,

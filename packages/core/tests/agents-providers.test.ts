@@ -15,7 +15,7 @@ import {
   scanAgentSessions,
   scanClaudeSessions,
   scanCodexSessions,
-} from '../src/services/agents';
+} from '../src/use-cases/agents';
 import { createTempDir } from './helpers';
 
 const fixturesDir = join(__dirname, 'fixtures', 'agents');

@@ -1,7 +1,9 @@
 import { mkdirSync } from 'node:fs';
 import {
   addToGitignore,
+  BRANCHES_DIR,
   CLI_NAME,
+  CONFIG_DIR,
   CONFIG_FILE,
   configExists,
   copyInitConfig,
@@ -20,6 +22,7 @@ import {
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
 import { requireGitRoot } from '../helpers/git-root';
+import { promptYesNo } from '../ui/prompt';
 
 const hookInstallMessages = {
   [HookInstallResult.Installed]: (hookName: string) => `Hook installed: ${hookName}`,
@@ -57,17 +60,17 @@ async function cmdInit(_args: string[]) {
     console.log(`  branches:  ${branchesDir}/ (gitignored)`);
   }
 
-  const checkoutResult = await installHook(gitRoot, HookType.PostCheckout);
+  const checkoutResult = await installHook(gitRoot, HookType.PostCheckout, promptYesNo);
   printHookInstallResult(checkoutResult, HOOK_POST_CHECKOUT);
   if (checkoutResult === HookInstallResult.AlreadyInstalled && alreadyInitialized) {
     console.log('Already initialized');
   }
 
-  const commitResult = await installHook(gitRoot, HookType.PostCommit);
+  const commitResult = await installHook(gitRoot, HookType.PostCommit, promptYesNo);
   printHookInstallResult(commitResult, HOOK_POST_COMMIT);
 
   addToGitignore(gitRoot, DEFAULT_SYMLINK);
-  addToGitignore(gitRoot, '.bctx/branches/');
+  addToGitignore(gitRoot, `${CONFIG_DIR}/${BRANCHES_DIR}/`);
 
   const branch = getCurrentBranch(gitRoot);
   if (branch) {

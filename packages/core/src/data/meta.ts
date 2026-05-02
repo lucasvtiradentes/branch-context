@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { ARCHIVED_DIR, META_FILE } from '../constants';
-import { GitFileStatus, gitDiff, gitLog, gitRefExists, gitUserName } from '../utils/git';
+import { GitFileStatus, gitDiff, gitLog, gitRefExists, gitUserName } from '../git';
 import { getBranchesDir } from './config';
 
 export const BASE_BRANCH_NOT_FOUND_TEMPLATE = 'Base branch not found: {base_branch}';

@@ -1,4 +1,4 @@
-import { gitUserName } from './git';
+import { gitUserName } from '../git';
 
 const VAR_PATTERN = /\{\{(\w+)\}\}/g;
 
