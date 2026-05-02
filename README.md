@@ -31,16 +31,20 @@ I was tired of re-briefing Codex and Claude Code about the same branch on every 
 
 <div align="center">
 <table>
-  <tr><th>Path</th><th>Purpose</th><th>Download</th></tr>
   <tr>
-    <td><a href="https://github.com/lucasvtiradentes/branch-context/tree/main/apps/cli"><code>apps/cli</code></a></td>
-    <td>CLI <code>bctx</code></td>
-    <td><a href="https://www.npmjs.com/package/branch-context"><img src="https://img.shields.io/npm/v/branch-context?label=npm&color=cb3837&logo=npm" alt="npm"></a></td>
+    <th>Package</th>
+    <th>Repo</th>
+    <th>Download</th>
   </tr>
   <tr>
-    <td><a href="https://github.com/lucasvtiradentes/branch-context/tree/main/apps/vscode-extension"><code>apps/vscode-extension</code></a></td>
-    <td>VS Code extension</td>
-    <td>
+    <td align="center">CLI</td>
+    <td align="center"><a href="https://github.com/lucasvtiradentes/branch-context/tree/main/apps/cli"><code>apps/cli</code></a></td>
+    <td align="center"><a href="https://www.npmjs.com/package/branch-context"><img src="https://img.shields.io/npm/v/branch-context?label=npm&color=cb3837&logo=npm" alt="npm"></a></td>
+  </tr>
+  <tr>
+    <td align="center">VS Code extension</td>
+    <td align="center"><a href="https://github.com/lucasvtiradentes/branch-context/tree/main/apps/vscode-extension"><code>apps/vscode-extension</code></a></td>
+    <td align="center">
       <a href="https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode"><img src="https://img.shields.io/badge/VS%20Code-Extension-blue.svg" alt="VS Marketplace"></a>
       <a href="https://open-vsx.org/extension/lucasvtiradentes/branch-context-vscode"><img src="https://img.shields.io/open-vsx/v/lucasvtiradentes/branch-context-vscode?label=Open%20VSX&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2aWV3Qm94PSI0LjYgNSA5Ni4yIDEyMi43IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoIGQ9Ik0zMCA0NC4yTDUyLjYgNUg3LjN6TTQuNiA4OC41aDQ1LjNMMjcuMiA0OS40em01MSAwbDIyLjYgMzkuMiAyMi42LTM5LjJ6IiBmaWxsPSIjYzE2MGVmIi8+CiAgPHBhdGggZD0iTTUyLjYgNUwzMCA0NC4yaDQ1LjJ6TTI3LjIgNDkuNGwyMi43IDM5LjEgMjIuNi0zOS4xem01MSAwTDU1LjYgODguNWg0NS4yeiIgZmlsbD0iI2E2MGVlNSIvPgo8L3N2Zz4=&labelColor=a60ee5&color=374151" alt="Open VSX"></a>
     </td>
@@ -64,7 +68,7 @@ I was tired of re-briefing Codex and Claude Code about the same branch on every 
 
    This sets up `.bctx/` and Git hooks. `_branch/context.md` now points at the active branch's context and stays in sync on checkout and commit.
 
-3. (Optional) Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode) for a richer view — branch contexts, git changes, templates, and AI sessions in the sidebar.
+3. (Optional) Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode) for a richer view: branch contexts, git changes, templates, and AI sessions in the sidebar.
 
 ## 🧰 Commands
 
