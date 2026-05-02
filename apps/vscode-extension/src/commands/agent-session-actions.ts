@@ -6,7 +6,7 @@ import { commandIds } from '../constants';
 import { removeAgentSessionPin, upsertAgentSessionPin } from '../core/agent-session-pins';
 import { getBranchContextState, refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
-import type { BranchContextTreeNodeDraft } from '../tree-views/items';
+import type { BranchContextTreeNodeDraft } from '../views/items';
 
 type CachedAgentSession = {
   provider: AgentSessionProvider;

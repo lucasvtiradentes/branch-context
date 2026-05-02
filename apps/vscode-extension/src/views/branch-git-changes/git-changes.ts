@@ -7,19 +7,19 @@ import type {
 } from '@branch-context/core';
 import { BranchGitSummaryErrorReason, GitFileStatus } from '@branch-context/core';
 import * as vscode from 'vscode';
-import { commandIds, contextKeys } from '../constants';
-import { type BranchContextExtensionState, getBranchContextState } from '../core/state';
-import { groupByDate } from '../lib/date-groups';
-import { formatRelativeTime } from '../lib/format-relative-time';
-import { markdownTooltipLine } from '../lib/markdown';
-import { isStringValue } from '../lib/string-values';
+import { commandIds, contextKeys } from '../../constants';
+import { type BranchContextExtensionState, getBranchContextState } from '../../core/state';
+import { groupByDate } from '../../lib/date-groups';
+import { formatRelativeTime } from '../../lib/format-relative-time';
+import { markdownTooltipLine } from '../../lib/markdown';
+import { isStringValue } from '../../lib/string-values';
 import {
   type BranchContextTreeNode,
   BranchContextTreeNodeKind,
   createGroupNode,
   createMessageNode,
   StateTreeProvider,
-} from './items';
+} from '../items';
 
 enum GitChangesMode {
   Files = 'files',

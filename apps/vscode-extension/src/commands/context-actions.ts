@@ -16,7 +16,7 @@ import {
   type BranchContextTreeNode,
   type BranchContextTreeNodeDraft,
   BranchContextTreeNodeKind,
-} from '../tree-views/items';
+} from '../views/items';
 import { formatActionError, getInitializedState, openExternalFolder, openPath } from './helpers';
 
 type ContextTreeNode = BranchContextTreeNode & {

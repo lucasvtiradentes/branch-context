@@ -12,21 +12,21 @@ import {
   parseJsonRecord,
 } from '@branch-context/core';
 import * as vscode from 'vscode';
-import { isAgentSessionActive } from '../core/active-agent-sessions';
-import { type AgentSessionPin, readAgentSessionPins } from '../core/agent-session-pins';
-import { getBranchContextState } from '../core/state';
-import { groupByDate } from '../lib/date-groups';
-import { formatBytes } from '../lib/format-bytes';
-import { formatRelativeTime } from '../lib/format-relative-time';
-import { createOrderedGroups } from '../lib/groups';
-import { markdownTooltipLine } from '../lib/markdown';
-import { isStringValue } from '../lib/string-values';
+import { isAgentSessionActive } from '../../core/active-agent-sessions';
+import { type AgentSessionPin, readAgentSessionPins } from '../../core/agent-session-pins';
+import { getBranchContextState } from '../../core/state';
+import { groupByDate } from '../../lib/date-groups';
+import { formatBytes } from '../../lib/format-bytes';
+import { formatRelativeTime } from '../../lib/format-relative-time';
+import { createOrderedGroups } from '../../lib/groups';
+import { markdownTooltipLine } from '../../lib/markdown';
+import { isStringValue } from '../../lib/string-values';
 import {
   BranchContextTreeNodeKind,
   createInactiveAgentSessionResourceUri,
   createMessageNode,
   StateTreeProvider,
-} from './items';
+} from '../items';
 
 export enum AgentSessionsGroupBy {
   Flat = 'flat',

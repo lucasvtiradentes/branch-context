@@ -6,7 +6,7 @@ import {
   GitCommitsGroupBy,
   getGitCommitsGroupBy,
   saveGitCommitsGroupBy,
-} from '../tree-views/git-changes';
+} from '../views/branch-git-changes/git-changes';
 import { type GroupByOption, showGroupByQuickPick } from './group-options';
 
 const groupByOptions: GroupByOption<GitCommitsGroupBy>[] = [

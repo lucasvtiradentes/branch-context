@@ -5,16 +5,19 @@ import {
   createAgentSessionsProvider,
   getAgentSessionsViewDescription,
   initializeAgentSessionsViewState,
-} from './agent-sessions';
-import { createContextsProvider } from './contexts';
-import { createCurrentContextProvider, getCurrentContextViewDescription } from './current-context';
+} from './branch-ai-sessions/agent-sessions';
+import {
+  createCurrentContextProvider,
+  getCurrentContextViewDescription,
+} from './branch-context/current-context';
 import {
   createGitChangesProvider,
   getGitChangesViewDescription,
   initializeGitChangesMode,
-} from './git-changes';
+} from './branch-git-changes/git-changes';
 import { initializeTreeItemDecorations } from './items';
-import { createTemplatesProvider } from './templates';
+import { createContextsProvider } from './other-branches/contexts';
+import { createTemplatesProvider } from './templates/templates';
 
 export function initializeTreeViews(context: vscode.ExtensionContext): void {
   initializeTreeItemDecorations(context);

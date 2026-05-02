@@ -2,7 +2,7 @@ import { AgentSessionProvider } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../constants';
 import { markAgentSessionTerminalActive } from '../core/active-agent-sessions';
-import type { BranchContextTreeNodeDraft } from '../tree-views/items';
+import type { BranchContextTreeNodeDraft } from '../views/items';
 
 const resumeCommandBuilders: Record<AgentSessionProvider, (sessionId: string) => string> = {
   [AgentSessionProvider.Claude]: (sessionId) =>

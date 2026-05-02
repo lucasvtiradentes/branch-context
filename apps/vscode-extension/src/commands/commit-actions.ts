@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
-import type { BranchContextTreeNodeDraft } from '../tree-views/items';
+import type { BranchContextTreeNodeDraft } from '../views/items';
 import { getInitializedState } from './helpers';
 
 const GITHUB_HOST = 'github.com';

@@ -6,7 +6,7 @@ import {
   AgentSessionsGroupBy,
   getAgentSessionsGroupBy,
   saveAgentSessionsGroupBy,
-} from '../tree-views/agent-sessions';
+} from '../views/branch-ai-sessions/agent-sessions';
 import { type GroupByOption, showGroupByQuickPick } from './group-options';
 
 const groupByOptions: GroupByOption<AgentSessionsGroupBy>[] = [

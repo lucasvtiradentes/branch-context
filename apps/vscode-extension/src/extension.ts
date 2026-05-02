@@ -8,8 +8,8 @@ import { initializeBranchContextState } from './core/state';
 import { initializeBranchContextWatcher } from './core/watcher';
 import { getLogFilePath, initializeLogging, logger } from './lib/logging';
 import { initializeStatusBar } from './status-bar/status-bar';
-import { initializeTreeViews } from './tree-views';
-import { initializeContextsGroupBy } from './tree-views/contexts';
+import { initializeContextsGroupBy } from './views/other-branches/contexts';
+import { initializeTreeViews } from './views/views';
 
 function initializeCore(context: vscode.ExtensionContext): void {
   initializeLogging();

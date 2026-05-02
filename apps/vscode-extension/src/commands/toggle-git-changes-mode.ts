@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format-error';
-import { toggleGitChangesMode } from '../tree-views/git-changes';
+import { toggleGitChangesMode } from '../views/branch-git-changes/git-changes';
 
 export function registerToggleGitChangesModeCommand(
   context: vscode.ExtensionContext,
