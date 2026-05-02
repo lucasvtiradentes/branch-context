@@ -12,6 +12,21 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Validate publish tokens
+      shell: bash
+      run: |
+        if [ -z "$AZURE_PAT" ]; then
+          echo "Missing AZURE_VSCODE_PAT"
+          exit 1
+        fi
+        if [ -z "$OPEN_VSX_PAT" ]; then
+          echo "Missing OPEN_VSX_PAT"
+          exit 1
+        fi
+      env:
+        AZURE_PAT: ${{ inputs.azure-pat }}
+        OPEN_VSX_PAT: ${{ inputs.open-vsx-pat }}
+
     - name: Build extension
       shell: bash
       run: pnpm --filter branch-context-vscode build
