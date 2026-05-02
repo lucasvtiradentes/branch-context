@@ -1,11 +1,11 @@
 import { BranchContextStatusIssueLevel, initProject } from '@branch-context/core';
 import * as vscode from 'vscode';
-import { APP_NAME, commandIds, STATUS_BAR_PRIORITY } from '../../constants';
-import { formatError } from '../../shared/format/error';
-import { escapeMarkdown, markdownTooltipLine } from '../../shared/format/markdown';
-import { formatRelativeTime } from '../../shared/format/relative-time';
-import { logger } from '../../shared/logger';
-import { type BranchContextExtensionState, branchContextState } from '../../vscode/state';
+import { APP_NAME, commandIds, STATUS_BAR_PRIORITY } from '../constants';
+import { formatError } from '../shared/format/error';
+import { escapeMarkdown, markdownTooltipLine } from '../shared/format/markdown';
+import { formatRelativeTime } from '../shared/format/relative-time';
+import { logger } from '../shared/logger';
+import { type BranchContextExtensionState, branchContextState } from './state';
 
 const PROMPT_YES = 'Yes';
 const PROMPT_NO = 'No';

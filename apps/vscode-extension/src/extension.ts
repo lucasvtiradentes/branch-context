@@ -3,11 +3,11 @@ import { initializeAgentIndexer } from './features/agent-sessions/indexer';
 import { initializeBranchContextWatcher } from './features/branch-context/watcher';
 import { initializeContextFileUx } from './features/context-file-ux';
 import { initializeContextsGroupBy } from './features/other-branches/views/contexts';
-import { initializeStatusBar } from './features/status-bar/status-bar';
 import { logger } from './shared/logger';
 import { registerCommands } from './vscode/commands/register';
 import { initializeGitDiffProvider } from './vscode/git-diff';
 import { branchContextState } from './vscode/state';
+import { initializeStatusBar } from './vscode/status-bar';
 import { initializeTreeViews } from './vscode/views';
 
 function initializeCore(context: vscode.ExtensionContext): void {
