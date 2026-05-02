@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { gitCheckout } from '../src/git';
 import {
   AgentSessionProvider,
+  AgentSessionScope,
+  createAgentSession,
   getAgentSessions,
+  getCachedAgentSessions,
   getClaudeProjectKey,
   getCurrentAgentsFilePath,
   readAgentsFile,
@@ -136,6 +139,96 @@ describe('agent session service', () => {
       return;
     }
     expect(readAgentsFile(agentsFilePath).pinnedSessions).toHaveLength(1);
+  });
+
+  it('gets cached agent sessions without scanning provider files', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    expectOk(gitCheckout(repo, 'feature/test', true));
+    writeAgentsFile(getCurrentAgentsFilePath(repo), {
+      version: 1,
+      sessions: [
+        createAgentSession({
+          provider: AgentSessionProvider.Codex,
+          sessionId: 'codex-current',
+          repoRoot: repo,
+          branch: 'feature/test',
+          branchKey: 'feature-test',
+          path: null,
+          model: null,
+          source: null,
+          title: null,
+          startedAt: null,
+          updatedAt: '2026-05-01T10:00:00.000Z',
+        }),
+        createAgentSession({
+          provider: AgentSessionProvider.Claude,
+          sessionId: 'claude-other',
+          repoRoot: repo,
+          branch: 'feature/other',
+          branchKey: 'feature-other',
+          path: null,
+          model: null,
+          source: null,
+          title: null,
+          startedAt: null,
+          updatedAt: '2026-05-01T11:00:00.000Z',
+        }),
+        createAgentSession({
+          provider: AgentSessionProvider.Codex,
+          sessionId: 'codex-repo',
+          repoRoot: repo,
+          branch: '',
+          branchKey: '',
+          scope: AgentSessionScope.Repo,
+          path: null,
+          model: null,
+          source: null,
+          title: null,
+          startedAt: null,
+          updatedAt: '2026-05-01T12:00:00.000Z',
+        }),
+      ],
+      pinnedSessions: [],
+    });
+
+    const result = getCachedAgentSessions(repo, { branch: 'feature/test' });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.sessions.map((session) => session.sessionId)).toEqual([
+      'codex-repo',
+      'codex-current',
+    ]);
+  });
+
+  it('does not rewrite current agents file when synced sessions are unchanged', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    expectOk(gitCheckout(repo, 'feature/test', true));
+    const codexRoot = createTempDir();
+    copyCodexFixture(codexRoot, repo);
+
+    const firstResult = syncAgentSessions(repo, {
+      branch: 'feature/test',
+      codexSessionsRoot: codexRoot,
+      now: new Date('2026-05-01T15:00:00.000Z'),
+    });
+    const secondResult = syncAgentSessions(repo, {
+      branch: 'feature/test',
+      codexSessionsRoot: codexRoot,
+      now: new Date('2026-05-01T15:00:00.000Z'),
+    });
+
+    expect(firstResult.ok).toBe(true);
+    expect(secondResult.ok).toBe(true);
+    if (!firstResult.ok || !secondResult.ok) {
+      return;
+    }
+    expect(firstResult.written).toBe(true);
+    expect(secondResult.written).toBe(false);
   });
 
   it('syncs native Codex sessions into initialized current context', () => {

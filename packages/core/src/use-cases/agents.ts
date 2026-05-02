@@ -17,6 +17,7 @@ import {
   AgentSessionScope,
   createAgentSession,
   getCurrentAgentsFilePath,
+  normalizeAgentsFile,
   readAgentsFile,
   writeAgentsFile,
 } from '../data/agents';
@@ -29,6 +30,7 @@ export type { AgentSession };
 
 const DEFAULT_MAX_FILES = 1000;
 const DEFAULT_MAX_FILE_BYTES = 2 * 1024 * 1024;
+const MAX_PARSED_SESSION_CACHE_ENTRIES = 2000;
 
 export type AgentSessionScanOptions = {
   repoRoot: string;
@@ -66,6 +68,17 @@ type SessionFileCandidate = {
   path: string;
   mtimeMs: number;
 };
+
+type ParsedSessionCacheEntry<T> = {
+  mtimeMs: number;
+  size: number;
+  maxBytes: number;
+  value: T;
+};
+
+const parsedClaudeSessionCache = new Map<string, ParsedSessionCacheEntry<ParsedClaudeSession>>();
+const parsedCodexSessionCache = new Map<string, ParsedSessionCacheEntry<ParsedCodexSession>>();
+const normalizedPathCache = new Map<string, string>();
 
 export enum ClaudeSessionEventType {
   User = 'user',
@@ -142,6 +155,40 @@ export function getAgentSessions(
   };
 }
 
+export function getCachedAgentSessions(
+  repoRoot: string,
+  options: Pick<AgentSessionScanOptions, 'branch'> = {},
+): AgentSessionsResult {
+  const branch = options.branch ?? gitCurrentBranch(repoRoot);
+  if (!branch) {
+    return {
+      ok: false,
+      reason: 'no_current_branch',
+      message: 'could not determine current branch',
+      repoRoot,
+    };
+  }
+
+  const branchKey = sanitizeBranchName(branch);
+  const agentsFilePath = getExistingAgentsFilePath(repoRoot);
+  const sessions = agentsFilePath
+    ? readAgentsFile(agentsFilePath)
+        .sessions.filter(
+          (session) => session.scope === AgentSessionScope.Repo || session.branch === branch,
+        )
+        .sort(compareSessions)
+    : [];
+
+  return {
+    ok: true,
+    repoRoot,
+    branch,
+    branchKey,
+    agentsFilePath,
+    sessions,
+  };
+}
+
 export function syncAgentSessions(
   repoRoot: string,
   options: Omit<AgentSessionScanOptions, 'repoRoot'> = {},
@@ -165,16 +212,20 @@ export function syncAgentSessions(
     (session) => session.scope === AgentSessionScope.Branch && session.branch === result.branch,
   );
   const currentAgentsFile = readAgentsFile(agentsFilePath);
-  writeAgentsFile(agentsFilePath, {
+  const nextAgentsFile = normalizeAgentsFile({
     ...currentAgentsFile,
     sessions: exactSessions,
   });
+  const written = !agentsFilesEqual(currentAgentsFile, nextAgentsFile);
+  if (written) {
+    writeAgentsFile(agentsFilePath, nextAgentsFile);
+  }
 
   return {
     ...result,
     agentsFilePath,
     sessions: exactSessions,
-    written: true,
+    written,
   };
 }
 
@@ -238,6 +289,12 @@ export function parseClaudeSessionFile(
   path: string,
   maxBytes = DEFAULT_MAX_FILE_BYTES,
 ): ParsedClaudeSession {
+  return readParsedSessionCache(path, maxBytes, parsedClaudeSessionCache, () =>
+    parseClaudeSessionFileUncached(path, maxBytes),
+  );
+}
+
+function parseClaudeSessionFileUncached(path: string, maxBytes: number): ParsedClaudeSession {
   const parsed: ParsedClaudeSession = {
     sessionId: null,
     cwd: null,
@@ -275,6 +332,12 @@ export function parseCodexSessionFile(
   path: string,
   maxBytes = DEFAULT_MAX_FILE_BYTES,
 ): ParsedCodexSession {
+  return readParsedSessionCache(path, maxBytes, parsedCodexSessionCache, () =>
+    parseCodexSessionFileUncached(path, maxBytes),
+  );
+}
+
+function parseCodexSessionFileUncached(path: string, maxBytes: number): ParsedCodexSession {
   const parsed: ParsedCodexSession = {
     sessionId: null,
     cwd: null,
@@ -394,6 +457,13 @@ function mergeSessions(...groups: AgentSession[][]) {
   return Array.from(sessions.values());
 }
 
+function agentsFilesEqual(
+  left: ReturnType<typeof readAgentsFile>,
+  right: ReturnType<typeof readAgentsFile>,
+) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
 function getClaudeProjectsRoot(options: AgentSessionScanOptions) {
   return options.claudeProjectsRoot ?? join(options.homeDir ?? homedir(), '.claude', 'projects');
 }
@@ -499,12 +569,20 @@ function matchesRepo(cwd: string | null, repoRoot: string) {
 }
 
 function normalizePath(path: string) {
-  const resolved = resolve(path);
-  try {
-    return realpathSync.native(resolved).replaceAll('\\', '/');
-  } catch {
-    return resolved.replaceAll('\\', '/');
+  const cached = normalizedPathCache.get(path);
+  if (cached) {
+    return cached;
   }
+
+  const resolved = resolve(path);
+  let normalized: string;
+  try {
+    normalized = realpathSync.native(resolved).replaceAll('\\', '/');
+  } catch {
+    normalized = resolved.replaceAll('\\', '/');
+  }
+  normalizedPathCache.set(path, normalized);
+  return normalized;
 }
 
 function extractMessageTitle(message: unknown) {
@@ -569,4 +647,53 @@ function compareSessions(left: AgentSession, right: AgentSession) {
   }
 
   return left.sessionId.localeCompare(right.sessionId);
+}
+
+function readParsedSessionCache<T>(
+  path: string,
+  maxBytes: number,
+  cache: Map<string, ParsedSessionCacheEntry<T>>,
+  read: () => T,
+): T {
+  const stat = getFileStat(path);
+  const cached = cache.get(path);
+  if (
+    stat &&
+    cached &&
+    cached.mtimeMs === stat.mtimeMs &&
+    cached.size === stat.size &&
+    cached.maxBytes === maxBytes
+  ) {
+    return cached.value;
+  }
+
+  const value = read();
+  if (stat) {
+    cache.set(path, {
+      mtimeMs: stat.mtimeMs,
+      size: stat.size,
+      maxBytes,
+      value,
+    });
+    trimParsedSessionCache(cache);
+  }
+  return value;
+}
+
+function trimParsedSessionCache<T>(cache: Map<string, ParsedSessionCacheEntry<T>>): void {
+  while (cache.size > MAX_PARSED_SESSION_CACHE_ENTRIES) {
+    const key = cache.keys().next().value;
+    if (!key) {
+      return;
+    }
+    cache.delete(key);
+  }
+}
+
+function getFileStat(path: string) {
+  try {
+    return statSync(path);
+  } catch {
+    return null;
+  }
 }

@@ -1,6 +1,6 @@
 import {
   type AgentSession,
-  getAgentSessions,
+  getCachedAgentSessions,
   getGitBranchSummary,
   getStatus,
 } from '@branch-context/core';
@@ -53,7 +53,7 @@ class BranchContextStateStore {
 
     try {
       const status = getStatus(workspace.workspaceRoot);
-      const agentSessions = this.readAgentSessions(workspace.workspaceRoot);
+      const agentSessions = this.readAgentSessions(workspace.workspaceRoot, status.currentBranch);
       const gitSummary = status.initialized
         ? getGitBranchSummary(workspace.workspaceRoot, status.baseBranch)
         : null;
@@ -103,8 +103,8 @@ class BranchContextStateStore {
     };
   }
 
-  private readAgentSessions(workspaceRoot: string): AgentSession[] {
-    const result = getAgentSessions(workspaceRoot);
+  private readAgentSessions(workspaceRoot: string, branch: string | null): AgentSession[] {
+    const result = getCachedAgentSessions(workspaceRoot, { branch });
     return result.ok ? result.sessions : [];
   }
 

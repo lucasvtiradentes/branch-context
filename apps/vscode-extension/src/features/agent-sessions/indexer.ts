@@ -112,10 +112,7 @@ function syncCurrentAgentSessions(): void {
     return;
   }
 
-  const result = syncAgentSessions(state.workspaceRoot);
-  if (result.ok) {
-    branchContextState.refresh();
-  }
+  syncAgentSessions(state.workspaceRoot);
 }
 
 function scheduleFollowUpAgentSyncs(): void {
