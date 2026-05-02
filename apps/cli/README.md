@@ -1,7 +1,9 @@
 <a name="TOC"></a>
 
 <div align="center">
+  <!-- <DYNFIELD:HEADER_LOGO> -->
   <img height="80" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/apps/vscode-extension/resources/icon-colored.png" alt="branch-context logo">
+  <!-- </DYNFIELD:HEADER_LOGO> -->
   <div>Branch Context CLI</div>
   <br />
   <a href="https://www.npmjs.com/package/branch-context"><img src="https://img.shields.io/npm/v/branch-context?label=npm&color=cb3837&logo=npm" alt="npm"></a>
@@ -9,9 +11,11 @@
   <a href="#-overview">Overview</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-commands">Commands</a> • <a href="#-configuration">Configuration</a> • <a href="#-license">License</a>
 </div>
 
+<!-- <DYNFIELD:TOP_DIVIDER> -->
 <div width="100%" align="center">
   <img src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/divider.png" />
 </div>
+<!-- </DYNFIELD:TOP_DIVIDER> -->
 
 ## 🎯 Overview
 
@@ -33,27 +37,50 @@ This creates `.bctx/` and installs the post-checkout / post-commit hooks. `_bran
 
 ## 🧰 Commands
 
+<!-- <DYNFIELD:COMMANDS> -->
 ```sh
-bctx init            # set up .bctx/ and Git hooks
-bctx sync            # refresh commit/file summaries
-bctx status          # check setup health and list branch contexts
-bctx base            # get/set base branch
-bctx template [name] # apply a template (e.g. fix, feature)
-bctx prune           # archive contexts of deleted branches
-bctx agents status   # show indexed AI session pointers for the branch
-bctx uninstall       # remove .bctx/ and hooks
+bctx init             # set up .bctx/ and Git hooks
+bctx sync             # refresh commit/file summaries
+bctx status           # check setup health and list branch contexts
+bctx base             # get/set base branch
+bctx template [name]  # apply a template (e.g. fix, feature)
+bctx prune            # archive contexts of deleted branches
+bctx agents status    # show indexed AI session pointers for the branch
+bctx uninstall        # remove .bctx/ and hooks
 ```
+<!-- </DYNFIELD:COMMANDS> -->
 
 Both `bctx` and `branch-ctx` bins are registered.
 
 ## ⚙️ Configuration
 
-See the [main README](https://github.com/lucasvtiradentes/branch-context#-configuration).
+Default `.bctx/config.json`:
+
+<!-- <DYNFIELD:CONFIG_JSON> -->
+```json
+{
+  "default_base_branch": "main",
+  "sound": true,
+  "commit_description": false,
+  "template_rules": [
+    {
+      "prefix": "feature/",
+      "template": "feature"
+    },
+    {
+      "prefix": "fix/",
+      "template": "fix"
+    }
+  ]
+}
+```
+<!-- </DYNFIELD:CONFIG_JSON> -->
 
 ## 📜 License
 
 [MIT](https://github.com/lucasvtiradentes/branch-context/blob/main/LICENSE)
 
+<!-- <DYNFIELD:FOOTER> -->
 <div width="100%" align="center">
   <img src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/divider.png" />
 </div>
@@ -68,3 +95,4 @@ See the [main README](https://github.com/lucasvtiradentes/branch-context#-config
     <a target="_blank" href="https://github.com/lucasvtiradentes"><img src="https://img.shields.io/badge/-github-gray?logo=Github&logoColor=white" alt="Github"></a>
   </div>
 </div>
+<!-- </DYNFIELD:FOOTER> -->

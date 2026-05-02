@@ -1,18 +1,22 @@
 <a name="TOC"></a>
 
 <div align="center">
+  <!-- <DYNFIELD:HEADER_LOGO> -->
   <img height="80" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/apps/vscode-extension/resources/icon-colored.png" alt="branch-context logo">
+  <!-- </DYNFIELD:HEADER_LOGO> -->
   <div>Branch Context for VS Code</div>
   <br />
   <a href="https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode"><img src="https://img.shields.io/badge/VS%20Code-Extension-blue.svg" alt="VS Marketplace"></a>
   <a href="https://open-vsx.org/extension/lucasvtiradentes/branch-context-vscode"><img src="https://img.shields.io/open-vsx/v/lucasvtiradentes/branch-context-vscode?label=Open%20VSX&labelColor=a60ee5&color=374151" alt="Open VSX"></a>
   <br /><br />
-  <a href="#-overview">Overview</a> • <a href="#-features">Features</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-license">License</a>
+  <a href="#-overview">Overview</a> • <a href="#-features">Features</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-configuration">Configuration</a> • <a href="#-license">License</a>
 </div>
 
+<!-- <DYNFIELD:TOP_DIVIDER> -->
 <div width="100%" align="center">
   <img src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/divider.png" />
 </div>
+<!-- </DYNFIELD:TOP_DIVIDER> -->
 
 ## 🎯 Overview
 
@@ -35,10 +39,35 @@ VS Code extension for [Branch Context](https://github.com/lucasvtiradentes/branc
 1. Install the CLI and run `bctx init` in your repo (see [main README](https://github.com/lucasvtiradentes/branch-context#-quick-start)).
 2. Install this extension from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode) or [Open VSX](https://open-vsx.org/extension/lucasvtiradentes/branch-context-vscode).
 
+## ⚙️ Configuration
+
+Default `.bctx/config.json`:
+
+<!-- <DYNFIELD:CONFIG_JSON> -->
+```json
+{
+  "default_base_branch": "main",
+  "sound": true,
+  "commit_description": false,
+  "template_rules": [
+    {
+      "prefix": "feature/",
+      "template": "feature"
+    },
+    {
+      "prefix": "fix/",
+      "template": "fix"
+    }
+  ]
+}
+```
+<!-- </DYNFIELD:CONFIG_JSON> -->
+
 ## 📜 License
 
 [MIT](https://github.com/lucasvtiradentes/branch-context/blob/main/LICENSE)
 
+<!-- <DYNFIELD:FOOTER> -->
 <div width="100%" align="center">
   <img src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/divider.png" />
 </div>
@@ -53,3 +82,4 @@ VS Code extension for [Branch Context](https://github.com/lucasvtiradentes/branc
     <a target="_blank" href="https://github.com/lucasvtiradentes"><img src="https://img.shields.io/badge/-github-gray?logo=Github&logoColor=white" alt="Github"></a>
   </div>
 </div>
+<!-- </DYNFIELD:FOOTER> -->
