@@ -1,6 +1,12 @@
 name: Setup and install
 description: Setup Node.js, pnpm, cache, and dependencies
 
+inputs:
+  skip-install:
+    description: Skip dependency installation
+    required: false
+    default: 'false'
+
 runs:
   using: composite
   steps:
@@ -15,5 +21,6 @@ runs:
         cache-dependency-path: pnpm-lock.yaml
 
     - name: Install dependencies
+      if: inputs.skip-install != 'true'
       shell: bash
       run: pnpm install --frozen-lockfile
