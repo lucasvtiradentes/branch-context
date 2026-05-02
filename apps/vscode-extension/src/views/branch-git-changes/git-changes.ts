@@ -9,10 +9,10 @@ import { BranchGitSummaryErrorReason, GitFileStatus } from '@branch-context/core
 import * as vscode from 'vscode';
 import { commandIds, contextKeys } from '../../constants';
 import { type BranchContextExtensionState, getBranchContextState } from '../../core/state';
-import { groupByDate } from '../../lib/date-groups';
-import { formatRelativeTime } from '../../lib/format-relative-time';
+import { formatRelativeTime } from '../../lib/format/relative-time';
+import { groupByDate } from '../../lib/groups';
+import { isStringValue } from '../../lib/is-string-value';
 import { markdownTooltipLine } from '../../lib/markdown';
-import { isStringValue } from '../../lib/string-values';
 import {
   type BranchContextTreeNode,
   BranchContextTreeNodeKind,

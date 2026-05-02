@@ -1,9 +1,9 @@
 import { CreateBranchContextResult, syncCurrentBranch } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
+import { formatLogError, logger } from '../core/logger';
 import { refreshBranchContextState } from '../core/state';
-import { formatError } from '../lib/format-error';
-import { formatLogError, logger } from '../lib/logging';
+import { formatError } from '../lib/format/error';
 import { formatActionError, getInitializedState } from './helpers';
 
 export function registerSyncCommand(): vscode.Disposable {

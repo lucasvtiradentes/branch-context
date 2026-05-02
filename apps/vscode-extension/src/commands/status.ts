@@ -2,7 +2,7 @@ import { BranchContextStatusIssueLevel } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
-import { formatError } from '../lib/format-error';
+import { formatError } from '../lib/format/error';
 import { getInitializedState } from './helpers';
 
 export function registerStatusCommand(): vscode.Disposable {

@@ -3,13 +3,13 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { getClaudeProjectKey, syncAgentSessions } from '@branch-context/core';
 import * as vscode from 'vscode';
-import { markAgentSessionFileActive } from './active-agent-sessions';
 import {
   type BranchContextExtensionState,
   getBranchContextState,
   onDidChangeState,
   refreshBranchContextState,
-} from './state';
+} from '../state';
+import { markAgentSessionFileActive } from './active';
 
 const SYNC_DEBOUNCE_MS = 250;
 const CODEX_WATCH_DAYS = 2;

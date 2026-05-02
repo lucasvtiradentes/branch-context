@@ -3,9 +3,9 @@ import { join } from 'node:path';
 import { AgentSessionProvider } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../constants';
-import { removeAgentSessionPin, upsertAgentSessionPin } from '../core/agent-session-pins';
+import { removeAgentSessionPin, upsertAgentSessionPin } from '../core/agent-sessions/pins';
 import { getBranchContextState, refreshBranchContextState } from '../core/state';
-import { formatError } from '../lib/format-error';
+import { formatError } from '../lib/format/error';
 import type { BranchContextTreeNodeDraft } from '../views/items';
 
 type CachedAgentSession = {

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { viewIds } from '../constants';
-import { initializeActiveAgentSessions } from '../core/active-agent-sessions';
+import { initializeActiveAgentSessions } from '../core/agent-sessions/active';
 import {
   createAgentSessionsProvider,
   getAgentSessionsViewDescription,

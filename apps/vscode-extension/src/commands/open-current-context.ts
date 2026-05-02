@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
-import { formatError } from '../lib/format-error';
+import { formatError } from '../lib/format/error';
 import { getInitializedState, openPath } from './helpers';
 
 export function registerOpenCurrentContextCommand(): vscode.Disposable {

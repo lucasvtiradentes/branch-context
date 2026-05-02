@@ -2,7 +2,7 @@ import type { GitCommitSummary } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { openCommitChanges } from '../core/git-diff';
-import { formatError } from '../lib/format-error';
+import { formatError } from '../lib/format/error';
 import { getInitializedState } from './helpers';
 
 export function registerOpenCommitDiffCommand(): vscode.Disposable {

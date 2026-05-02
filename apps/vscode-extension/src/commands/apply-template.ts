@@ -2,7 +2,7 @@ import { applyTemplateToCurrentBranch, listAvailableTemplates } from '@branch-co
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
-import { formatError } from '../lib/format-error';
+import { formatError } from '../lib/format/error';
 import { formatActionError, getInitializedState } from './helpers';
 
 export function registerApplyTemplateCommand(): vscode.Disposable {

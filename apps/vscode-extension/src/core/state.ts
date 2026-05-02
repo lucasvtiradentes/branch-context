@@ -10,7 +10,7 @@ import {
 } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { contextKeys } from '../constants';
-import { formatLogError, logger } from '../lib/logging';
+import { formatLogError, logger } from '../core/logger';
 import { getWorkspaceInfo } from './workspace';
 
 export type BranchContextExtensionState = {

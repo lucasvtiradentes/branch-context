@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { commandIds } from '../constants';
 import { refreshBranchContextState } from '../core/state';
-import { formatError } from '../lib/format-error';
+import { formatError } from '../lib/format/error';
 import {
   GitCommitsGroupBy,
   getGitCommitsGroupBy,

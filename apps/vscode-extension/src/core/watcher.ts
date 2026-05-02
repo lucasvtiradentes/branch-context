@@ -1,6 +1,6 @@
 import { CONFIG_DIR, DEFAULT_SYMLINK } from '@branch-context/core';
 import * as vscode from 'vscode';
-import { logger } from '../lib/logging';
+import { logger } from '../core/logger';
 import { refreshBranchContextState } from './state';
 import { getWorkspaceInfo } from './workspace';
 

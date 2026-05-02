@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type AgentSession, AgentSessionProvider } from '@branch-context/core';
-import { getBranchContextState } from './state';
+import { getBranchContextState } from '../state';
 
 const pinsFileName = 'agent-session-pins.json';
 

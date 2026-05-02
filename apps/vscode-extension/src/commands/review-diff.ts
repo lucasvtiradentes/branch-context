@@ -2,7 +2,7 @@ import { type BranchGitSummary, BranchGitSummaryErrorReason } from '@branch-cont
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../constants';
 import { openBranchChanges } from '../core/git-diff';
-import { formatError } from '../lib/format-error';
+import { formatError } from '../lib/format/error';
 import { getInitializedState } from './helpers';
 
 export function registerReviewDiffCommand(): vscode.Disposable {

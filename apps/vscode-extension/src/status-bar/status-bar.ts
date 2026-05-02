@@ -1,15 +1,15 @@
 import { BranchContextStatusIssueLevel, initProject } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds, STATUS_BAR_PRIORITY } from '../constants';
+import { formatLogError, logger } from '../core/logger';
 import {
   type BranchContextExtensionState,
   getBranchContextState,
   onDidChangeState,
   refreshBranchContextState,
 } from '../core/state';
-import { formatError } from '../lib/format-error';
-import { formatRelativeTime } from '../lib/format-relative-time';
-import { formatLogError, logger } from '../lib/logging';
+import { formatError } from '../lib/format/error';
+import { formatRelativeTime } from '../lib/format/relative-time';
 import { escapeMarkdown, markdownTooltipLine } from '../lib/markdown';
 
 const PROMPT_YES = 'Yes';
