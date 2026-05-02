@@ -257,6 +257,30 @@
         "command": "branch-context.internal.syncAgents",
         "title": "Branch Context: Sync Agents",
         "icon": "$(sync)"
+      },
+      {
+        "command": "workbench.view.extension.branch-context",
+        "title": "Branch Context: Focus Branch Context View"
+      },
+      {
+        "command": "branch-context.currentContext.focus",
+        "title": "Branch Context: Focus Branch Context"
+      },
+      {
+        "command": "branch-context.agentSessions.focus",
+        "title": "Branch Context: Focus Branch AI Sessions"
+      },
+      {
+        "command": "branch-context.gitChanges.focus",
+        "title": "Branch Context: Focus Branch Git Changes"
+      },
+      {
+        "command": "branch-context.contexts.focus",
+        "title": "Branch Context: Focus Other Branches"
+      },
+      {
+        "command": "branch-context.templates.focus",
+        "title": "Branch Context: Focus Templates"
       }
     ],
     "menus": {
