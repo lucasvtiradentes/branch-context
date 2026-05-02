@@ -8,7 +8,7 @@ import {
   getBranchContextState,
   onDidChangeState,
   refreshBranchContextState,
-} from '../state';
+} from '../../state/state';
 import { markAgentSessionFileActive } from './active';
 
 const SYNC_DEBOUNCE_MS = 250;

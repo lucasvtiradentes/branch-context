@@ -5,7 +5,7 @@ import { initializeContextFileUx } from './context-file-ux';
 import { initializeAgentIndexer } from './core/agent-sessions/indexer';
 import { initializeGitDiffProvider } from './core/git-diff';
 import { getLogFilePath, initializeLogging, logger } from './core/logger';
-import { initializeBranchContextState } from './core/state';
+import { initializeBranchContextState } from './state/state';
 import { initializeStatusBar } from './status-bar/status-bar';
 import { initializeContextsGroupBy } from './views/other-branches/contexts';
 import { initializeTreeViews } from './views/views';

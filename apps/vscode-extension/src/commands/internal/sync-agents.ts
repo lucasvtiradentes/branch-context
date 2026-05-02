@@ -1,7 +1,7 @@
 import { syncAgentSessions } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../../constants';
-import { getBranchContextState, refreshBranchContextState } from '../../core/state';
+import { getBranchContextState, refreshBranchContextState } from '../../state/state';
 
 export function registerSyncAgentsCommand(): vscode.Disposable {
   return vscode.commands.registerCommand(commandIds.syncAgents, () => {

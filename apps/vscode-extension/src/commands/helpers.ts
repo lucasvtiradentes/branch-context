@@ -4,7 +4,7 @@ import {
 } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME } from '../constants';
-import { type BranchContextExtensionState, getBranchContextState } from '../core/state';
+import { type BranchContextExtensionState, getBranchContextState } from '../state/state';
 
 const actionErrorMessages = {
   [BranchContextActionErrorReason.NotInitialized]: () => `${APP_NAME}: no .bctx config found`,

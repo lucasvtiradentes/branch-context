@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { commandIds } from '../constants';
-import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format/error';
+import { refreshBranchContextState } from '../state/state';
 import { toggleAgentSessionTextMode } from '../views/branch-ai-sessions/agent-sessions';
 
 export function registerToggleAgentSessionTextCommand(

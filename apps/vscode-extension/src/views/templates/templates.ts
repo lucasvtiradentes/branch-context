@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import { getBranchContextState } from '../../core/state';
 import { getWorkspaceInfo } from '../../core/workspace';
+import { getBranchContextState } from '../../state/state';
 import { createMessageNode, createTemplateNode, StateTreeProvider } from '../items';
 
 export function createTemplatesProvider(): StateTreeProvider {

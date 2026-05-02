@@ -1,8 +1,8 @@
 import { CONFIG_DIR, DEFAULT_SYMLINK } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { logger } from '../core/logger';
-import { refreshBranchContextState } from '../core/state';
 import { getWorkspaceInfo } from '../core/workspace';
+import { refreshBranchContextState } from '../state/state';
 
 let watcherDisposables: vscode.Disposable[] = [];
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;

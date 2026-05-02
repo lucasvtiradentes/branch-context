@@ -8,11 +8,11 @@ import type {
 import { BranchGitSummaryErrorReason, GitFileStatus } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds, contextKeys } from '../../constants';
-import { type BranchContextExtensionState, getBranchContextState } from '../../core/state';
 import { formatRelativeTime } from '../../lib/format/relative-time';
 import { groupByDate } from '../../lib/groups';
 import { isStringValue } from '../../lib/is-string-value';
 import { markdownTooltipLine } from '../../lib/markdown';
+import { type BranchContextExtensionState, getBranchContextState } from '../../state/state';
 import {
   type BranchContextTreeNode,
   BranchContextTreeNodeKind,

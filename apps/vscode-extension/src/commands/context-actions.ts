@@ -10,8 +10,8 @@ import {
 import * as vscode from 'vscode';
 import { APP_NAME, CONTEXT_FILE_NAME, commandIds } from '../constants';
 import { formatLogError, logger } from '../core/logger';
-import { refreshBranchContextState } from '../core/state';
 import { formatError } from '../lib/format/error';
+import { refreshBranchContextState } from '../state/state';
 import {
   type BranchContextTreeNode,
   type BranchContextTreeNodeDraft,

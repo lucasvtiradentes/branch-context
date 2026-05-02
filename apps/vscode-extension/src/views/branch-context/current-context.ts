@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { DEFAULT_SYMLINK } from '@branch-context/core';
-import { type BranchContextExtensionState, getBranchContextState } from '../../core/state';
+import { type BranchContextExtensionState, getBranchContextState } from '../../state/state';
 import { createMessageNode, readDirectoryNodes, StateTreeProvider } from '../items';
 
 export function createCurrentContextProvider(): StateTreeProvider {

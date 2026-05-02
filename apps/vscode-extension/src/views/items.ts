@@ -4,7 +4,7 @@ import type { AgentSessionProvider, GitCommitSummary } from '@branch-context/cor
 import { AGENTS_FILE_NAME } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { CONTEXT_FILE_NAME } from '../constants';
-import { onDidChangeState } from '../core/state';
+import { onDidChangeState } from '../state/state';
 
 const MAX_DIRECTORY_ITEMS = 200;
 const archivedContextResourceScheme = 'branch-context-archived';

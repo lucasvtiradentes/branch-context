@@ -11,7 +11,7 @@ import {
 import * as vscode from 'vscode';
 import { contextKeys } from '../constants';
 import { formatLogError, logger } from '../core/logger';
-import { getWorkspaceInfo } from './workspace';
+import { getWorkspaceInfo } from '../core/workspace';
 
 export type BranchContextExtensionState = {
   workspaceRoot: string | null;

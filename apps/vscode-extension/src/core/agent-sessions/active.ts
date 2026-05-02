@@ -1,8 +1,8 @@
 import { type ExecFileException, execFile } from 'node:child_process';
 import type { AgentSession } from '@branch-context/core';
 import * as vscode from 'vscode';
+import { getBranchContextState } from '../../state/state';
 import { logger } from '../logger';
-import { getBranchContextState } from '../state';
 
 const FILE_ACTIVITY_TTL_MS = 30_000;
 const CLOSED_FILE_ACTIVITY_SUPPRESS_MS = 5_000;
