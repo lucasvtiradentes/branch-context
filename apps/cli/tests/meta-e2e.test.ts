@@ -14,9 +14,7 @@ import {
   syncBranch,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { cmdOnCheckout } from '../src/commands/on-checkout';
-import { cmdOnCommit } from '../src/commands/on-commit';
-import { cmdTemplate } from '../src/commands/template';
+import { runCli } from '../src/index';
 import { createGitRepo, createTempDir, expectOk, initBctxWorkspace } from './helpers';
 
 function initMetaRepo() {
@@ -32,58 +30,58 @@ function initMetaRepo() {
 }
 
 describe('meta e2e', () => {
-  it('on-checkout creates and updates meta', () => {
+  it('on-checkout creates and updates meta', async () => {
     const repo = initMetaRepo();
     syncBranch(repo, 'main');
     expectOk(gitCheckout(repo, 'feature/test', true));
-    cmdOnCheckout(['main', 'feature/test']);
+    await runCli(['on-checkout', 'main', 'feature/test']);
     const meta = getBranchMeta(repo, sanitizeBranchName('feature/test'));
     expect(meta?.branch).toBe('feature/test');
     expect(meta?.author).toBe('Test User');
   });
 
-  it('on-commit updates meta', () => {
+  it('on-commit updates meta', async () => {
     const repo = initMetaRepo();
     syncBranch(repo, 'main');
     expectOk(gitCheckout(repo, 'feature/commit-test', true));
-    cmdOnCheckout(['main', 'feature/commit-test']);
+    await runCli(['on-checkout', 'main', 'feature/commit-test']);
     writeFileSync(join(repo, 'new_file.py'), "print('hello')");
     expectOk(gitAdd(repo));
     expectOk(gitCommit(repo, 'feat: add file'));
-    cmdOnCommit([]);
+    await runCli(['on-commit']);
     const meta = getBranchMeta(repo, sanitizeBranchName('feature/commit-test'));
     expect(meta?.last_commit?.message).toBe('feat: add file');
     expect(meta?.commits).toContain('feat: add file');
   });
 
-  it('on-commit updates context tags', () => {
+  it('on-commit updates context tags', async () => {
     const repo = initMetaRepo();
     syncBranch(repo, 'main');
     expectOk(gitCheckout(repo, 'feature/tags-test', true));
     syncBranch(repo, 'feature/tags-test');
-    cmdOnCheckout(['main', 'feature/tags-test']);
+    await runCli(['on-checkout', 'main', 'feature/tags-test']);
     writeFileSync(join(repo, 'test.py'), "print('test')");
     expectOk(gitAdd(repo));
     expectOk(gitCommit(repo, 'feat: test commit'));
-    cmdOnCommit([]);
+    await runCli(['on-commit']);
     const content = readFileSync(join(repo, DEFAULT_SYMLINK, 'context.md'), 'utf8');
     expect(content).toContain('feat: test commit');
     expect(content).toContain('test.py');
   });
 
-  it('on-commit syncs agent sessions', () => {
+  it('on-commit syncs agent sessions', async () => {
     const repo = initMetaRepo();
     syncBranch(repo, 'main');
     expectOk(gitCheckout(repo, 'feature/test', true));
     syncBranch(repo, 'feature/test');
-    cmdOnCheckout(['main', 'feature/test']);
+    await runCli(['on-checkout', 'main', 'feature/test']);
 
     const homeDir = initCodexHome(repo);
     const originalHome = process.env.HOME;
     process.env.HOME = homeDir;
 
     try {
-      cmdOnCommit([]);
+      await runCli(['on-commit']);
     } finally {
       if (originalHome === undefined) {
         delete process.env.HOME;
@@ -101,14 +99,14 @@ describe('meta e2e', () => {
     syncBranch(repo, 'main');
     expectOk(gitCheckout(repo, 'feature/template-test', true));
     syncBranch(repo, 'feature/template-test');
-    cmdOnCheckout(['main', 'feature/template-test']);
+    await runCli(['on-checkout', 'main', 'feature/template-test']);
     writeFileSync(join(repo, 'file.py'), 'x = 1');
     expectOk(gitAdd(repo));
     expectOk(gitCommit(repo, 'feat: add file'));
-    cmdOnCommit([]);
+    await runCli(['on-commit']);
     const branchKey = sanitizeBranchName('feature/template-test');
     const metaBefore = getBranchMeta(repo, branchKey);
-    await cmdTemplate(['_default']);
+    await runCli(['template', '_default']);
     const metaAfter = getBranchMeta(repo, branchKey);
     expect(metaAfter?.commits).toBe(metaBefore?.commits);
     expect(metaAfter?.changed_files).toBe(metaBefore?.changed_files);
@@ -117,12 +115,12 @@ describe('meta e2e', () => {
     );
   });
 
-  it('prune moves meta to archived', () => {
+  it('prune moves meta to archived', async () => {
     const repo = initMetaRepo();
     syncBranch(repo, 'main');
     expectOk(gitCheckout(repo, 'feature/to-prune', true));
     syncBranch(repo, 'feature/to-prune');
-    cmdOnCheckout(['main', 'feature/to-prune']);
+    await runCli(['on-checkout', 'main', 'feature/to-prune']);
     const branchKey = sanitizeBranchName('feature/to-prune');
     expect(getBranchMeta(repo, branchKey)).not.toBeNull();
     archiveBranch(repo, branchKey);

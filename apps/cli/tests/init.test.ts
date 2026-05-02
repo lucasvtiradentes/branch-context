@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { addToGitignore, DEFAULT_SYMLINK } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { cmdInit } from '../src/commands/init';
+import { runCli } from '../src/index';
 import { createGitRepo, createTempDir } from './helpers';
 
 describe('init command', () => {
@@ -36,14 +36,14 @@ describe('init command', () => {
   it('init creates symlink', async () => {
     const repo = createGitRepo();
     process.chdir(repo);
-    await cmdInit([]);
+    await runCli(['init']);
     expect(existsSync(join(repo, DEFAULT_SYMLINK))).toBe(true);
   });
 
   it('init adds symlink to gitignore', async () => {
     const repo = createGitRepo();
     process.chdir(repo);
-    await cmdInit([]);
+    await runCli(['init']);
     expect(readFileSync(join(repo, '.gitignore'), 'utf8')).toContain(DEFAULT_SYMLINK);
   });
 });

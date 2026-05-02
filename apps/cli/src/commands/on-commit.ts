@@ -8,7 +8,7 @@ export function registerOnCommitCommand(program: Program) {
     .action(() => cmdOnCommit([]));
 }
 
-export function cmdOnCommit(_args: string[]) {
+function cmdOnCommit(_args: string[]) {
   const gitRoot = getGitRoot();
   if (!gitRoot) {
     return 1;

@@ -21,7 +21,7 @@ export function registerStatusCommand(program: Program) {
   program.command('status', 'Show status, health, and branches').action(() => cmdStatus([]));
 }
 
-export function cmdStatus(_args: string[]) {
+function cmdStatus(_args: string[]) {
   const gitRoot = getGitRoot();
   if (!gitRoot) {
     console.log('error: not a git repository');

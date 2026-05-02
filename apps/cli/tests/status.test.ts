@@ -11,15 +11,15 @@ import {
   syncBranch,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { cmdStatus } from '../src/commands/status';
+import { runCli } from '../src/index';
 import { captureConsole, createGitRepo, initBctxWorkspace } from './helpers';
 
 describe('status command', () => {
-  it('errors when not initialized', () => {
+  it('errors when not initialized', async () => {
     const repo = createGitRepo();
     process.chdir(repo);
     const capture = captureConsole();
-    expect(cmdStatus([])).toBe(1);
+    expect(await runCli(['status'])).toBe(1);
     expect(capture.output).toContain('not initialized');
   });
 
@@ -31,12 +31,12 @@ describe('status command', () => {
     expect(status.issues.some((issue) => issue.message === 'not initialized')).toBe(true);
   });
 
-  it('shows branch and base', () => {
+  it('shows branch and base', async () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     process.chdir(repo);
     const capture = captureConsole();
-    cmdStatus([]);
+    await runCli(['status']);
     expect(capture.output).toContain('Branch:');
     expect(capture.output).toContain('Base:');
   });
@@ -93,21 +93,21 @@ author: {{author}}
     expect(context?.contextDir).toBe(getBranchDir(repo, 'feature/fb_partner_reports_and_payouts'));
   });
 
-  it('shows current branch', () => {
+  it('shows current branch', async () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     process.chdir(repo);
     const capture = captureConsole();
-    cmdStatus([]);
+    await runCli(['status']);
     expect(capture.output).toContain('main');
   });
 
-  it('shows health hooks', () => {
+  it('shows health hooks', async () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     process.chdir(repo);
     const capture = captureConsole();
-    cmdStatus([]);
+    await runCli(['status']);
     expect(capture.output).toContain('hook');
   });
 
@@ -117,27 +117,27 @@ author: {{author}}
     process.chdir(repo);
     await installHook(repo, HOOK_POST_CHECKOUT);
     const capture = captureConsole();
-    cmdStatus([]);
+    await runCli(['status']);
     expect(capture.output).toContain('post-checkout');
   });
 
-  it('shows templates', () => {
+  it('shows templates', async () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     process.chdir(repo);
     const capture = captureConsole();
-    cmdStatus([]);
+    await runCli(['status']);
     expect(capture.output).toContain('Templates:');
     expect(capture.output).toContain('_default');
   });
 
-  it('shows contexts count', () => {
+  it('shows contexts count', async () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     syncBranch(repo, 'main');
     process.chdir(repo);
     const capture = captureConsole();
-    cmdStatus([]);
+    await runCli(['status']);
     expect(capture.output).toContain('1 contexts');
   });
 
@@ -149,27 +149,27 @@ author: {{author}}
     syncBranch(repo, 'main');
     process.chdir(repo);
     const capture = captureConsole();
-    cmdStatus([]);
+    await runCli(['status']);
     expect(capture.output).toContain('Health:');
     expect(capture.output).toContain('[ok]');
   });
 
-  it('shows symlink not set', () => {
+  it('shows symlink not set', async () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     process.chdir(repo);
     const capture = captureConsole();
-    cmdStatus([]);
+    await runCli(['status']);
     expect(capture.output).toContain('symlink not set');
   });
 
-  it('shows symlink valid', () => {
+  it('shows symlink valid', async () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     syncBranch(repo, 'main');
     process.chdir(repo);
     const capture = captureConsole();
-    cmdStatus([]);
+    await runCli(['status']);
     expect(capture.output).toContain('symlink valid');
   });
 
@@ -185,14 +185,14 @@ author: {{author}}
     });
   });
 
-  it('returns error when hook missing', () => {
+  it('returns error when hook missing', async () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     syncBranch(repo, 'main');
     rmSync(`${repo}/.git/hooks/post-checkout`, { force: true });
     process.chdir(repo);
     const capture = captureConsole();
-    expect(cmdStatus([])).toBe(1);
+    expect(await runCli(['status'])).toBe(1);
     expect(capture.output).toContain('[!!]');
     expect(capture.output).toContain('post-checkout');
   });

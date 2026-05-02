@@ -1,6 +1,11 @@
 import { getAgentSessions, getGitRoot } from '@branch-context/core';
+import type { Program } from '@caporal/core';
 
-export function cmdAgentsStatus() {
+export function registerAgentsStatusCommand(program: Program) {
+  program.command('agents status', 'Show agent integration status').action(() => cmdAgentsStatus());
+}
+
+function cmdAgentsStatus() {
   const gitRoot = getGitRoot();
   if (!gitRoot) {
     console.log('error: not a git repository');

@@ -19,7 +19,7 @@ export function registerOnCheckoutCommand(program: Program) {
     .action(({ args }) => cmdOnCheckout([String(args.oldBranch), String(args.newBranch)]));
 }
 
-export function cmdOnCheckout(args: string[]) {
+function cmdOnCheckout(args: string[]) {
   if (args.length < 2) {
     console.log(`usage: ${CLI_NAME} on-checkout <old_branch> <new_branch>`);
     return 1;

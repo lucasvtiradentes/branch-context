@@ -23,7 +23,7 @@ export function registerInitCommand(program: Program) {
   program.command('init', 'Initialize and install hook').action(() => cmdInit([]));
 }
 
-export async function cmdInit(_args: string[]) {
+async function cmdInit(_args: string[]) {
   const gitRoot = getGitRoot();
   if (!gitRoot) {
     console.log('error: not a git repository');

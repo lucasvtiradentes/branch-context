@@ -1,6 +1,11 @@
 import { getGitRoot, syncAgentSessions } from '@branch-context/core';
+import type { Program } from '@caporal/core';
 
-export function cmdAgentsSync() {
+export function registerAgentsSyncCommand(program: Program) {
+  program.command('agents sync', 'Sync agent sessions').action(() => cmdAgentsSync());
+}
+
+function cmdAgentsSync() {
   const gitRoot = getGitRoot();
   if (!gitRoot) {
     console.log('error: not a git repository');

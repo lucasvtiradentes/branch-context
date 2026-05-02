@@ -5,7 +5,7 @@ export function registerSyncCommand(program: Program) {
   program.command('sync', 'Sync context and update meta/tags').action(() => cmdSync([]));
 }
 
-export function cmdSync(_args: string[]) {
+function cmdSync(_args: string[]) {
   const gitRoot = getGitRoot();
   if (!gitRoot) {
     console.log('error: not a git repository');

@@ -15,7 +15,7 @@ export function registerUninstallCommand(program: Program) {
     .action(({ options }) => cmdUninstall(options.global ? ['--global'] : []));
 }
 
-export function cmdUninstall(args: string[]) {
+function cmdUninstall(args: string[]) {
   if (args.includes('--global')) {
     unsetGlobalHooksPath();
     console.log('Global hooks path unset');

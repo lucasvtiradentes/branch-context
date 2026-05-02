@@ -47,7 +47,7 @@ function stringArgs(value: unknown) {
   return value == null || value === '' ? [] : [String(value)];
 }
 
-export async function cmdTemplate(args: string[]) {
+async function cmdTemplate(args: string[]) {
   const gitRoot = getGitRoot();
   if (!gitRoot) {
     console.log('error: not a git repository');

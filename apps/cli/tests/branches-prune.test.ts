@@ -8,8 +8,7 @@ import {
   syncBranch,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { cmdPrune } from '../src/commands/prune';
-import { cmdStatus } from '../src/commands/status';
+import { runCli } from '../src/index';
 import {
   captureConsole,
   createGitRepo,
@@ -20,7 +19,7 @@ import {
 } from './helpers';
 
 describe('branches and prune commands', () => {
-  it('status shows branches', () => {
+  it('status shows branches', async () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     process.chdir(repo);
@@ -28,22 +27,22 @@ describe('branches and prune commands', () => {
     expectOk(gitCheckout(repo, 'feature/test', true));
     syncBranch(repo, 'feature/test');
     const capture = captureConsole();
-    cmdStatus([]);
+    await runCli(['status']);
     expect(capture.output).toContain('main');
     expect(capture.output).toContain('feature');
   });
 
-  it('status shows current marker', () => {
+  it('status shows current marker', async () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     process.chdir(repo);
     syncBranch(repo, 'main');
     const capture = captureConsole();
-    cmdStatus([]);
+    await runCli(['status']);
     expect(capture.output).toContain('* main');
   });
 
-  it('status shows orphan warning', () => {
+  it('status shows orphan warning', async () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     process.chdir(repo);
@@ -53,7 +52,7 @@ describe('branches and prune commands', () => {
     expectOk(gitCheckout(repo, 'main'));
     git(['branch', '-D', 'feature/old'], repo);
     const capture = captureConsole();
-    cmdStatus([]);
+    await runCli(['status']);
     expect(capture.output).toContain('orphan');
   });
 
@@ -63,7 +62,7 @@ describe('branches and prune commands', () => {
     process.chdir(repo);
     syncBranch(repo, 'main');
     const capture = captureConsole();
-    expect(await cmdPrune([])).toBe(0);
+    expect(await runCli(['prune'])).toBe(0);
     expect(capture.output).toContain('Nothing to prune');
   });
 
@@ -78,7 +77,7 @@ describe('branches and prune commands', () => {
     git(['branch', '-D', 'feature/old'], repo);
     setMultiSelectOverride(() => [0]);
     const capture = captureConsole();
-    expect(await cmdPrune([])).toBe(0);
+    expect(await runCli(['prune'])).toBe(0);
     expect(capture.output).toContain('Archiving');
     expect(capture.output).toContain('feature');
   });
@@ -104,7 +103,7 @@ describe('branches and prune commands', () => {
     expectOk(gitCheckout(repo, 'main'));
     setMultiSelectOverride(() => []);
     const capture = captureConsole();
-    expect(await cmdPrune([])).toBe(0);
+    expect(await runCli(['prune'])).toBe(0);
     expect(capture.output).toContain('feature/local-only');
     expect(capture.output.split('Select')[1]).not.toContain('feature/synced');
   });

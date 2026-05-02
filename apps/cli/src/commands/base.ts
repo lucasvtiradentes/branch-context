@@ -8,7 +8,7 @@ export function registerBaseCommand(program: Program) {
     .action(({ args }) => cmdBase(stringArgs(args.branch)));
 }
 
-export function cmdBase(args: string[]) {
+function cmdBase(args: string[]) {
   const gitRoot = getGitRoot();
   if (!gitRoot) {
     console.log('error: not a git repository');

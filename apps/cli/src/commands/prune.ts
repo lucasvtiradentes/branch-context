@@ -22,7 +22,7 @@ export function registerPruneCommand(program: Program) {
     .action(() => cmdPrune([]));
 }
 
-export async function cmdPrune(_args: string[]) {
+async function cmdPrune(_args: string[]) {
   const gitRoot = getGitRoot();
   if (!gitRoot) {
     console.log('error: not a git repository');

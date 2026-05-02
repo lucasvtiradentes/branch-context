@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
-import { CLI_NAME, DIST_NAME, VERSION } from '@branch-context/core';
+import { CLI_NAME, VERSION } from '@branch-context/core';
 import type { Program as CaporalProgram } from '@caporal/core';
 import { registerAgentsCommands } from './commands/agents';
 import { registerBaseCommand } from './commands/base';
@@ -14,19 +14,22 @@ import { registerSyncCommand } from './commands/sync';
 import { registerTemplateCommand } from './commands/template';
 import { registerUninstallCommand } from './commands/uninstall';
 
-export function printHelp() {
-  void createProgram().run(['--help']);
-}
+let programInstance: CaporalProgram | undefined;
 
 export async function runCli(args = process.argv.slice(2)) {
   try {
-    const result = await createProgram().run(args);
+    const result = await getProgram().run(args);
     return typeof result === 'number' && result > 0 ? result : 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.log(`error: ${message}`);
     return 1;
   }
+}
+
+function getProgram(): CaporalProgram {
+  programInstance ??= createProgram();
+  return programInstance;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
@@ -89,5 +92,3 @@ function getProgramConstructor() {
   }
   return Program;
 }
-
-export { DIST_NAME };
