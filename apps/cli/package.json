@@ -10,8 +10,7 @@
     "access": "public"
   },
   "bin": {
-    "bctx": "./dist/index.js",
-    "branch-ctx": "./dist/index.js"
+    "bctx": "./dist/index.js"
   },
   "scripts": {
     "build": "tsup",

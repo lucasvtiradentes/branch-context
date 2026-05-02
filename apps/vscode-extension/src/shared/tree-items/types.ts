@@ -27,6 +27,7 @@ export type BranchContextTreeNode = {
   remote?: boolean;
   agentProvider?: AgentSessionProvider;
   sessionId?: string;
+  agentsFilePath?: string;
   pinned?: boolean;
   pinDescription?: string;
   commit?: GitCommitSummary;

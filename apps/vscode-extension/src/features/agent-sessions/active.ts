@@ -180,6 +180,13 @@ export function markAgentSessionFileActive(path: string): void {
   );
 }
 
+export function suppressAgentSessionFileActivity(path: string, reason = 'manual'): void {
+  logger.debug(`[active-agent-sessions] suppress requested path=${path} reason=${reason}`);
+  clearActiveFilePath(path);
+  suppressFileActivity(path);
+  refreshTree?.();
+}
+
 export function markAgentSessionTerminalActive(
   terminal: vscode.Terminal,
   session: ActiveAgentSessionSource,

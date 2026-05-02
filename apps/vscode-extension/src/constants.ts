@@ -34,12 +34,15 @@ export const commandIds = {
   copyAgentSessionId: `${APP_ID}.copyAgentSessionId`,
   deleteAgentSession: `${APP_ID}.deleteAgentSession`,
   groupContextsBy: `${APP_ID}.groupContextsBy`,
+  toggleOtherBranchesMode: `${APP_ID}.toggleOtherBranchesMode`,
+  moveAgentSessionToBranch: `${APP_ID}.moveAgentSessionToBranch`,
   checkoutContextBranch: `${APP_ID}.checkoutContextBranch`,
   openContext: `${APP_ID}.openContext`,
   revealContextFolder: `${APP_ID}.revealContextFolder`,
   archiveContext: `${APP_ID}.archiveContext`,
   restoreContext: `${APP_ID}.restoreContext`,
   deleteContext: `${APP_ID}.deleteContext`,
+  updateCli: `${APP_ID}.updateCli`,
   showLogs: `${APP_ID}.showLogs`,
   syncAgents: `${APP_ID}.internal.syncAgents`,
   showStatusBarActions: `${APP_ID}.internal.showStatusBarActions`,
@@ -57,6 +60,7 @@ export const viewIds = {
 export const contextKeys = {
   initialized: `${APP_ID}.initialized`,
   gitChangesMode: `${APP_ID}.gitChangesMode`,
+  otherBranchesMode: `${APP_ID}.otherBranchesMode`,
 } as const;
 
 export const codeLensTitles = {

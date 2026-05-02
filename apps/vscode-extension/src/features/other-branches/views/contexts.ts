@@ -1,8 +1,17 @@
+import { join } from 'node:path';
 import type {
+  AgentSession,
   BranchContextArchivedContextSummary,
   BranchContextContextSummary,
 } from '@branch-context/core';
+import {
+  AGENTS_FILE_NAME,
+  AgentSessionScope,
+  createAgentSession,
+  readAgentsFile,
+} from '@branch-context/core';
 import * as vscode from 'vscode';
+import { contextKeys } from '../../../constants';
 import { formatBytes } from '../../../shared/format/bytes';
 import { markdownTooltipLine } from '../../../shared/format/markdown';
 import { formatRelativeTime } from '../../../shared/format/relative-time';
@@ -16,6 +25,10 @@ import {
   StateTreeProvider,
 } from '../../../shared/tree-items';
 import { branchContextState } from '../../../vscode/state';
+import {
+  createAgentSessionNode,
+  createSessionViewItem,
+} from '../../agent-sessions/views/agent-sessions';
 
 export enum ContextsGroupBy {
   Flat = 'flat',
@@ -25,11 +38,17 @@ export enum ContextsGroupBy {
   Template = 'template',
 }
 
+enum OtherBranchesViewMode {
+  ContextFiles = 'contextFiles',
+  AgentSessions = 'agentSessions',
+}
+
 enum LegacyContextsGroupBy {
   Recent = 'recent',
 }
 
 const contextsGroupByValues = Object.values(ContextsGroupBy);
+const otherBranchesViewModeValues = Object.values(OtherBranchesViewMode);
 type SavedContextsGroupBy = ContextsGroupBy | LegacyContextsGroupBy;
 
 type ContextViewItem = {
@@ -53,17 +72,31 @@ type ContextViewGroup = {
 };
 
 let contextsGroupBy: ContextsGroupBy = ContextsGroupBy.Status;
+let otherBranchesViewMode: OtherBranchesViewMode = OtherBranchesViewMode.ContextFiles;
 const contextsGroupByWorkspaceKey = 'contexts.groupBy';
+const otherBranchesViewModeWorkspaceKey = 'contexts.mode';
 
-export function initializeContextsGroupBy(context: vscode.ExtensionContext): void {
+export function initializeContextsViewState(context: vscode.ExtensionContext): void {
   const savedGroupBy = context.workspaceState.get<unknown>(contextsGroupByWorkspaceKey);
   if (isContextsGroupBy(savedGroupBy)) {
     contextsGroupBy = normalizeContextsGroupBy(savedGroupBy);
   }
+
+  const savedMode = context.workspaceState.get<unknown>(otherBranchesViewModeWorkspaceKey);
+  if (isOtherBranchesViewMode(savedMode)) {
+    otherBranchesViewMode = savedMode;
+  }
+  setOtherBranchesModeContext();
 }
 
 export function getContextsGroupBy(): ContextsGroupBy {
   return contextsGroupBy;
+}
+
+export function getOtherBranchesViewDescription(): string {
+  return otherBranchesViewMode === OtherBranchesViewMode.AgentSessions
+    ? 'ai sessions'
+    : 'context files';
 }
 
 export async function saveContextsGroupBy(
@@ -74,12 +107,36 @@ export async function saveContextsGroupBy(
   await context.workspaceState.update(contextsGroupByWorkspaceKey, nextGroupBy);
 }
 
+export async function toggleOtherBranchesViewMode(
+  context: vscode.ExtensionContext,
+): Promise<OtherBranchesViewMode> {
+  otherBranchesViewMode =
+    otherBranchesViewMode === OtherBranchesViewMode.ContextFiles
+      ? OtherBranchesViewMode.AgentSessions
+      : OtherBranchesViewMode.ContextFiles;
+  await context.workspaceState.update(otherBranchesViewModeWorkspaceKey, otherBranchesViewMode);
+  setOtherBranchesModeContext();
+  return otherBranchesViewMode;
+}
+
 function isContextsGroupBy(value: unknown): value is SavedContextsGroupBy {
   return isStringValue([...contextsGroupByValues, LegacyContextsGroupBy.Recent], value);
 }
 
 function normalizeContextsGroupBy(value: SavedContextsGroupBy): ContextsGroupBy {
   return value === LegacyContextsGroupBy.Recent ? ContextsGroupBy.Date : value;
+}
+
+function isOtherBranchesViewMode(value: unknown): value is OtherBranchesViewMode {
+  return isStringValue(otherBranchesViewModeValues, value);
+}
+
+function setOtherBranchesModeContext(): void {
+  void vscode.commands.executeCommand(
+    'setContext',
+    contextKeys.otherBranchesMode,
+    otherBranchesViewMode,
+  );
 }
 
 export function createContextsProvider(): StateTreeProvider {
@@ -89,12 +146,11 @@ export function createContextsProvider(): StateTreeProvider {
       return [createMessageNode('No .bctx config')];
     }
 
-    const contexts = [
-      ...state.recentContexts.map(toActiveContext),
-      ...state.archivedContexts.map(toArchivedContext),
-    ]
-      .filter((context) => !isCurrentContext(context, state.currentBranch))
-      .sort(compareByUpdatedAt);
+    const contexts = getOtherBranchContexts();
+
+    if (otherBranchesViewMode === OtherBranchesViewMode.AgentSessions) {
+      return createOtherBranchAgentSessionNodes(contexts);
+    }
 
     if (contexts.length === 0) {
       return [createMessageNode('No other branches')];
@@ -102,6 +158,147 @@ export function createContextsProvider(): StateTreeProvider {
 
     return groupContexts(contexts);
   });
+}
+
+function getOtherBranchContexts() {
+  const state = branchContextState.get();
+  return [
+    ...state.recentContexts.map(toActiveContext),
+    ...state.archivedContexts.map(toArchivedContext),
+  ]
+    .filter((context) => !isCurrentContext(context, state.currentBranch))
+    .sort(compareByUpdatedAt);
+}
+
+function createOtherBranchAgentSessionNodes(contexts: ContextViewItem[]) {
+  if (contexts.length === 0) {
+    return [createMessageNode('No other branches')];
+  }
+
+  const groups = contexts.map((context) => ({
+    context,
+    sessions: readBranchAgentSessions(context),
+  }));
+
+  return groupBranchAgentSessions(groups);
+}
+
+type BranchAgentSessionGroup = {
+  context: ContextViewItem;
+  sessions: AgentSession[];
+};
+
+type BranchAgentSessionGroupContainer = {
+  label: string;
+  groups: BranchAgentSessionGroup[];
+};
+
+function groupBranchAgentSessions(groups: BranchAgentSessionGroup[]) {
+  if (contextsGroupBy === ContextsGroupBy.Flat) {
+    return groups.map(createBranchAgentSessionGroupNode);
+  }
+
+  if (contextsGroupBy === ContextsGroupBy.Date) {
+    return createBranchAgentSessionGroupNodes(
+      groupByDate(groups, (group) => group.context.updatedAt).map((group) => ({
+        label: group.label,
+        groups: group.items,
+      })),
+    );
+  }
+
+  if (contextsGroupBy === ContextsGroupBy.Size) {
+    return createBranchAgentSessionGroupNodes(
+      createOrderedGroups(groups, ['Small', 'Medium', 'Large'], (group) =>
+        getSizeGroup(group.context),
+      ).map(branchAgentSessionGroupFromItems),
+    );
+  }
+
+  if (contextsGroupBy === ContextsGroupBy.Template) {
+    return createBranchAgentSessionGroupNodes(
+      createSortedBranchAgentSessionGroups(groups, (group) => group.context.template || 'Unknown'),
+    );
+  }
+
+  return createBranchAgentSessionGroupNodes(
+    createOrderedGroups(groups, ['Active', 'Archived'], (group) =>
+      group.context.archived ? 'Archived' : 'Active',
+    ).map(branchAgentSessionGroupFromItems),
+  );
+}
+
+function branchAgentSessionGroupFromItems(group: {
+  label: string;
+  items: BranchAgentSessionGroup[];
+}) {
+  return { label: group.label, groups: group.items };
+}
+
+function createBranchAgentSessionGroupNodes(groups: BranchAgentSessionGroupContainer[]) {
+  return groups.map((group) =>
+    createGroupNode(
+      group.label,
+      group.groups.map(createBranchAgentSessionGroupNode),
+      `${group.groups.length}`,
+    ),
+  );
+}
+
+function createSortedBranchAgentSessionGroups(
+  groups: BranchAgentSessionGroup[],
+  getLabel: (group: BranchAgentSessionGroup) => string,
+) {
+  const groupsByLabel = new Map<string, BranchAgentSessionGroup[]>();
+  for (const group of groups) {
+    const label = getLabel(group);
+    let groupedItems = groupsByLabel.get(label);
+    if (!groupedItems) {
+      groupedItems = [];
+      groupsByLabel.set(label, groupedItems);
+    }
+    groupedItems.push(group);
+  }
+
+  return Array.from(groupsByLabel.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([label, groupedItems]) => ({
+      label,
+      groups: groupedItems,
+    }));
+}
+
+function createBranchAgentSessionGroupNode({ context, sessions }: BranchAgentSessionGroup) {
+  const agentsFilePath = getContextAgentsFilePath(context);
+  return createGroupNode(
+    context.branch,
+    sessions.map((session) =>
+      createAgentSessionNode(createSessionViewItem(session), {
+        agentsFilePath,
+        movable: true,
+      }),
+    ),
+    {
+      description: String(sessions.length),
+      icon: context.archived ? new vscode.ThemeIcon('archive') : new vscode.ThemeIcon('git-branch'),
+    },
+  );
+}
+
+function readBranchAgentSessions(context: ContextViewItem): AgentSession[] {
+  return readAgentsFile(getContextAgentsFilePath(context))
+    .sessions.map((session) =>
+      createAgentSession({
+        ...session,
+        branch: context.branch,
+        scope: AgentSessionScope.Branch,
+      }),
+    )
+    .sort(compareAgentSessions);
+}
+
+function getContextAgentsFilePath(context: ContextViewItem) {
+  return join(context.contextDir, AGENTS_FILE_NAME);
 }
 
 function toActiveContext(context: BranchContextContextSummary): ContextViewItem {
@@ -285,4 +482,22 @@ function compareByUpdatedAt(left: ContextViewItem, right: ContextViewItem) {
   }
 
   return right.updatedAt.localeCompare(left.updatedAt);
+}
+
+function compareAgentSessions(left: AgentSession, right: AgentSession) {
+  if (Boolean(left.pinned) !== Boolean(right.pinned)) {
+    return left.pinned ? -1 : 1;
+  }
+
+  const leftTime = left.updatedAt ?? left.startedAt ?? '';
+  const rightTime = right.updatedAt ?? right.startedAt ?? '';
+  if (leftTime !== rightTime) {
+    return rightTime.localeCompare(leftTime);
+  }
+
+  if (left.provider !== right.provider) {
+    return left.provider.localeCompare(right.provider);
+  }
+
+  return left.sessionId.localeCompare(right.sessionId);
 }

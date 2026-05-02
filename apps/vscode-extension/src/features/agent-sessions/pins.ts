@@ -4,6 +4,7 @@ import {
   type AgentSession,
   type AgentSessionPin,
   getAgentSessionPins,
+  getBranchAgentsFilePath,
   getCurrentAgentsFilePath,
   isAgentSessionPin,
   readAgentsFile,
@@ -40,8 +41,10 @@ export function upsertAgentSessionPin(
   provider: AgentSession['provider'],
   sessionId: string,
   description: string,
+  branch?: string,
+  sourceAgentsFilePath?: string,
 ): void {
-  const path = getAgentsFilePath();
+  const path = getAgentsFilePath(branch, sourceAgentsFilePath);
   if (!path) {
     return;
   }
@@ -53,8 +56,13 @@ export function upsertAgentSessionPin(
   });
 }
 
-export function removeAgentSessionPin(provider: AgentSession['provider'], sessionId: string): void {
-  const path = getAgentsFilePath();
+export function removeAgentSessionPin(
+  provider: AgentSession['provider'],
+  sessionId: string,
+  branch?: string,
+  sourceAgentsFilePath?: string,
+): void {
+  const path = getAgentsFilePath(branch, sourceAgentsFilePath);
   if (!path) {
     return;
   }
@@ -62,9 +70,21 @@ export function removeAgentSessionPin(provider: AgentSession['provider'], sessio
   removeCoreAgentSessionPin(path, provider, sessionId);
 }
 
-function getAgentsFilePath(): string | null {
-  const workspaceRoot = branchContextState.get().workspaceRoot;
-  return workspaceRoot ? getCurrentAgentsFilePath(workspaceRoot) : null;
+function getAgentsFilePath(branch?: string, sourceAgentsFilePath?: string): string | null {
+  if (sourceAgentsFilePath) {
+    return sourceAgentsFilePath;
+  }
+
+  const state = branchContextState.get();
+  if (!state.workspaceRoot) {
+    return null;
+  }
+
+  if (branch && branch !== state.currentBranch) {
+    return getBranchAgentsFilePath(state.workspaceRoot, branch);
+  }
+
+  return getCurrentAgentsFilePath(state.workspaceRoot);
 }
 
 function readLegacyAgentSessionPins(agentsFilePath: string): AgentSessionPin[] {

@@ -3,9 +3,11 @@ import {
   existsSync,
   openSync,
   readdirSync,
+  readFileSync,
   readSync,
   realpathSync,
   statSync,
+  writeFileSync,
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -16,6 +18,7 @@ import {
   AgentSessionProvider,
   AgentSessionScope,
   createAgentSession,
+  getBranchAgentsFilePath,
   getCurrentAgentsFilePath,
   normalizeAgentsFile,
   readAgentsFile,
@@ -124,6 +127,24 @@ export type SyncAgentSessionsResult =
     })
   | Extract<AgentSessionsResult, { ok: false }>;
 
+export type MoveAgentSessionToBranchResult =
+  | {
+      ok: true;
+      fromAgentsFilePath: string;
+      toAgentsFilePath: string;
+      sessionFilePath: string;
+      patchedLines: number;
+    }
+  | {
+      ok: false;
+      reason:
+        | 'session_not_found'
+        | 'session_file_missing'
+        | 'session_file_unpatchable'
+        | 'unsupported_provider';
+      message: string;
+    };
+
 export function getAgentSessions(
   repoRoot: string,
   options: Omit<AgentSessionScanOptions, 'repoRoot'> = {},
@@ -229,6 +250,77 @@ export function syncAgentSessions(
     agentsFilePath,
     sessions: exactSessions,
     written,
+  };
+}
+
+export function moveAgentSessionToBranch(options: {
+  repoRoot: string;
+  provider: AgentSessionProvider;
+  sessionId: string;
+  fromBranch: string;
+  toBranch: string;
+  fromAgentsFilePath?: string;
+  toAgentsFilePath?: string;
+}): MoveAgentSessionToBranchResult {
+  const fromAgentsFilePath =
+    options.fromAgentsFilePath ?? getBranchAgentsFilePath(options.repoRoot, options.fromBranch);
+  const toAgentsFilePath =
+    options.toAgentsFilePath ?? getBranchAgentsFilePath(options.repoRoot, options.toBranch);
+  const fromAgentsFile = readAgentsFile(fromAgentsFilePath);
+  const session = fromAgentsFile.sessions.find(
+    (candidate) =>
+      candidate.provider === options.provider && candidate.sessionId === options.sessionId,
+  );
+
+  if (!session) {
+    return {
+      ok: false,
+      reason: 'session_not_found',
+      message: 'agent session was not found in source branch',
+    };
+  }
+
+  if (!session.path || !existsSync(session.path)) {
+    return {
+      ok: false,
+      reason: 'session_file_missing',
+      message: 'agent session file does not exist',
+    };
+  }
+
+  const patchResult = patchAgentSessionFileBranch(session.path, options.provider, options.toBranch);
+  if (!patchResult.ok) {
+    return patchResult;
+  }
+
+  const nextFromAgentsFile = normalizeAgentsFile({
+    ...fromAgentsFile,
+    sessions: fromAgentsFile.sessions.filter(
+      (candidate) =>
+        candidate.provider !== options.provider || candidate.sessionId !== options.sessionId,
+    ),
+  });
+  const toAgentsFile = readAgentsFile(toAgentsFilePath);
+  const nextToAgentsFile = normalizeAgentsFile({
+    ...toAgentsFile,
+    sessions: [
+      ...toAgentsFile.sessions.filter(
+        (candidate) =>
+          candidate.provider !== options.provider || candidate.sessionId !== options.sessionId,
+      ),
+      session,
+    ],
+  });
+
+  writeAgentsFile(fromAgentsFilePath, nextFromAgentsFile);
+  writeAgentsFile(toAgentsFilePath, nextToAgentsFile);
+
+  return {
+    ok: true,
+    fromAgentsFilePath,
+    toAgentsFilePath,
+    sessionFilePath: session.path,
+    patchedLines: patchResult.patchedLines,
   };
 }
 
@@ -464,6 +556,76 @@ function agentsFilesEqual(
   right: ReturnType<typeof readAgentsFile>,
 ) {
   return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function patchAgentSessionFileBranch(
+  path: string,
+  provider: AgentSessionProvider,
+  branch: string,
+): { ok: true; patchedLines: number } | Extract<MoveAgentSessionToBranchResult, { ok: false }> {
+  if (provider !== AgentSessionProvider.Claude && provider !== AgentSessionProvider.Codex) {
+    return {
+      ok: false,
+      reason: 'unsupported_provider',
+      message: `unsupported agent provider: ${provider}`,
+    };
+  }
+
+  const original = readFileSync(path, 'utf8');
+  const hasFinalNewline = original.endsWith('\n');
+  const lines = original.split(/\r?\n/);
+  if (lines.at(-1) === '') {
+    lines.pop();
+  }
+
+  let patchedLines = 0;
+  const nextLines = lines.map((line) => {
+    const data = parseJsonRecord(line);
+    if (!data) {
+      return line;
+    }
+
+    const patched = patchAgentSessionLineBranch(data, provider, branch);
+    if (!patched) {
+      return line;
+    }
+
+    patchedLines += 1;
+    return JSON.stringify(data);
+  });
+
+  if (patchedLines === 0) {
+    return {
+      ok: false,
+      reason: 'session_file_unpatchable',
+      message: 'agent session file branch metadata could not be patched',
+    };
+  }
+
+  writeFileSync(path, `${nextLines.join('\n')}${hasFinalNewline ? '\n' : ''}`);
+  return { ok: true, patchedLines };
+}
+
+function patchAgentSessionLineBranch(
+  data: Record<string, unknown>,
+  provider: AgentSessionProvider,
+  branch: string,
+) {
+  if (provider === AgentSessionProvider.Claude && typeof data.gitBranch === 'string') {
+    data.gitBranch = branch;
+    return true;
+  }
+
+  if (provider === AgentSessionProvider.Codex) {
+    const payload = asRecord(data.payload);
+    const git = asRecord(payload?.git);
+    if (git && typeof git.branch === 'string') {
+      git.branch = branch;
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function getClaudeProjectsRoot(options: AgentSessionScanOptions) {

@@ -2,7 +2,7 @@ import type * as vscode from 'vscode';
 import { initializeAgentIndexer } from './features/agent-sessions/indexer';
 import { initializeBranchContextWatcher } from './features/branch-context/watcher';
 import { initializeContextFileUx } from './features/context-file-ux/initialize';
-import { initializeContextsGroupBy } from './features/other-branches/views/contexts';
+import { initializeContextsViewState } from './features/other-branches/views/contexts';
 import { logger } from './shared/logger';
 import { registerCommands } from './vscode/commands/register';
 import { initializeGitDiffProvider } from './vscode/git-diff';
@@ -14,7 +14,7 @@ function initializeCore(context: vscode.ExtensionContext): void {
   logger.initialize();
   logger.info(`extension activated; log file reset at ${logger.getLogFilePath()}`);
   branchContextState.initialize(context);
-  initializeContextsGroupBy(context);
+  initializeContextsViewState(context);
 }
 
 function initializeUi(context: vscode.ExtensionContext): void {

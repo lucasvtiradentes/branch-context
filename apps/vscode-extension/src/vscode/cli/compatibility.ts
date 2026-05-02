@@ -69,7 +69,7 @@ function resolveCliCompatibility(): CliCompatibilityState {
       continue;
     }
 
-    const compatible = version === VERSION;
+    const compatible = IS_DEV_EXTENSION || version === VERSION;
     logger.info(
       `cli compatibility resolved: command=${command.label} version=${version} expected=${VERSION} compatible=${compatible}`,
     );

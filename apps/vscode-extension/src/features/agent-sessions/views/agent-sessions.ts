@@ -188,9 +188,14 @@ function createGroupNode(
   };
 }
 
-function createAgentSessionNode(
+export function createAgentSessionNode(
   item: AgentSessionViewItem,
-  options: { showIcon?: boolean; pinned?: boolean } = {},
+  options: {
+    showIcon?: boolean;
+    pinned?: boolean;
+    movable?: boolean;
+    agentsFilePath?: string;
+  } = {},
 ) {
   const session = item.session;
   const description = formatRelativeTime(session.updatedAt ?? session.startedAt);
@@ -205,8 +210,10 @@ function createAgentSessionNode(
       : getSessionDisplayText(item),
     kind: BranchContextTreeNodeKind.Agent,
     path,
+    branch: session.branch,
     agentProvider: session.provider,
     sessionId: session.sessionId,
+    agentsFilePath: options.agentsFilePath,
     pinned,
     pinDescription: item.pin?.description,
     description: pinned ? `${formatProviderName(session.provider)} ${description}` : description,
@@ -214,7 +221,7 @@ function createAgentSessionNode(
     icon: showIcon ? getProviderIcon(session.provider, active) : new vscode.ThemeIcon('blank'),
     resourceUri: active ? undefined : createInactiveAgentSessionResourceUri(session.sessionId),
     useResourceUri: showIcon,
-    contextValue: createAgentSessionContextValue({ active, pinned }),
+    contextValue: createAgentSessionContextValue({ active, pinned, movable: options.movable }),
     command: path
       ? {
           command: 'vscode.open',
@@ -225,11 +232,19 @@ function createAgentSessionNode(
   };
 }
 
-function createSessionViewItem(
+export function createSessionViewItem(
   session: AgentSession,
-  pins: AgentSessionPin[],
+  pins: AgentSessionPin[] = [],
 ): AgentSessionViewItem {
   const path = session.path ?? null;
+  const embeddedPin = session.pinned
+    ? {
+        provider: session.provider,
+        sessionId: session.sessionId,
+        description: session.pinned.description,
+        pinnedAt: session.pinned.pinnedAt,
+      }
+    : null;
   return {
     session,
     details: readSessionDetails(path),
@@ -237,7 +252,9 @@ function createSessionViewItem(
     pin:
       pins.find(
         (pin) => pin.provider === session.provider && pin.sessionId === session.sessionId,
-      ) ?? null,
+      ) ??
+      embeddedPin ??
+      null,
   };
 }
 
@@ -340,10 +357,20 @@ function getAgentSessionKey(provider: AgentSession['provider'], sessionId: strin
   return `${provider}:${sessionId}`;
 }
 
-function createAgentSessionContextValue(options: { active: boolean; pinned: boolean }) {
-  return `branchContext.agentSession.${options.active ? 'active' : 'resumable'}.${
-    options.pinned ? 'pinned' : 'pinnable'
-  }`;
+function createAgentSessionContextValue(options: {
+  active: boolean;
+  pinned: boolean;
+  movable?: boolean;
+}) {
+  return [
+    'branchContext',
+    'agentSession',
+    options.active ? 'active' : 'resumable',
+    options.pinned ? 'pinned' : 'pinnable',
+    options.movable ? 'movable' : null,
+  ]
+    .filter(Boolean)
+    .join('.');
 }
 
 function createAgentSessionGroupNode(
