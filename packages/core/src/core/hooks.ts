@@ -25,7 +25,6 @@ export enum HookInstallResult {
   HookExists = 'hook_exists',
   Appended = 'appended',
   Updated = 'updated',
-  Skipped = 'skipped',
 }
 
 export enum HookUninstallResult {

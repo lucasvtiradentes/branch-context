@@ -1,4 +1,4 @@
-export type LabelGroup<T> = {
+type LabelGroup<T> = {
   label: string;
   items: T[];
 };

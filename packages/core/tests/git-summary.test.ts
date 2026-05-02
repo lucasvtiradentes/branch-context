@@ -1,4 +1,4 @@
-import { renameSync, writeFileSync } from 'node:fs';
+import { renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -67,6 +67,35 @@ describe('git branch summary', () => {
       path: 'new.ts',
       oldPath: 'old.ts',
     });
+  });
+
+  it('parses modified and deleted files', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    writeFileSync(join(repo, 'changed.ts'), 'export const value = 1;\n');
+    writeFileSync(join(repo, 'removed.ts'), 'export const removed = true;\n');
+    expectOk(gitAdd(repo));
+    expectOk(gitCommit(repo, 'feat: add files'));
+    expectOk(gitCheckout(repo, 'feature/change-files', true));
+    writeFileSync(join(repo, 'changed.ts'), 'export const value = 2;\n');
+    rmSync(join(repo, 'removed.ts'));
+    expectOk(gitAdd(repo));
+    expectOk(gitCommit(repo, 'refactor: change files'));
+
+    const summaries = gitChangedFileSummaries(repo, 'main');
+
+    expect(summaries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          status: GitFileStatus.Modified,
+          path: 'changed.ts',
+        }),
+        expect.objectContaining({
+          status: GitFileStatus.Deleted,
+          path: 'removed.ts',
+        }),
+      ]),
+    );
   });
 
   it('parses commit summaries', () => {
