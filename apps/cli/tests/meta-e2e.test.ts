@@ -14,7 +14,9 @@ import {
   syncBranch,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { cmdOnCheckout, cmdOnCommit, cmdTemplate } from '../src/index';
+import { cmdOnCheckout } from '../src/commands/on-checkout';
+import { cmdOnCommit } from '../src/commands/on-commit';
+import { cmdTemplate } from '../src/commands/template';
 import { createGitRepo, createTempDir, expectOk, initBctxWorkspace } from './helpers';
 
 function initMetaRepo() {

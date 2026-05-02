@@ -8,7 +8,8 @@ import {
   syncBranch,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { cmdPrune, cmdStatus } from '../src/index';
+import { cmdPrune } from '../src/commands/prune';
+import { cmdStatus } from '../src/commands/status';
 import {
   captureConsole,
   createGitRepo,

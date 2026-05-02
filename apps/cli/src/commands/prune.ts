@@ -14,7 +14,7 @@ import {
   yellow,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
-import { printTable } from './_branches';
+import { printTable } from '../helpers/branches';
 
 export function registerPruneCommand(program: Program) {
   program

@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { DEFAULT_SYMLINK } from '@branch-context/core';
+import { addToGitignore, DEFAULT_SYMLINK } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { addToGitignore, cmdInit } from '../src/index';
+import { cmdInit } from '../src/commands/init';
 import { createGitRepo, createTempDir } from './helpers';
 
 describe('init command', () => {

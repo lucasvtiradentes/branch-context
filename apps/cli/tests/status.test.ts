@@ -11,7 +11,7 @@ import {
   syncBranch,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { cmdStatus } from '../src/index';
+import { cmdStatus } from '../src/commands/status';
 import { captureConsole, createGitRepo, initBctxWorkspace } from './helpers';
 
 describe('status command', () => {

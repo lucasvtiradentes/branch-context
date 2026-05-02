@@ -11,7 +11,7 @@ import {
   yellow,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
-import { printTable } from './_branches';
+import { printTable } from '../helpers/branches';
 
 const STATUS_OK = green('[ok]');
 const STATUS_ERROR = red('[!!]');
