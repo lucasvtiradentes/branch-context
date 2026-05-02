@@ -6,10 +6,10 @@ import { initializeAgentIndexer } from './core/agent-sessions/indexer';
 import { initializeGitDiffProvider } from './core/git-diff';
 import { getLogFilePath, initializeLogging, logger } from './core/logger';
 import { initializeBranchContextState } from './core/state';
-import { initializeBranchContextWatcher } from './core/watcher';
 import { initializeStatusBar } from './status-bar/status-bar';
 import { initializeContextsGroupBy } from './views/other-branches/contexts';
 import { initializeTreeViews } from './views/views';
+import { initializeBranchContextWatcher } from './watchers/branch-context';
 
 function initializeCore(context: vscode.ExtensionContext): void {
   initializeLogging();
