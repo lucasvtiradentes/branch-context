@@ -10,12 +10,12 @@ import {
 } from '../constants';
 import { copyInitConfigResource, loadDefaultConfigResource } from '../resources';
 
-const defaultConfig = loadDefaultConfigResource();
-
 export type TemplateRule = {
   prefix: string;
   template: string;
 };
+
+let defaultConfig: ReturnType<typeof loadDefaultConfigResource> | null = null;
 
 export class Config {
   defaultBaseBranch: string;
@@ -25,14 +25,15 @@ export class Config {
   templateRules: TemplateRule[];
 
   constructor(options: Partial<Config> = {}) {
+    const defaults = getDefaultConfig();
     this.defaultBaseBranch =
-      options.defaultBaseBranch ?? defaultConfig.default_base_branch ?? DEFAULT_BASE_BRANCH;
-    this.sound = options.sound ?? defaultConfig.sound ?? true;
+      options.defaultBaseBranch ?? defaults.default_base_branch ?? DEFAULT_BASE_BRANCH;
+    this.sound = options.sound ?? defaults.sound ?? true;
     this.soundFile = options.soundFile ?? null;
-    this.commitDescription = options.commitDescription ?? defaultConfig.commit_description ?? false;
+    this.commitDescription = options.commitDescription ?? defaults.commit_description ?? false;
     this.templateRules =
       options.templateRules ??
-      (defaultConfig.template_rules ?? []).map((rule) => ({
+      (defaults.template_rules ?? []).map((rule) => ({
         prefix: rule.prefix,
         template: rule.template,
       }));
@@ -45,6 +46,7 @@ export class Config {
     }
 
     try {
+      const defaults = getDefaultConfig();
       const data = JSON.parse(readFileSync(configPath, 'utf8')) as Record<string, unknown>;
       const rawRules = Array.isArray(data.template_rules) ? data.template_rules : [];
 
@@ -52,13 +54,13 @@ export class Config {
         defaultBaseBranch:
           typeof data.default_base_branch === 'string'
             ? data.default_base_branch
-            : (defaultConfig.default_base_branch ?? DEFAULT_BASE_BRANCH),
-        sound: typeof data.sound === 'boolean' ? data.sound : (defaultConfig.sound ?? true),
+            : (defaults.default_base_branch ?? DEFAULT_BASE_BRANCH),
+        sound: typeof data.sound === 'boolean' ? data.sound : (defaults.sound ?? true),
         soundFile: typeof data.sound_file === 'string' ? data.sound_file : null,
         commitDescription:
           typeof data.commit_description === 'boolean'
             ? data.commit_description
-            : (defaultConfig.commit_description ?? false),
+            : (defaults.commit_description ?? false),
         templateRules: rawRules
           .filter(
             (rule): rule is Record<string, unknown> => typeof rule === 'object' && rule !== null,
@@ -102,6 +104,11 @@ export class Config {
     }
     return DEFAULT_TEMPLATE;
   }
+}
+
+function getDefaultConfig() {
+  defaultConfig ??= loadDefaultConfigResource();
+  return defaultConfig;
 }
 
 export function getDefaultTemplate() {
