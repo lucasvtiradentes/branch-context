@@ -36,12 +36,13 @@ jobs:
       should_release_vscode: ${{ steps.check.outputs.should_release_vscode }}
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
         with:
           node-version: 22
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Check extension version
         id: check
