@@ -2,7 +2,7 @@
   "name": "branch-context-vscode",
   "displayName": "Branch Context",
   "description": "Branch Context notes, status, commands, and context.md helpers for VS Code.",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "private": true,
   "publisher": "lucasvtiradentes",
   "license": "MIT",
