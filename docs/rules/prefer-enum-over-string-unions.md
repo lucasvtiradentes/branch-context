@@ -36,7 +36,7 @@ rg -U -n "type [A-Za-z0-9_]+ =\\n(\\s+\\| '[^']+'\\n)+" $CODE_PATHS -g '*.ts'
 Find direct comparisons that may still duplicate enum values:
 
 ```sh
-rg -n "'ready'|'failed'|'missing_config'|'error'|'warning'" $CODE_PATHS -g '*.ts'
+rg -n "(===|!==|==|!=) ['\"][a-z0-9_-]+['\"]|['\"][a-z0-9_-]+['\"] (===|!==|==|!=)" $CODE_PATHS -g '*.ts'
 ```
 
 Identify available verification commands:
@@ -59,7 +59,7 @@ Convert one domain at a time.
 
 1. Replace the string union type with an exported enum.
 2. Replace function returns with enum members.
-3. Replace comparisons in CLI, extension, services, and tests.
+3. Replace comparisons in callers, adapters, services, UI modules, and tests.
 4. Build the owning package before checking downstream packages.
 5. Run `rg -n "' \\| '" $CODE_PATHS -g '*.ts'` again.
 
@@ -73,7 +73,7 @@ Put the enum where the domain belongs:
 
 - Protocol or lifecycle values belong near the protocol/lifecycle implementation.
 - Data model values belong beside the model type.
-- CLI-only inputs can stay local to the command.
+- Command-only inputs can stay local to the command.
 - UI-only states can stay local to the UI module.
 
 Keep compatibility constants when public APIs already export them. Example: keep `DEFAULT_STATUS`, but make it reference `Status.Ready`.

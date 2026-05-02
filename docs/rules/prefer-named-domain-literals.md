@@ -7,7 +7,7 @@ description: Replace raw domain literals in branching logic with enums, named co
 
 ## Motivation
 
-Raw literals in branching logic hide domain meaning. Values like `R`, `base_not_found`, `session_meta`, `github.com`, or `yes` are not just text; they can be protocol, status, lifecycle, host, scope, or input values.
+Raw literals in branching logic hide domain meaning. Values like `R`, `not_found`, `event_started`, `example.com`, or `yes` are not just text; they can be protocol, status, lifecycle, host, scope, or input values.
 
 Name these values once so comparisons, tests, fixtures, and downstream consumers stay aligned when the domain changes.
 
@@ -47,16 +47,22 @@ Find short status-code literals:
 rg -n "['\"](A|M|D|R|C|U|\?|\!)['\"]" $CODE_PATHS -g '*.ts'
 ```
 
-Find event or protocol literals after identifying the local vocabulary:
+Find protocol-like string literals:
 
 ```sh
-rg -n "['\"](session_meta|turn_context|event_msg|response_item|user_message|custom-title|assistant|user)['\"]" $CODE_PATHS -g '*.ts'
+rg -n "\.(type|event|action|role|kind|source) (===|!==|==|!=) ['\"][^'\"]+['\"]" $CODE_PATHS -g '*.ts'
 ```
 
-Find raw comparisons that duplicate existing enum values:
+Find reason or result literals:
 
 ```sh
-rg -n "'base_not_found'|'missing_base'|'no_current_branch'|'missing_context'|'template_not_found'" $CODE_PATHS -g '*.ts'
+rg -n "\.(reason|result|code|error) (===|!==|==|!=) ['\"][^'\"]+['\"]" $CODE_PATHS -g '*.ts'
+```
+
+After identifying a local vocabulary, search for those concrete values across the codebase:
+
+```sh
+rg -n "'value_one'|'value_two'|'value_three'" $CODE_PATHS -g '*.ts'
 ```
 
 Find named constants that may need to move if reused across files:

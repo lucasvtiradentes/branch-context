@@ -42,7 +42,7 @@ rg -n "(map|filter|find|sort|reduce)\([^\n]*=>|\.then\([^\n]*=>|\.catch\([^\n]*=
 Find repeated boundary and UI command flows:
 
 ```sh
-rg -n "try \{|catch \(error\)|showQuickPick|show(InputBox|InformationMessage|WarningMessage|ErrorMessage)|return null;|return \[\];|return 1;" $CODE_PATHS -g '*.ts'
+rg -n "try \{|catch \(error\)|return null;|return \[\];|return 1;|show[A-Za-z0-9_]*\(|prompt[A-Za-z0-9_]*\(|select[A-Za-z0-9_]*\(" $CODE_PATHS -g '*.ts'
 ```
 
 Find repeated parser, formatter, and storage helpers:
@@ -54,7 +54,7 @@ rg -n "function (parse|format|normalize|clean|extract|read|write|save|delete|arc
 Find exact repeated lines that often indicate missing helpers:
 
 ```sh
-rg -n "(JSON\.parse|JSON\.stringify|spawnSync|execFileSync|workspaceState\.(get|update)|showQuickPick|description: .*current|\.trim\(\)\.replace|Math\.round|toFixed)" $CODE_PATHS -g '*.ts' \
+rg -n "(JSON\.parse|JSON\.stringify|spawnSync|execFileSync|state\.(get|set|update)|storage\.(get|set|update)|description: .*current|\.trim\(\)\.replace|Math\.round|toFixed)" $CODE_PATHS -g '*.ts' \
   | sed 's/^[^:]*:[0-9]*:[[:space:]]*//' \
   | sort | uniq -c | sort -nr | head -100
 ```
@@ -127,21 +127,33 @@ Work one duplicate family at a time.
 
 ## Patterns
 
-Repeated command picker:
+Repeated option picker:
 
 ```ts
-export async function showModeQuickPick<T extends string>(
+type PickerOption<T extends string> = {
+  label: string;
+  description?: string;
+  value: T;
+};
+
+type ShowPicker = <T extends string>(
+  items: Array<PickerOption<T>>,
+  options: { placeholder: string },
+) => Promise<PickerOption<T> | null>;
+
+export async function showModePicker<T extends string>(
+  showPicker: ShowPicker,
   options: Array<{ label: string; value: T }>,
   current: T,
-  placeHolder: string,
+  placeholder: string,
 ) {
-  return window.showQuickPick(
+  return showPicker(
     options.map((option) => ({
       label: option.label,
       description: option.value === current ? 'current' : undefined,
       value: option.value,
     })),
-    { placeHolder },
+    { placeholder },
   );
 }
 ```
