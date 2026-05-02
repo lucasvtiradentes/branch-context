@@ -4,7 +4,7 @@
   <img height="80" src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/apps/vscode-extension/resources/icon-colored.png" alt="branch-context logo">
   <div>Branch Context</div>
   <br />
-  <a href="#-overview">Overview</a> • <a href="#-motivation">Motivation</a> • <a href="#-features">Features</a> • <a href="#-packages">Packages</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-commands">Commands</a> • <a href="#-configuration">Configuration</a> • <a href="#-development">Development</a> • <a href="#-license">License</a>
+  <a href="#-overview">Overview</a> • <a href="#-motivation">Motivation</a> • <a href="#-features">Features</a> • <a href="#-packages">Packages</a> • <a href="#-quick-start">Quick Start</a> • <a href="#-commands">Commands</a> • <a href="#-configuration">Configuration</a> • <a href="#-license">License</a>
 </div>
 
 <div width="100%" align="center">
@@ -13,85 +13,73 @@
 
 ## 🎯 Overview
 
-Branch Context is a Git branch context manager. It keeps notes, metadata, templates, git summaries, and AI session references isolated per branch through `.bctx/` and the current `_branch/context.md` symlink.
-
-Use it to keep AI agents and developers aligned with the current branch intent, touched files, commits, tasks, and follow-up notes.
+AI agents are stateless, but work is organized in branches. Branch Context pins a folder to each branch and exposes it at a fixed path (`_branch/`), a stable target for your agents and hooks, automatically swapped on checkout.
 
 ## ❓ Motivation
 
-Switching branches usually means losing context: why the work started, what was decided, which files matter, and where the AI session left off. Notes in scratch files leak across branches, and `git log` only tells you what was committed — not what you intended.
-
-Branch Context pins that context to the branch itself. Each branch gets its own `context.md`, automatically created on checkout and kept in sync with commits and changed files, so both you and your AI agents resume work with the full picture.
+I was tired of re-briefing Codex and Claude Code about the same branch on every new session. I wanted one place to drop everything tied to a branch (e.g. scratch scripts, test files, decisions) that my agents could read on startup and that wouldn't follow me when I switched branches. So I built it.
 
 ## ⭐ Features
 
-- Per-branch context folders under `.bctx/branches`
-- `_branch/` symlink pointing to the active branch context
-- Auto-created contexts through Git checkout hooks
-- Auto-updated commit and changed-file summaries after commits
-- Context templates for feature, fix, chore, and default branches
-- CLI commands for init, sync, status, base branch, templates, agents, and cleanup
-- VS Code views and commands for branch context, git changes, templates, and AI sessions
-
-<div align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode"><img src="https://img.shields.io/badge/VS%20Code-Extension-blue.svg" alt="VS Marketplace"></a>
-  <a href="https://open-vsx.org/extension/lucasvtiradentes/branch-context-vscode"><img src="https://img.shields.io/open-vsx/v/lucasvtiradentes/branch-context-vscode?label=Open%20VSX&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2aWV3Qm94PSI0LjYgNSA5Ni4yIDEyMi43IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoIGQ9Ik0zMCA0NC4yTDUyLjYgNUg3LjN6TTQuNiA4OC41aDQ1LjNMMjcuMiA0OS40em01MSAwbDIyLjYgMzkuMiAyMi42LTM5LjJ6IiBmaWxsPSIjYzE2MGVmIi8+CiAgPHBhdGggZD0iTTUyLjYgNUwzMCA0NC4yaDQ1LjJ6TTI3LjIgNDkuNGwyMi43IDM5LjEgMjIuNi0zOS4xem01MSAwTDU1LjYgODguNWg0NS4yeiIgZmlsbD0iI2E2MGVlNSIvPgo8L3N2Zz4=&labelColor=a60ee5&color=374151" alt="Open VSX"></a>
-</div>
+- One folder per branch, active one always at `_branch/` (stable path for agent hooks)
+- `context.md` auto-syncs commits and changed files, so months later the history is still there
+- Deleted branches auto-restore their context when checked out again
+- Per-branch-type templates (feature, fix, chore, …) matched by prefix
+- CLI (`bctx`) and VS Code extension
 
 ## 📦 Packages
 
+<div align="center">
 <table>
+  <tr><th>Path</th><th>Purpose</th><th>Download</th></tr>
   <tr>
-    <th>Path</th>
-    <th>Purpose</th>
+    <td><a href="https://github.com/lucasvtiradentes/branch-context/tree/main/apps/cli"><code>apps/cli</code></a></td>
+    <td>CLI <code>bctx</code></td>
+    <td><a href="https://www.npmjs.com/package/branch-context"><img src="https://img.shields.io/npm/v/branch-context?label=npm&color=cb3837&logo=npm" alt="npm"></a></td>
   </tr>
   <tr>
-    <td><code>apps/cli</code></td>
-    <td>CLI package published as <code>branch-context</code>, exposing <code>bctx</code> and <code>branch-ctx</code>.</td>
-  </tr>
-  <tr>
-    <td><code>apps/vscode-extension</code></td>
-    <td>VS Code extension with activity bar views, commands, status bar integration, and context.md helpers.</td>
-  </tr>
-  <tr>
-    <td><code>packages/core</code></td>
-    <td>Shared logic for config, sync, hooks, templates, git summaries, status, and agent sessions.</td>
+    <td><a href="https://github.com/lucasvtiradentes/branch-context/tree/main/apps/vscode-extension"><code>apps/vscode-extension</code></a></td>
+    <td>VS Code extension</td>
+    <td>
+      <a href="https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode"><img src="https://img.shields.io/badge/VS%20Code-Extension-blue.svg" alt="VS Marketplace"></a>
+      <a href="https://open-vsx.org/extension/lucasvtiradentes/branch-context-vscode"><img src="https://img.shields.io/open-vsx/v/lucasvtiradentes/branch-context-vscode?label=Open%20VSX&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2aWV3Qm94PSI0LjYgNSA5Ni4yIDEyMi43IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoIGQ9Ik0zMCA0NC4yTDUyLjYgNUg3LjN6TTQuNiA4OC41aDQ1LjNMMjcuMiA0OS40em01MSAwbDIyLjYgMzkuMiAyMi42LTM5LjJ6IiBmaWxsPSIjYzE2MGVmIi8+CiAgPHBhdGggZD0iTTUyLjYgNUwzMCA0NC4yaDQ1LjJ6TTI3LjIgNDkuNGwyMi43IDM5LjEgMjIuNi0zOS4xem01MSAwTDU1LjYgODguNWg0NS4yeiIgZmlsbD0iI2E2MGVlNSIvPgo8L3N2Zz4=&labelColor=a60ee5&color=374151" alt="Open VSX"></a>
+    </td>
   </tr>
 </table>
+</div>
 
 ## 🚀 Quick Start
 
-```sh
-pnpm install
-pnpm build
-pnpm --filter branch-context dev init
-pnpm --filter branch-context dev status
-```
+1. Install the CLI globally:
 
-After `init`, the repo gets `.bctx/` configuration and Git hooks. The current branch context is available at:
+   ```sh
+   npm i -g branch-context
+   ```
 
-```sh
-_branch/context.md
-```
+2. Inside each repo where you want to use it, run:
+
+   ```sh
+   bctx init
+   ```
+
+   This sets up `.bctx/` and Git hooks. `_branch/context.md` now points at the active branch's context and stays in sync on checkout and commit.
+
+3. (Optional) Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode) for a richer view — branch contexts, git changes, templates, and AI sessions in the sidebar.
 
 ## 🧰 Commands
 
 ```sh
-bctx init
-bctx sync
-bctx status
-bctx base
-bctx base origin/main
-bctx template
-bctx template feature
-bctx agents status
-bctx prune
-bctx uninstall
+bctx init            # set up .bctx/ and Git hooks
+bctx sync            # refresh commit/file summaries
+bctx status          # check setup health and list branch contexts
+bctx base            # get/set base branch, good for merging stuff into feature branches
+bctx template [name] # apply a template (e.g. fix, feature)
+bctx prune           # archive contexts of deleted branches
 ```
 
 ## ⚙️ Configuration
 
-Default config lives in `.bctx/config.json`:
+Default `.bctx/config.json`:
 
 ```json
 {
@@ -108,29 +96,9 @@ Default config lives in `.bctx/config.json`:
 }
 ```
 
-Templates are stored in `.bctx/templates` after init and are sourced from `packages/core/resources/templates`.
-
-## 🛠️ Development
-
-```sh
-pnpm install
-pnpm build
-pnpm test
-pnpm typecheck
-pnpm check
-```
-
-Useful package scripts:
-
-```sh
-pnpm --filter branch-context dev status
-pnpm --filter branch-context-vscode build
-pnpm --filter @branch-context/core test
-```
-
 ## 📜 License
 
-MIT
+[MIT](https://github.com/lucasvtiradentes/branch-context/blob/main/LICENSE)
 
 <div width="100%" align="center">
   <img src="https://cdn.jsdelivr.net/gh/lucasvtiradentes/branch-context@main/.github/image/divider.png" />
