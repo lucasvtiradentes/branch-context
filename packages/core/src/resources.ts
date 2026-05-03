@@ -1,5 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { CONFIG_DIR, CONFIG_FILE, HookType, TEMPLATES_DIR } from './constants';
 import type { BranchContextConfigFile } from './data/config-schema';
 
@@ -71,6 +72,7 @@ function getStartDirs() {
         process.env.BCTX_RESOURCES_DIR,
         process.cwd(),
         process.argv[1] ? dirname(process.argv[1]) : null,
+        dirname(fileURLToPath(import.meta.url)),
         typeof __dirname === 'string' ? __dirname : null,
       ].filter((value): value is string => Boolean(value)),
     ),

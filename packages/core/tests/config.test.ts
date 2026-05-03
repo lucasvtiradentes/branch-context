@@ -11,6 +11,7 @@ import {
   DEFAULT_TEMPLATE,
   getBranchesDir,
   getConfigDir,
+  getResourcesDir,
   getTemplateDir,
   TEMPLATES_DIR,
 } from '../src/index';
@@ -73,6 +74,12 @@ describe('config', () => {
     const loaded = Config.load(workspace);
     expect(loaded.defaultBaseBranch).toBe('main');
     expect(loaded.templateRules).toContainEqual({ prefix: 'feature/', template: 'feature' });
+  });
+
+  it('finds resources when cwd is outside the package', () => {
+    const workspace = createTempDir();
+    process.chdir(workspace);
+    expect(existsSync(join(getResourcesDir(), 'config.json'))).toBe(true);
   });
 
   it('loads defaults when config file is missing', () => {
