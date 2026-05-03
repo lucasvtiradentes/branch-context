@@ -79,7 +79,7 @@ function resolveCliCompatibility(): CliCompatibilityState {
     }
 
     const mismatch = getVersionMismatch(version, VERSION);
-    const compatible = IS_DEV_EXTENSION || mismatch === CliCompatibilityMismatch.None;
+    const compatible = IS_DEV_EXTENSION || mismatch !== CliCompatibilityMismatch.CliOlder;
     logger.info(
       `cli compatibility resolved: command=${command.label} version=${version} expected=${VERSION} compatible=${compatible}`,
     );
@@ -88,7 +88,7 @@ function resolveCliCompatibility(): CliCompatibilityState {
       expectedVersion: VERSION,
       installed: true,
       compatible,
-      mismatch: compatible ? CliCompatibilityMismatch.None : mismatch,
+      mismatch: IS_DEV_EXTENSION ? CliCompatibilityMismatch.None : mismatch,
       command: command.label,
       version,
       error: compatible ? null : getVersionMismatchError(mismatch, version, VERSION),
@@ -166,14 +166,10 @@ function getVersionMismatchError(
   expectedVersion: string,
 ): string {
   if (mismatch === CliCompatibilityMismatch.CliOlder) {
-    return `CLI ${version} is older than extension compatibility ${expectedVersion}`;
+    return `CLI ${version} is older than extension minimum ${expectedVersion}`;
   }
 
-  if (mismatch === CliCompatibilityMismatch.CliNewer) {
-    return `CLI ${version} is newer than extension compatibility ${expectedVersion}`;
-  }
-
-  return `CLI ${version} does not match extension compatibility ${expectedVersion}`;
+  return `CLI ${version} does not satisfy extension minimum ${expectedVersion}`;
 }
 
 function compareVersions(left: string, right: string): number {

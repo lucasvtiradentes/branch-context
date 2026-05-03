@@ -10,7 +10,6 @@ import { type BranchContextExtensionState, branchContextState } from './state';
 const PROMPT_YES = 'Yes';
 const PROMPT_NO = 'No';
 const PROMPT_UPDATE_CLI = 'Update CLI';
-const PROMPT_UPDATE_EXTENSION = 'Update Extension';
 const PROMPT_IGNORE = 'Ignore';
 
 let item: vscode.StatusBarItem | undefined;
@@ -163,6 +162,10 @@ function getStatusBarState(state: BranchContextExtensionState): StatusBarState {
     return StatusBarState.Error;
   }
 
+  if (state.cliCompatibility.mismatch === CliCompatibilityMismatch.CliNewer) {
+    return StatusBarState.Warning;
+  }
+
   if (!state.currentContextFile) {
     return StatusBarState.NotSynced;
   }
@@ -220,12 +223,19 @@ function getExtensionVersion(context: vscode.ExtensionContext): string {
 function getCliCompatibilityTooltipLines(state: BranchContextExtensionState): string[] {
   const cli = state.cliCompatibility;
   if (cli.compatible) {
-    return [markdownTooltipLine('CLI', `${cli.command ?? 'bctx'} ${cli.version}`)];
+    const lines = [markdownTooltipLine('CLI', `${cli.command ?? 'bctx'} ${cli.version}`)];
+    if (cli.mismatch === CliCompatibilityMismatch.CliNewer) {
+      lines.push(markdownTooltipLine('Minimum CLI', cli.expectedVersion));
+      lines.push(
+        `$(warning) ${escapeMarkdown(`CLI ${cli.version ?? 'unknown'} is newer than extension minimum ${cli.expectedVersion}`)}`,
+      );
+    }
+    return lines;
   }
 
   return [
     markdownTooltipLine('CLI', cli.installed ? (cli.version ?? 'unknown') : 'not found'),
-    markdownTooltipLine('Expected CLI', cli.expectedVersion),
+    markdownTooltipLine('Minimum CLI', cli.expectedVersion),
     `${cli.installed ? '$(error)' : '$(warning)'} ${escapeMarkdown(cli.error ?? 'CLI mismatch')}`,
   ];
 }
@@ -240,19 +250,13 @@ async function maybePromptCliCompatibilityIssue(state: BranchContextExtensionSta
 }
 
 async function promptCliUpdate(state: BranchContextExtensionState): Promise<void> {
-  const cli = state.cliCompatibility;
   const message = getCliCompatibilityPromptMessage(state);
-  const updateLabel =
-    cli.mismatch === CliCompatibilityMismatch.CliNewer
-      ? PROMPT_UPDATE_EXTENSION
-      : PROMPT_UPDATE_CLI;
-  const selected = await vscode.window.showWarningMessage(message, updateLabel, PROMPT_IGNORE);
-  if (selected !== updateLabel) {
-    return;
-  }
-
-  if (cli.mismatch === CliCompatibilityMismatch.CliNewer) {
-    await vscode.commands.executeCommand(commandIds.updateExtension);
+  const selected = await vscode.window.showWarningMessage(
+    message,
+    PROMPT_UPDATE_CLI,
+    PROMPT_IGNORE,
+  );
+  if (selected !== PROMPT_UPDATE_CLI) {
     return;
   }
 
@@ -265,12 +269,8 @@ function getCliCompatibilityPromptMessage(state: BranchContextExtensionState): s
     return `${APP_NAME}: CLI not found`;
   }
 
-  if (cli.mismatch === CliCompatibilityMismatch.CliNewer) {
-    return `${APP_NAME}: CLI version ${cli.version ?? 'unknown'} is newer than extension compatibility ${cli.expectedVersion}`;
-  }
-
   if (cli.mismatch === CliCompatibilityMismatch.CliOlder) {
-    return `${APP_NAME}: CLI version ${cli.version ?? 'unknown'} is older than extension compatibility ${cli.expectedVersion}`;
+    return `${APP_NAME}: CLI version ${cli.version ?? 'unknown'} is older than extension minimum ${cli.expectedVersion}`;
   }
 
   return `${APP_NAME}: ${cli.error ?? 'CLI version could not be read'}`;
