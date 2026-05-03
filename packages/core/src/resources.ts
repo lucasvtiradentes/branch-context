@@ -1,4 +1,12 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+} from 'node:fs';
 import { dirname, join } from 'node:path';
 import { CONFIG_DIR, CONFIG_FILE, HookType, TEMPLATES_DIR } from './constants';
 import type { BranchContextConfigFile } from './data/config-schema';
@@ -71,10 +79,23 @@ function getStartDirs() {
         process.env.BCTX_RESOURCES_DIR,
         process.cwd(),
         process.argv[1] ? dirname(process.argv[1]) : null,
+        getProcessEntryDir(),
         typeof __dirname === 'string' ? __dirname : null,
       ].filter((value): value is string => Boolean(value)),
     ),
   );
+}
+
+function getProcessEntryDir() {
+  if (!process.argv[1]) {
+    return null;
+  }
+
+  try {
+    return dirname(realpathSync(process.argv[1]));
+  } catch {
+    return null;
+  }
 }
 
 function getResourceCandidates(root: string) {
