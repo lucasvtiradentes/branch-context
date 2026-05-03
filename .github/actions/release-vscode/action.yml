@@ -43,6 +43,8 @@ runs:
     - name: Publish to Open VSX
       id: publish_open_vsx
       uses: HaaLeo/publish-vscode-extension@v2
+      env:
+        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       with:
         pat: ${{ inputs.open-vsx-pat }}
         packagePath: apps/vscode-extension
@@ -51,6 +53,8 @@ runs:
 
     - name: Publish to VS Code Marketplace
       uses: HaaLeo/publish-vscode-extension@v2
+      env:
+        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       with:
         pat: ${{ inputs.azure-pat }}
         registryUrl: https://marketplace.visualstudio.com
