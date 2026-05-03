@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- 5fb563d: Fix bundled CLI resource lookup and relax VS Code CLI compatibility checks so newer CLI versions do not trigger update prompts.
+- 625c398: Default agent sessions and other branches group-by modes to flat.
+
 ## 0.2.0
 
 ### Minor Changes
