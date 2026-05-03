@@ -1,5 +1,11 @@
 # branch-context
 
+## 0.0.5
+
+### Patch Changes
+
+- 1ab7936: Copy core resources into the CLI dist during build so published installs include config, hook, template, and asset files required at runtime.
+
 ## 0.0.4
 
 ### Patch Changes
