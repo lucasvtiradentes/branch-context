@@ -13,10 +13,11 @@
     "bctx": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && pnpm run resources",
     "dev": "tsx --conditions=development src/index.ts",
     "bctxd:install": "tsx scripts/install-dev-version.ts",
     "bctxd:uninstall": "tsx scripts/uninstall-dev-version.ts",
+    "resources": "tsx --conditions=development scripts/copy-core-resources.ts",
     "start": "node dist/index.js",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
