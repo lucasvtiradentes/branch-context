@@ -71,7 +71,7 @@ type ContextViewGroup = {
   contexts: ContextViewItem[];
 };
 
-let contextsGroupBy: ContextsGroupBy = ContextsGroupBy.Status;
+let contextsGroupBy: ContextsGroupBy = ContextsGroupBy.Flat;
 let otherBranchesViewMode: OtherBranchesViewMode = OtherBranchesViewMode.ContextFiles;
 const contextsGroupByWorkspaceKey = 'contexts.groupBy';
 const otherBranchesViewModeWorkspaceKey = 'contexts.mode';

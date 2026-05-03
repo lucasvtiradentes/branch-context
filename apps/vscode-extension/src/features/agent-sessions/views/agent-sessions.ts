@@ -102,7 +102,7 @@ type UserMessageExtraction = {
   lastOnly?: boolean;
 };
 
-let agentSessionsGroupBy: AgentSessionsGroupBy = AgentSessionsGroupBy.Provider;
+let agentSessionsGroupBy: AgentSessionsGroupBy = AgentSessionsGroupBy.Flat;
 let agentSessionTextMode: AgentSessionTextMode = AgentSessionTextMode.Initial;
 
 export function initializeAgentSessionsViewState(context: vscode.ExtensionContext): void {
