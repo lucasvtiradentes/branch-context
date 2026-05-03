@@ -18,31 +18,34 @@ Prefer lookup tables when the branch only selects data or a small pure function.
 Identify source folders first. Keep only folders that exist in the current repo:
 
 ```sh
-CODE_PATHS="$(printf '%s\n' src tests app apps package packages lib libs | while read -r dir; do [ -d "$dir" ] && printf '%s ' "$dir"; done)"
+CODE_PATHS=()
+for dir in src tests app apps package packages lib libs; do
+  [ -d "$dir" ] && CODE_PATHS+=("$dir")
+done
 ```
 
 Find branch chains that may return static values:
 
 ```sh
-rg -n "if \([^)]*(===|!==)[^)]*\)|else if \([^)]*(===|!==)[^)]*\)|switch \(|case .*:" $CODE_PATHS -g '*.ts'
+rg -n "if \([^)]*(===|!==)[^)]*\)|else if \([^)]*(===|!==)[^)]*\)|switch \(|case .*:" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find mapping-like functions by name:
 
 ```sh
-rg -n "function (get|format|create|render)[A-Z][A-Za-z0-9_]+\(" $CODE_PATHS -g '*.ts'
+rg -n "function (get|format|create|render)[A-Z][A-Za-z0-9_]+\(" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find static return branches:
 
 ```sh
-rg -n "return ['\"`]|return new |return [A-Za-z0-9_]+\\[" $CODE_PATHS -g '*.ts'
+rg -n "return ['\"`]|return new |return [A-Za-z0-9_]+\\[" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find existing lookup tables that may need stronger typing:
 
 ```sh
-rg -n "as const|Record<|Partial<Record<|satisfies Record" $CODE_PATHS -g '*.ts'
+rg -n "as const|Record<|Partial<Record<|satisfies Record" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Identify available verification commands:
@@ -66,6 +69,10 @@ Convert one mapping family at a time.
 9. Wrap lookup plus null handling in one helper when the table can intentionally skip output.
 10. Run typecheck after each conversion.
 11. Leave branches alone when cases perform different effects or control flow.
+
+For small repositories, no change is often the right outcome. Convert only static value-to-value mappings where a table makes the domain clearer or more exhaustive. Keep straightforward branching when the table would be farther away from its only use.
+
+If no applicable mapping exists, do not commit by default. Create an empty validation commit only when the surrounding workflow explicitly requires a marker commit for every rule.
 
 ## Patterns
 

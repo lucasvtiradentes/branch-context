@@ -18,47 +18,50 @@ If an `index.ts` only re-exports one symbol or one sibling file, delete the `ind
 Identify source folders first. Keep only folders that exist in the target repository:
 
 ```sh
-CODE_PATHS="$(printf '%s\n' src test tests app apps package packages script scripts lib libs | while read -r dir; do [ -d "$dir" ] && printf '%s ' "$dir"; done)"
+CODE_PATHS=()
+for dir in src test tests app apps package packages script scripts lib libs; do
+  [ -d "$dir" ] && CODE_PATHS+=("$dir")
+done
 ```
 
 List all index files:
 
 ```sh
-find $CODE_PATHS -path '*/dist/*' -prune -o -path '*/out/*' -prune -o -path '*/node_modules/*' -prune -o -name 'index.ts' -type f -print | sort
+find "${CODE_PATHS[@]}" -path '*/dist/*' -prune -o -path '*/out/*' -prune -o -path '*/node_modules/*' -prune -o -name 'index.ts' -type f -print | sort
 ```
 
 Show index file contents for review:
 
 ```sh
-find $CODE_PATHS -path '*/dist/*' -prune -o -path '*/out/*' -prune -o -path '*/node_modules/*' -prune -o -name 'index.ts' -type f -print | sort \
+find "${CODE_PATHS[@]}" -path '*/dist/*' -prune -o -path '*/out/*' -prune -o -path '*/node_modules/*' -prune -o -name 'index.ts' -type f -print | sort \
   | while read -r file; do printf '\n== %s ==\n' "$file"; sed -n '1,120p' "$file"; done
 ```
 
 Find index files with implementation signals:
 
 ```sh
-find $CODE_PATHS -path '*/dist/*' -prune -o -path '*/out/*' -prune -o -path '*/node_modules/*' -prune -o -name 'index.ts' -type f -print0 \
+find "${CODE_PATHS[@]}" -path '*/dist/*' -prune -o -path '*/out/*' -prune -o -path '*/node_modules/*' -prune -o -name 'index.ts' -type f -print0 \
   | xargs -0 rg -n "\b(import|function|class|const|let|var|if|for|while|try|await|new)\b"
 ```
 
 Find non-export lines in index files. This requires ripgrep with PCRE2:
 
 ```sh
-find $CODE_PATHS -path '*/dist/*' -prune -o -path '*/out/*' -prune -o -path '*/node_modules/*' -prune -o -name 'index.ts' -type f -print0 \
+find "${CODE_PATHS[@]}" -path '*/dist/*' -prune -o -path '*/out/*' -prune -o -path '*/node_modules/*' -prune -o -name 'index.ts' -type f -print0 \
   | xargs -0 rg --pcre2 -n "^(?!\s*(export\b|$|#!/usr/bin/env node))"
 ```
 
 Find module directories where `index.ts` imports from siblings and then exports functions:
 
 ```sh
-find $CODE_PATHS -path '*/dist/*' -prune -o -path '*/out/*' -prune -o -path '*/node_modules/*' -prune -o -name 'index.ts' -type f -print0 \
+find "${CODE_PATHS[@]}" -path '*/dist/*' -prune -o -path '*/out/*' -prune -o -path '*/node_modules/*' -prune -o -name 'index.ts' -type f -print0 \
   | xargs -0 rg -n "import .* from './|export (async )?function|export const|export class"
 ```
 
 Find single-export index files that should usually be deleted:
 
 ```sh
-find $CODE_PATHS -path '*/dist/*' -prune -o -path '*/out/*' -prune -o -path '*/node_modules/*' -prune -o -name 'index.ts' -type f -print \
+find "${CODE_PATHS[@]}" -path '*/dist/*' -prune -o -path '*/out/*' -prune -o -path '*/node_modules/*' -prune -o -name 'index.ts' -type f -print \
   | while read -r file; do count="$(rg -n "^\s*export\b" "$file" | wc -l | tr -d ' ')"; [ "$count" = 1 ] && printf '%s\n' "$file"; done
 ```
 
@@ -93,6 +96,12 @@ node -e "const p=require('./package.json'); for (const name of ['typecheck','tes
 10. Prefer moving entrypoint logic too when changing package metadata is low risk.
 11. Rerun the index audit commands after changes.
 12. Run focused typecheck and repository checks.
+
+Before deleting a single-export `index.ts`, check whether the repository treats that folder as a public module path. Delete it when local imports can use the named file directly and package metadata does not expose the folder path. Keep it when package APIs, external consumers, generated declarations, or documented imports rely on the folder import.
+
+For small repositories, no change is often the right outcome. Prefer moving obvious implementation out of index files, but do not break intentional folder-as-module APIs only to remove a thin barrel.
+
+If no applicable index cleanup exists, do not commit by default. Create an empty validation commit only when the surrounding workflow explicitly requires a marker commit for every rule.
 
 ## Patterns
 

@@ -18,25 +18,28 @@ Keep plain string literals when the value is just display text, a file path, a s
 Identify source folders first. Keep only folders that exist in the current repo:
 
 ```sh
-CODE_PATHS="$(printf '%s\n' src tests app apps package packages lib libs | while read -r dir; do [ -d "$dir" ] && printf '%s ' "$dir"; done)"
+CODE_PATHS=()
+for dir in src tests app apps package packages lib libs; do
+  [ -d "$dir" ] && CODE_PATHS+=("$dir")
+done
 ```
 
 Find candidate unions:
 
 ```sh
-rg -n "' \\| '" $CODE_PATHS -g '*.ts'
+rg -n "' \\| '" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find remaining multi-line type aliases:
 
 ```sh
-rg -U -n "type [A-Za-z0-9_]+ =\\n(\\s+\\| '[^']+'\\n)+" $CODE_PATHS -g '*.ts'
+rg -U -n "type [A-Za-z0-9_]+ =\\n(\\s+\\| '[^']+'\\n)+" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find direct comparisons that may still duplicate enum values:
 
 ```sh
-rg -n "(===|!==|==|!=) ['\"][a-z0-9_-]+['\"]|['\"][a-z0-9_-]+['\"] (===|!==|==|!=)" $CODE_PATHS -g '*.ts'
+rg -n "(===|!==|==|!=) ['\"][a-z0-9_-]+['\"]|['\"][a-z0-9_-]+['\"] (===|!==|==|!=)" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Identify available verification commands:
@@ -61,7 +64,11 @@ Convert one domain at a time.
 2. Replace function returns with enum members.
 3. Replace comparisons in callers, adapters, services, UI modules, and tests.
 4. Build the owning package before checking downstream packages.
-5. Run `rg -n "' \\| '" $CODE_PATHS -g '*.ts'` again.
+5. Run `rg -n "' \\| '" "${CODE_PATHS[@]}" -g '*.ts'` again.
+
+For small repositories, no change is often the right outcome. Convert only stable, repeated value domains. Leave display strings, property-key unions, and one-off local types alone.
+
+If no applicable string-literal union exists, do not commit by default. Create an empty validation commit only when the surrounding workflow explicitly requires a marker commit for every rule.
 
 ## Edge Cases
 

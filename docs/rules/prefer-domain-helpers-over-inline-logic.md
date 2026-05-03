@@ -18,19 +18,22 @@ Do not extract one-off logic only to make code shorter. Extract when the rule is
 Identify source folders first. Keep only folders that exist in the current repo:
 
 ```sh
-CODE_PATHS="$(printf '%s\n' src tests app apps package packages lib libs | while read -r dir; do [ -d "$dir" ] && printf '%s ' "$dir"; done)"
+CODE_PATHS=()
+for dir in src tests app apps package packages lib libs; do
+  [ -d "$dir" ] && CODE_PATHS+=("$dir")
+done
 ```
 
 Find repeated inline predicates and transformations:
 
 ```sh
-rg -n "(typeof .* ===|Array\.isArray|instanceof |\.includes\(|\.startsWith\(|\.endsWith\(|\.replace\(|\.split\(|\.filter\(|\.map\()" $CODE_PATHS -g '*.ts'
+rg -n "(typeof .* ===|Array\.isArray|instanceof |\.includes\(|\.startsWith\(|\.endsWith\(|\.replace\(|\.split\(|\.filter\(|\.map\()" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Count exact repeated logic lines:
 
 ```sh
-rg -n "(typeof |Array\.isArray|\.replace\(|\.split\(|\.includes\(|\.filter\(|\.map\()" $CODE_PATHS -g '*.ts' \
+rg -n "(typeof |Array\.isArray|\.replace\(|\.split\(|\.includes\(|\.filter\(|\.map\()" "${CODE_PATHS[@]}" -g '*.ts' \
   | sed 's/^[^:]*:[0-9]*:[[:space:]]*//' \
   | sort | uniq -c | sort -nr | head -100
 ```
@@ -38,25 +41,25 @@ rg -n "(typeof |Array\.isArray|\.replace\(|\.split\(|\.includes\(|\.filter\(|\.m
 Find repeated boundary messages and status returns:
 
 ```sh
-rg -n "not initialized|not a .*repository|return [01];|console\.(log|error)\(`?(error|warning):" $CODE_PATHS -g '*.ts'
+rg -n "not initialized|not a .*repository|return [01];|console\.(log|error)\(`?(error|warning):" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find repeated parser and formatter helpers:
 
 ```sh
-rg -n "function (is|has|get|normalize|format|parse|resolve|require|escape)[A-Z]|const (is|has|get|normalize|format|parse|resolve|require|escape)[A-Z]" $CODE_PATHS -g '*.ts'
+rg -n "function (is|has|get|normalize|format|parse|resolve|require|escape)[A-Z]|const (is|has|get|normalize|format|parse|resolve|require|escape)[A-Z]" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find repeated JSON and unknown-input guards:
 
 ```sh
-rg -n "JSON\.parse|JSON\.stringify|value: unknown|as Record|typeof .* === 'object'|typeof .* === 'string'" $CODE_PATHS -g '*.ts'
+rg -n "JSON\.parse|JSON\.stringify|value: unknown|as Record|typeof .* === 'object'|typeof .* === 'string'" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find repeated markdown, shell, URL, regex, or path escaping:
 
 ```sh
-rg -n "escape|replace\(/\[|encodeURIComponent|quote|split\(sep\)|join\('/'\)" $CODE_PATHS -g '*.ts'
+rg -n "escape|replace\(/\[|encodeURIComponent|quote|split\(sep\)|join\('/'\)" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Identify available verification commands:
@@ -80,6 +83,10 @@ Work one helper family at a time.
 9. Delete the old local helper copies after moving behavior.
 10. Run focused typecheck and tests after each helper family.
 11. Rerun the scan and leave intentional one-offs alone.
+
+For small repositories, no change is often the right outcome. Extract helpers only when the rule is repeated, meaningful, and likely to change. Similar-looking inline expressions can stay inline when they are clearer at the call site.
+
+If no applicable helper family exists, do not commit by default. Create an empty validation commit only when the surrounding workflow explicitly requires a marker commit for every rule.
 
 ## Patterns
 

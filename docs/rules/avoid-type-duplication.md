@@ -18,49 +18,52 @@ Do not extract every one-off object. Extract when the name clarifies intent, the
 Identify source folders first. Keep only folders that exist in the current repo:
 
 ```sh
-CODE_PATHS="$(printf '%s\n' src tests app apps package packages lib libs | while read -r dir; do [ -d "$dir" ] && printf '%s ' "$dir"; done)"
+CODE_PATHS=()
+for dir in src tests app apps package packages lib libs; do
+  [ -d "$dir" ] && CODE_PATHS+=("$dir")
+done
 ```
 
 List declared types:
 
 ```sh
-rg -n "\b(type|interface|class|enum)\s+[A-Za-z0-9_]+" $CODE_PATHS -g '*.ts'
+rg -n "\b(type|interface|class|enum)\s+[A-Za-z0-9_]+" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find utility types:
 
 ```sh
-rg -n "Pick<|Omit<|Partial<|Required<|Record<|Extract<|Exclude<|ReturnType<|Parameters<|Awaited<" $CODE_PATHS -g '*.ts'
+rg -n "Pick<|Omit<|Partial<|Required<|Record<|Extract<|Exclude<|ReturnType<|Parameters<|Awaited<" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Count repeated utility type expressions:
 
 ```sh
-rg -o "(Pick|Omit|Partial|Record|Extract|ReturnType|Awaited)<[^>]+>" $CODE_PATHS -g '*.ts' | sort | uniq -c | sort -nr
+rg -o "(Pick|Omit|Partial|Record|Extract|ReturnType|Awaited)<[^>]+>" "${CODE_PATHS[@]}" -g '*.ts' | sort | uniq -c | sort -nr
 ```
 
 Inspect object type aliases across files:
 
 ```sh
-rg -nU "type\s+\w+\s*=\s*\{[^}]+\}" $CODE_PATHS -g '*.ts'
+rg -nU "type\s+\w+\s*=\s*\{[^}]+\}" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Search for repeated object fields when a concrete shape seems duplicated:
 
 ```sh
-rg -n "label:\s*string|value:\s*[A-Za-z0-9_<>]+|provider:\s*[A-Za-z0-9_<>]+" $CODE_PATHS -g '*.ts'
+rg -n "label:\s*string|value:\s*[A-Za-z0-9_<>]+|provider:\s*[A-Za-z0-9_<>]+" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find inline object parameters and return shapes:
 
 ```sh
-rg -n "function\s+[A-Za-z0-9_]+\([^)]*:\s*\{|:\s*\{\s*$|\):\s*\{" $CODE_PATHS -g '*.ts'
+rg -n "function\s+[A-Za-z0-9_]+\([^)]*:\s*\{|:\s*\{\s*$|\):\s*\{" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find inline array object shapes:
 
 ```sh
-rg -n "Array<\{|:\s*\{[^}]+}\[]" $CODE_PATHS -g '*.ts'
+rg -n "Array<\{|:\s*\{[^}]+}\[]" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Run verification commands that exist in the repo:
@@ -81,6 +84,10 @@ Work one repeated shape at a time.
 6. Put generic cross-file helpers near the consumers, such as a local `types.ts` or feature-specific helper file.
 7. Run typecheck after each extraction.
 8. Rerun the duplicate scan and decide if remaining matches are intentional.
+
+For small repositories, no change is often the right outcome. Extract a type only when it removes real duplication, clarifies a domain concept, or protects a reused contract. Similar inline shapes can stay local when they are one-off fixtures or boundary objects.
+
+If no applicable repeated shape exists, do not commit by default. Create an empty validation commit only when the surrounding workflow explicitly requires a marker commit for every rule.
 
 ## Patterns
 

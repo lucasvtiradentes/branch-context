@@ -16,19 +16,22 @@ Prefer a named helper when duplicated behavior has the same intent, same inputs,
 Identify source folders first. Keep only folders that exist in the current repo:
 
 ```sh
-CODE_PATHS="$(printf '%s\n' src tests app apps package packages lib libs | while read -r dir; do [ -d "$dir" ] && printf '%s ' "$dir"; done)"
+CODE_PATHS=()
+for dir in src tests app apps package packages lib libs; do
+  [ -d "$dir" ] && CODE_PATHS+=("$dir")
+done
 ```
 
 List function declarations, methods, and arrow functions:
 
 ```sh
-rg -n "^\s*(export\s+)?(async\s+)?function\s+[A-Za-z0-9_]+|^\s*(export\s+)?const\s+[A-Za-z0-9_]+\s*=\s*(async\s*)?(\([^=]*\)|[A-Za-z0-9_]+)\s*=>|^\s*(private|protected|public)?\s*(async\s+)?[A-Za-z0-9_]+\([^)]*\)\s*[:{]" $CODE_PATHS -g '*.ts'
+rg -n "^\s*(export\s+)?(async\s+)?function\s+[A-Za-z0-9_]+|^\s*(export\s+)?const\s+[A-Za-z0-9_]+\s*=\s*(async\s*)?(\([^=]*\)|[A-Za-z0-9_]+)\s*=>|^\s*(private|protected|public)?\s*(async\s+)?[A-Za-z0-9_]+\([^)]*\)\s*[:{]" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find repeated function names:
 
 ```sh
-rg -o "function\s+[A-Za-z0-9_]+|const\s+[A-Za-z0-9_]+\s*=\s*(async\s*)?(\([^=]*\)|[A-Za-z0-9_]+)\s*=>" $CODE_PATHS -g '*.ts' \
+rg -o "function\s+[A-Za-z0-9_]+|const\s+[A-Za-z0-9_]+\s*=\s*(async\s*)?(\([^=]*\)|[A-Za-z0-9_]+)\s*=>" "${CODE_PATHS[@]}" -g '*.ts' \
   | sed -E 's/.*function ([A-Za-z0-9_]+).*/\1/; s/.*const ([A-Za-z0-9_]+).*/\1/' \
   | sort | uniq -c | sort -nr
 ```
@@ -36,25 +39,25 @@ rg -o "function\s+[A-Za-z0-9_]+|const\s+[A-Za-z0-9_]+\s*=\s*(async\s*)?(\([^=]*\
 Find repeated callback-heavy flows:
 
 ```sh
-rg -n "(map|filter|find|sort|reduce)\([^\n]*=>|\.then\([^\n]*=>|\.catch\([^\n]*=>" $CODE_PATHS -g '*.ts'
+rg -n "(map|filter|find|sort|reduce)\([^\n]*=>|\.then\([^\n]*=>|\.catch\([^\n]*=>" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find repeated boundary and UI command flows:
 
 ```sh
-rg -n "try \{|catch \(error\)|return null;|return \[\];|return 1;|show[A-Za-z0-9_]*\(|prompt[A-Za-z0-9_]*\(|select[A-Za-z0-9_]*\(" $CODE_PATHS -g '*.ts'
+rg -n "try \{|catch \(error\)|return null;|return \[\];|return 1;|show[A-Za-z0-9_]*\(|prompt[A-Za-z0-9_]*\(|select[A-Za-z0-9_]*\(" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find repeated parser, formatter, and storage helpers:
 
 ```sh
-rg -n "function (parse|format|normalize|clean|extract|read|write|save|delete|archive|restore|move)[A-Z]|const (parse|format|normalize|clean|extract|read|write|save|delete|archive|restore|move)[A-Z]" $CODE_PATHS -g '*.ts'
+rg -n "function (parse|format|normalize|clean|extract|read|write|save|delete|archive|restore|move)[A-Z]|const (parse|format|normalize|clean|extract|read|write|save|delete|archive|restore|move)[A-Z]" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find exact repeated lines that often indicate missing helpers:
 
 ```sh
-rg -n "(JSON\.parse|JSON\.stringify|spawnSync|execFileSync|state\.(get|set|update)|storage\.(get|set|update)|description: .*current|\.trim\(\)\.replace|Math\.round|toFixed)" $CODE_PATHS -g '*.ts' \
+rg -n "(JSON\.parse|JSON\.stringify|spawnSync|execFileSync|state\.(get|set|update)|storage\.(get|set|update)|description: .*current|\.trim\(\)\.replace|Math\.round|toFixed)" "${CODE_PATHS[@]}" -g '*.ts' \
   | sed 's/^[^:]*:[0-9]*:[[:space:]]*//' \
   | sort | uniq -c | sort -nr | head -100
 ```
@@ -124,6 +127,10 @@ Work one duplicate family at a time.
 9. Use a tiny adapter when a generic helper returns generic names but the call site needs domain vocabulary.
 10. Run focused typecheck and tests after each helper family.
 11. Rerun duplicate scans and leave intentional symmetry alone.
+
+For small repositories, no change is often the right outcome. Extract only when duplicated behavior is real, has matching semantics, and creates maintenance risk. Similar-looking syntax is not enough.
+
+If no applicable duplicate family exists, do not commit by default. Create an empty validation commit only when the surrounding workflow explicitly requires a marker commit for every rule.
 
 ## Patterns
 

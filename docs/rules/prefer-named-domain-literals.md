@@ -18,25 +18,28 @@ Use enums for closed stable domains. Use named constants for meaningful single v
 Identify source folders first. Keep only folders that exist in the current repo:
 
 ```sh
-CODE_PATHS="$(printf '%s\n' src tests app apps package packages lib libs | while read -r dir; do [ -d "$dir" ] && printf '%s ' "$dir"; done)"
+CODE_PATHS=()
+for dir in src tests app apps package packages lib libs; do
+  [ -d "$dir" ] && CODE_PATHS+=("$dir")
+done
 ```
 
 Find raw literal comparisons:
 
 ```sh
-rg -n "(===|!==|==|!=) ['\"][^'\"]+['\"]|['\"][^'\"]+['\"] (===|!==|==|!=)" $CODE_PATHS -g '*.ts'
+rg -n "(===|!==|==|!=) ['\"][^'\"]+['\"]|['\"][^'\"]+['\"] (===|!==|==|!=)" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find protocol-like field comparisons:
 
 ```sh
-rg -n "\.(type|status|role|scope|state|kind|level|provider|reason|mode|source) (===|!==|==|!=) ['\"][^'\"]+['\"]" $CODE_PATHS -g '*.ts'
+rg -n "\.(type|status|role|scope|state|kind|level|provider|reason|mode|source) (===|!==|==|!=) ['\"][^'\"]+['\"]" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Count repeated compared literals:
 
 ```sh
-rg -n "(===|!==|==|!=) ['\"][^'\"]+['\"]" $CODE_PATHS -g '*.ts' \
+rg -n "(===|!==|==|!=) ['\"][^'\"]+['\"]" "${CODE_PATHS[@]}" -g '*.ts' \
   | sed -E "s/^([^:]+):([0-9]+):.*(===|!==|==|!=) ['\"]([^'\"]+)['\"].*/\4  \1:\2/" \
   | sort
 ```
@@ -44,31 +47,31 @@ rg -n "(===|!==|==|!=) ['\"][^'\"]+['\"]" $CODE_PATHS -g '*.ts' \
 Find short status-code literals:
 
 ```sh
-rg -n "['\"](A|M|D|R|C|U|\?|\!)['\"]" $CODE_PATHS -g '*.ts'
+rg -n "['\"](A|M|D|R|C|U|\?|\!)['\"]" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find protocol-like string literals:
 
 ```sh
-rg -n "\.(type|event|action|role|kind|source) (===|!==|==|!=) ['\"][^'\"]+['\"]" $CODE_PATHS -g '*.ts'
+rg -n "\.(type|event|action|role|kind|source) (===|!==|==|!=) ['\"][^'\"]+['\"]" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find reason or result literals:
 
 ```sh
-rg -n "\.(reason|result|code|error) (===|!==|==|!=) ['\"][^'\"]+['\"]" $CODE_PATHS -g '*.ts'
+rg -n "\.(reason|result|code|error) (===|!==|==|!=) ['\"][^'\"]+['\"]" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 After identifying a local vocabulary, search for those concrete values across the codebase:
 
 ```sh
-rg -n "'value_one'|'value_two'|'value_three'" $CODE_PATHS -g '*.ts'
+rg -n "'value_one'|'value_two'|'value_three'" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Find named constants that may need to move if reused across files:
 
 ```sh
-rg -n "const [A-Z0-9_]+ = ['\"][^'\"]+['\"]|enum [A-Za-z0-9_]+" $CODE_PATHS -g '*.ts'
+rg -n "const [A-Z0-9_]+ = ['\"][^'\"]+['\"]|enum [A-Za-z0-9_]+" "${CODE_PATHS[@]}" -g '*.ts'
 ```
 
 Identify available verification commands:
@@ -96,6 +99,10 @@ Convert one value family at a time.
 13. Leave serialized fixtures and rendered-output assertions as literals when they intentionally verify external data.
 14. Build shared packages before checking downstream packages.
 15. Rerun the raw-literal scans.
+
+For small repositories, no change is often the right outcome. Name literals only when they carry domain meaning in branching logic or are likely to drift. Do not replace ordinary display text, runtime type-name checks, or one-off local strings only to satisfy a scan.
+
+If no applicable literal family exists, do not commit by default. Create an empty validation commit only when the surrounding workflow explicitly requires a marker commit for every rule.
 
 ## Patterns
 
