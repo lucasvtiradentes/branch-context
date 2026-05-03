@@ -43,6 +43,18 @@ node -p "require('./apps/vscode-extension/package.json').name"
 2. Pick `patch`, `minor`, or `major`.
 3. Write one short release note.
 4. Run `docalign .changeset/file-name.md --fix`.
+5. Verify with `pnpm changeset status --verbose`.
+
+Do not rely on `pnpm changeset status --since main` before the changeset file is tracked or
+committed; it can report no changesets even when a new local changeset file exists.
+
+## Ignored Packages
+
+`@branch-context/core` is ignored by Changesets. When a core change affects published behavior,
+add the changeset to the package that ships the behavior:
+
+- CLI impact:               `branch-context`
+- VS Code extension impact: `branch-context-vscode`
 
 Example:
 
