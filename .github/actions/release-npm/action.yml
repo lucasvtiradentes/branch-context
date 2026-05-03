@@ -15,6 +15,13 @@ runs:
       env:
         CI: true
 
+    - name: Get CLI version
+      id: version
+      shell: bash
+      run: |
+        version="$(node -p "require('./apps/cli/package.json').version")"
+        echo "current=$version" >> "$GITHUB_OUTPUT"
+
     - name: Publish packages
       shell: bash
       run: |
@@ -23,3 +30,13 @@ runs:
       env:
         NODE_AUTH_TOKEN: ${{ inputs.npm-token }}
         NPM_TOKEN: ${{ inputs.npm-token }}
+
+    - name: Create git tag
+      shell: bash
+      run: |
+        tag="branch-context-v${{ steps.version.outputs.current }}"
+        if git ls-remote --tags origin | grep -q "refs/tags/$tag$"; then
+          exit 0
+        fi
+        git tag "$tag"
+        git push origin "$tag"
