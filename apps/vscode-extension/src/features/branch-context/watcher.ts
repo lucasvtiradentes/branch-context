@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { logger } from '../../shared/logger';
 import { branchContextState } from '../../vscode/state';
 import { getWorkspaceInfo } from '../../vscode/workspace';
+import { consumeBranchContextRefreshSuppression } from './refresh-suppression';
 
 let watcherDisposables: vscode.Disposable[] = [];
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
@@ -73,6 +74,11 @@ function disposeWatchers(): void {
 }
 
 function scheduleRefresh(event: string, uri: vscode.Uri): void {
+  if (consumeBranchContextRefreshSuppression(uri.fsPath)) {
+    logger.debug(`watcher event ignored: type=${event} path=${uri.fsPath}`);
+    return;
+  }
+
   logger.debug(`watcher event: type=${event} path=${uri.fsPath}`);
   if (refreshTimer) {
     clearTimeout(refreshTimer);

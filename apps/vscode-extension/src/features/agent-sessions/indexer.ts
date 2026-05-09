@@ -5,6 +5,7 @@ import { getAgentSessions, getClaudeProjectKey, syncAgentSessions } from '@branc
 import * as vscode from 'vscode';
 import { logger } from '../../shared/logger';
 import { type BranchContextExtensionState, branchContextState } from '../../vscode/state';
+import { suppressNextBranchContextRefresh } from '../branch-context/refresh-suppression';
 import { markAgentSessionFileActive } from './active';
 
 const SYNC_DEBOUNCE_MS = 250;
@@ -149,11 +150,13 @@ function syncCurrentAgentSessions(reason: string): void {
       return;
     }
 
-    if (result.written) {
+    if (result.written && result.agentsFilePath) {
+      suppressNextBranchContextRefresh(result.agentsFilePath);
       logger.info(
         `[agent-sessions:indexer] sync result mode=bctx reason=${reason} workspace=${state.workspaceRoot} branch=${state.currentBranch} count=${result.sessions.length} written=${result.written} agentsFile=${result.agentsFilePath ?? 'none'} ms=${durationMs}`,
       );
     }
+    branchContextState.setAgentSessions(result.sessions, 'bctx-sync');
     return;
   }
 
