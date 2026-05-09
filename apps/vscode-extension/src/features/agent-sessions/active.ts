@@ -322,11 +322,21 @@ function refreshActiveProcessFiles(): void {
       return;
     }
 
+    const currentSessionPaths = getCurrentSessionPaths();
+    if (currentSessionPaths.size === 0) {
+      if (activeProcessFilePaths.size > 0) {
+        activeProcessFilePaths.clear();
+        refreshTree?.();
+      }
+      return;
+    }
+
     const nextPaths = new Set(
       stdout
         .split(/\r?\n/)
         .filter((line) => line.startsWith('n') && line.endsWith('.jsonl'))
-        .map((line) => line.slice(1)),
+        .map((line) => line.slice(1))
+        .filter((path) => currentSessionPaths.has(path)),
     );
     if (sameSet(activeProcessFilePaths, nextPaths)) {
       return;
@@ -339,6 +349,15 @@ function refreshActiveProcessFiles(): void {
     logger.debug(`[active-agent-sessions] process active files=${activeProcessFilePaths.size}`);
     refreshTree?.();
   });
+}
+
+function getCurrentSessionPaths(): Set<string> {
+  return new Set(
+    branchContextState
+      .get()
+      .agentSessions.map((session) => session.path)
+      .filter((path): path is string => Boolean(path)),
+  );
 }
 
 function isProcessLookupTimeout(error: ExecFileException): boolean {

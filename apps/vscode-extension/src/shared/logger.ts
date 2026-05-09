@@ -66,7 +66,10 @@ class ExtensionLogger {
     }
 
     try {
-      fs.appendFileSync(this.logFilePath, `[${new Date().toISOString()}] [${level}] ${message}\n`);
+      fs.appendFileSync(
+        this.logFilePath,
+        `[${new Date().toISOString()}] [${level}] [pid=${process.pid}] ${message}\n`,
+      );
     } catch {}
   }
 }
