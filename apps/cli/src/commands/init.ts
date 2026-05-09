@@ -1,24 +1,13 @@
-import { mkdirSync } from 'node:fs';
 import {
-  addToGitignore,
-  BRANCHES_DIR,
+  BranchContextActionErrorReason,
   CLI_NAME,
-  CONFIG_DIR,
-  CONFIG_FILE,
-  configExists,
-  copyInitConfig,
-  copyInitTemplates,
   DEFAULT_SYMLINK,
-  getBranchesDir,
-  getConfigDir,
-  getCurrentBranch,
-  getTemplatesDir,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
   HookInstallResult,
-  HookType,
-  installHook,
-  syncBranch,
+  type InitProjectResult,
+  initProject,
+  UpdateSymlinkResult,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
 import { requireGitRoot } from '../helpers/git-root';
@@ -43,42 +32,47 @@ async function cmdInit(_args: string[]) {
     return 1;
   }
 
-  const configDir = getConfigDir(gitRoot);
-  const templatesDir = getTemplatesDir(gitRoot);
-  const branchesDir = getBranchesDir(gitRoot);
-  const alreadyInitialized = configExists(gitRoot);
-
-  if (!alreadyInitialized) {
-    mkdirSync(configDir, { recursive: true });
-    mkdirSync(branchesDir, { recursive: true });
-    copyInitConfig(gitRoot);
-    copyInitTemplates(templatesDir);
-
-    console.log(`Initialized: ${configDir}`);
-    console.log(`  config:    ${configDir}/${CONFIG_FILE}`);
-    console.log(`  templates: ${templatesDir}/`);
-    console.log(`  branches:  ${branchesDir}/ (gitignored)`);
+  const result = await initProject(gitRoot, promptYesNo);
+  if (!result.ok) {
+    console.log(`error: ${result.message}`);
+    return 1;
   }
 
-  const checkoutResult = await installHook(gitRoot, HookType.PostCheckout, promptYesNo);
-  printHookInstallResult(checkoutResult, HOOK_POST_CHECKOUT);
-  if (checkoutResult === HookInstallResult.AlreadyInstalled && alreadyInitialized) {
+  printInitResult(result);
+
+  if (result.syncResult.ok) {
+    if (result.syncResult.symlinkResult === UpdateSymlinkResult.ErrorNotSymlink) {
+      console.log(`error: ${DEFAULT_SYMLINK} exists but is not a symlink`);
+      return 1;
+    }
+
+    console.log(`Synced: ${result.syncResult.branch}`);
+    return 0;
+  }
+
+  if (result.syncResult.reason === BranchContextActionErrorReason.NoCurrentBranch) {
+    console.log('warning: no current branch to sync');
+    return 0;
+  }
+
+  console.log(`warning: ${result.syncResult.message}`);
+  return 0;
+}
+
+function printInitResult(result: Extract<InitProjectResult, { ok: true }>) {
+  if (!result.alreadyInitialized) {
+    console.log(`Initialized: ${result.configDir}`);
+    console.log(`  config:    ${result.configPath}`);
+    console.log(`  templates: ${result.templatesDir}/`);
+    console.log(`  branches:  ${result.branchesDir}/ (gitignored)`);
+  }
+
+  printHookInstallResult(result.checkoutHook, HOOK_POST_CHECKOUT);
+  if (result.checkoutHook === HookInstallResult.AlreadyInstalled && result.alreadyInitialized) {
     console.log('Already initialized');
   }
 
-  const commitResult = await installHook(gitRoot, HookType.PostCommit, promptYesNo);
-  printHookInstallResult(commitResult, HOOK_POST_COMMIT);
-
-  addToGitignore(gitRoot, DEFAULT_SYMLINK);
-  addToGitignore(gitRoot, `${CONFIG_DIR}/${BRANCHES_DIR}/`);
-
-  const branch = getCurrentBranch(gitRoot);
-  if (branch) {
-    syncBranch(gitRoot, branch);
-    console.log(`Synced: ${branch}`);
-  }
-
-  return 0;
+  printHookInstallResult(result.commitHook, HOOK_POST_COMMIT);
 }
 
 function printHookInstallResult(result: HookInstallResult, hookName: string) {

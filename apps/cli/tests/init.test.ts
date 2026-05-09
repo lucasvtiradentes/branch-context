@@ -1,9 +1,15 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { addToGitignore, DEFAULT_SYMLINK } from '@branch-context/core';
+import {
+  addToGitignore,
+  DEFAULT_SYMLINK,
+  gitAdd,
+  gitCheckout,
+  gitCommit,
+} from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
 import { runCli } from '../src/index';
-import { createGitRepo, createTempDir } from './helpers';
+import { captureConsole, createGitRepo, createTempDir, expectOk, git } from './helpers';
 
 describe('init command', () => {
   it('creates gitignore file when adding entry', () => {
@@ -45,5 +51,44 @@ describe('init command', () => {
     process.chdir(repo);
     await runCli(['init']);
     expect(readFileSync(join(repo, '.gitignore'), 'utf8')).toContain(DEFAULT_SYMLINK);
+  });
+
+  it('init syncs current branch through core service', async () => {
+    const repo = createGitRepo();
+    expectOk(gitCheckout(repo, 'feature/init-sync', true));
+    writeFileSync(join(repo, 'feature.txt'), 'changed');
+    expectOk(gitAdd(repo));
+    expectOk(gitCommit(repo, 'feat: init sync'));
+
+    process.chdir(repo);
+    await runCli(['init']);
+
+    const content = readFileSync(join(repo, DEFAULT_SYMLINK, 'context.md'), 'utf8');
+    expect(content).toContain('feat: init sync');
+    expect(content).toContain('feature.txt');
+  });
+
+  it('init fails when symlink path is blocked', async () => {
+    const repo = createGitRepo();
+    writeFileSync(join(repo, DEFAULT_SYMLINK), 'blocked');
+    process.chdir(repo);
+    const capture = captureConsole();
+
+    const result = await runCli(['init']);
+
+    expect(result).toBe(1);
+    expect(capture.output).toContain(`error: ${DEFAULT_SYMLINK} exists but is not a symlink`);
+  });
+
+  it('init warns when current branch base is missing', async () => {
+    const repo = createGitRepo();
+    expectOk(git(['branch', '-m', 'master'], repo));
+    process.chdir(repo);
+    const capture = captureConsole();
+
+    const result = await runCli(['init']);
+
+    expect(result).toBe(0);
+    expect(capture.output).toContain('warning: base branch not found: main');
   });
 });
