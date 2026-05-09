@@ -131,7 +131,7 @@ function removeCachedAgentSession(
   sourceAgentsFilePath?: string,
 ): void {
   const state = branchContextState.get();
-  if (!state.workspaceRoot) {
+  if (!state.workspaceRoot || !state.initialized) {
     return;
   }
 

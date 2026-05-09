@@ -17,6 +17,7 @@ import { markdownTooltipLine } from '../../../shared/format/markdown';
 import { formatRelativeTime } from '../../../shared/format/relative-time';
 import { createOrderedGroups, groupByDate } from '../../../shared/groups';
 import { isStringValue } from '../../../shared/is-string-value';
+import { logger } from '../../../shared/logger';
 import {
   BranchContextTreeNodeKind,
   createInactiveAgentSessionResourceUri,
@@ -104,6 +105,7 @@ type UserMessageExtraction = {
 
 let agentSessionsGroupBy: AgentSessionsGroupBy = AgentSessionsGroupBy.Flat;
 let agentSessionTextMode: AgentSessionTextMode = AgentSessionTextMode.Last;
+let lastAgentSessionsRenderLogKey: string | null = null;
 
 export function initializeAgentSessionsViewState(context: vscode.ExtensionContext): void {
   const savedGroupBy = context.workspaceState.get<unknown>(agentSessionsGroupByWorkspaceKey);
@@ -152,18 +154,53 @@ export async function toggleAgentSessionTextMode(
 export function createAgentSessionsProvider(): StateTreeProvider {
   return new StateTreeProvider(() => {
     const state = branchContextState.get();
-    if (!state.initialized) {
-      return [createMessageNode('No .bctx config')];
+    if (!state.workspaceRoot) {
+      logger.debug('[agent-sessions:view] render workspace=none');
+      return [createMessageNode('No workspace')];
     }
 
     const pins = readAgentSessionPins();
     const items = state.agentSessions.map((session) => createSessionViewItem(session, pins));
+    logAgentSessionsRender({
+      workspaceRoot: state.workspaceRoot,
+      initialized: state.initialized,
+      branch: state.currentBranch,
+      sessions: state.agentSessions.length,
+      pins: pins.length,
+      items: items.length,
+    });
     if (items.length === 0) {
       return [createMessageNode('No sessions')];
     }
 
     return groupAgentSessions(items);
   });
+}
+
+function logAgentSessionsRender(details: {
+  workspaceRoot: string;
+  initialized: boolean;
+  branch: string | null;
+  sessions: number;
+  pins: number;
+  items: number;
+}) {
+  const key = [
+    details.workspaceRoot,
+    details.initialized ? '1' : '0',
+    details.branch ?? '',
+    details.sessions,
+    details.pins,
+    details.items,
+  ].join('|');
+  if (key === lastAgentSessionsRenderLogKey) {
+    return;
+  }
+
+  lastAgentSessionsRenderLogKey = key;
+  logger.debug(
+    `[agent-sessions:view] render workspace=${details.workspaceRoot} initialized=${details.initialized} branch=${details.branch ?? 'none'} sessions=${details.sessions} pins=${details.pins} items=${details.items}`,
+  );
 }
 
 function createGroupNode(
@@ -366,7 +403,7 @@ function createAgentSessionContextValue(options: {
     'branchContext',
     'agentSession',
     options.active ? 'active' : 'resumable',
-    options.pinned ? 'pinned' : 'pinnable',
+    options.pinned ? 'pinned' : branchContextState.get().initialized ? 'pinnable' : null,
     options.movable ? 'movable' : null,
   ]
     .filter(Boolean)

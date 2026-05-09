@@ -76,7 +76,7 @@ function getAgentsFilePath(branch?: string, sourceAgentsFilePath?: string): stri
   }
 
   const state = branchContextState.get();
-  if (!state.workspaceRoot) {
+  if (!state.workspaceRoot || !state.initialized) {
     return null;
   }
 

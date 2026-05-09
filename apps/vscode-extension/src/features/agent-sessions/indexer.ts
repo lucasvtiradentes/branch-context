@@ -1,8 +1,9 @@
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { getClaudeProjectKey, syncAgentSessions } from '@branch-context/core';
+import { getAgentSessions, getClaudeProjectKey, syncAgentSessions } from '@branch-context/core';
 import * as vscode from 'vscode';
+import { logger } from '../../shared/logger';
 import { type BranchContextExtensionState, branchContextState } from '../../vscode/state';
 import { markAgentSessionFileActive } from './active';
 
@@ -19,16 +20,22 @@ let branchKey: string | null = null;
 
 export function initializeAgentIndexer(context: vscode.ExtensionContext): void {
   const state = branchContextState.get();
+  logger.info(
+    `[agent-sessions:indexer] initialized workspace=${state.workspaceRoot ?? 'none'} initialized=${state.initialized} branch=${state.currentBranch ?? 'none'}`,
+  );
   branchKey = getStateBranchKey(state);
   resetAgentWatchers(state);
-  scheduleAgentSync();
+  scheduleAgentSync('initialize');
 
   context.subscriptions.push(
     branchContextState.onDidChange((nextState) => {
       const nextBranchKey = getStateBranchKey(nextState);
       if (nextBranchKey !== branchKey) {
+        logger.info(
+          `[agent-sessions:indexer] branch key changed from=${branchKey ?? 'none'} to=${nextBranchKey}`,
+        );
         branchKey = nextBranchKey;
-        scheduleAgentSync();
+        scheduleAgentSync('branch-change');
       }
       resetAgentWatchers(nextState);
     }),
@@ -47,11 +54,15 @@ function resetAgentWatchers(state: BranchContextExtensionState): void {
     return;
   }
 
+  logger.info(
+    `[agent-sessions:indexer] watcher reset key=${nextWatcherKey} workspace=${state.workspaceRoot ?? 'none'} initialized=${state.initialized} branch=${state.currentBranch ?? 'none'}`,
+  );
   watcherKey = nextWatcherKey;
   disposeAgentWatchers();
   clearRolloverTimer();
 
-  if (!state.workspaceRoot || !state.initialized) {
+  if (!state.workspaceRoot) {
+    logger.warning('[agent-sessions:indexer] watcher registration skipped: no workspace');
     return;
   }
 
@@ -61,6 +72,7 @@ function resetAgentWatchers(state: BranchContextExtensionState): void {
 
 function registerProviderWatchers(workspaceRoot: string): void {
   const homeDir = homedir();
+  logger.info(`[agent-sessions:indexer] registering provider watchers workspace=${workspaceRoot}`);
   registerProviderWatcher(
     join(homeDir, '.claude', 'projects'),
     `${getClaudeProjectKey(workspaceRoot)}/*.jsonl`,
@@ -74,9 +86,13 @@ function registerProviderWatchers(workspaceRoot: string): void {
 
 function registerProviderWatcher(root: string, pattern: string): void {
   if (!existsSync(root)) {
+    logger.warning(`[agent-sessions:indexer] provider watcher skipped missing root=${root}`);
     return;
   }
 
+  logger.info(
+    `[agent-sessions:indexer] provider watcher registered root=${root} pattern=${pattern}`,
+  );
   const watcher = vscode.workspace.createFileSystemWatcher(
     new vscode.RelativePattern(vscode.Uri.file(root), pattern),
   );
@@ -85,41 +101,94 @@ function registerProviderWatcher(root: string, pattern: string): void {
     watcher,
     watcher.onDidCreate(handleAgentSessionFileChange),
     watcher.onDidChange(handleAgentSessionFileChange),
-    watcher.onDidDelete(scheduleAgentSync),
+    watcher.onDidDelete(() => {
+      scheduleAgentSync('file-delete');
+    }),
   );
 }
 
 function handleAgentSessionFileChange(uri: vscode.Uri): void {
   markAgentSessionFileActive(uri.fsPath);
-  scheduleAgentSync();
+  scheduleAgentSync('file-change');
   scheduleFollowUpAgentSyncs();
 }
 
-function scheduleAgentSync(): void {
+function scheduleAgentSync(reason: string): void {
   if (syncTimer) {
     clearTimeout(syncTimer);
   }
 
   syncTimer = setTimeout(() => {
     syncTimer = undefined;
-    syncCurrentAgentSessions();
+    syncCurrentAgentSessions(reason);
   }, SYNC_DEBOUNCE_MS);
 }
 
-function syncCurrentAgentSessions(): void {
+function syncCurrentAgentSessions(reason: string): void {
   const state = branchContextState.get();
-  if (!state.workspaceRoot || !state.currentBranch || !state.initialized) {
+  if (!state.workspaceRoot) {
+    logger.warning(`[agent-sessions:indexer] sync skipped reason=${reason} workspace=none`);
     return;
   }
 
-  syncAgentSessions(state.workspaceRoot);
+  if (!state.currentBranch) {
+    logger.warning(
+      `[agent-sessions:indexer] sync skipped reason=${reason} workspace=${state.workspaceRoot} branch=none initialized=${state.initialized}`,
+    );
+    return;
+  }
+
+  if (state.initialized) {
+    const startedAt = Date.now();
+    const result = syncAgentSessions(state.workspaceRoot, { branch: state.currentBranch });
+    const durationMs = Date.now() - startedAt;
+    if (!result.ok) {
+      logger.warning(
+        `[agent-sessions:indexer] sync result mode=bctx reason=${reason} ok=false workspace=${state.workspaceRoot} branch=${state.currentBranch} result=${result.reason} ms=${durationMs}`,
+      );
+      return;
+    }
+
+    if (result.written) {
+      logger.info(
+        `[agent-sessions:indexer] sync result mode=bctx reason=${reason} workspace=${state.workspaceRoot} branch=${state.currentBranch} count=${result.sessions.length} written=${result.written} agentsFile=${result.agentsFilePath ?? 'none'} ms=${durationMs}`,
+      );
+    }
+    return;
+  }
+
+  const startedAt = Date.now();
+  try {
+    const result = getAgentSessions(state.workspaceRoot, { branch: state.currentBranch });
+    const durationMs = Date.now() - startedAt;
+    const countChanged = result.ok && result.sessions.length !== state.agentSessions.length;
+    if (!result.ok) {
+      logger.warning(
+        `[agent-sessions:indexer] scan result mode=no-bctx reason=${reason} ok=false workspace=${state.workspaceRoot} branch=${state.currentBranch} result=${result.reason} ms=${durationMs}`,
+      );
+      branchContextState.setAgentSessions([], 'no-bctx-scan-failed');
+      return;
+    }
+
+    if (reason === 'initialize' || countChanged) {
+      logger.info(
+        `[agent-sessions:indexer] scan result mode=no-bctx reason=${reason} workspace=${state.workspaceRoot} branch=${state.currentBranch} count=${result.sessions.length} agentsFile=${result.agentsFilePath ?? 'none'} ms=${durationMs}`,
+      );
+    }
+    branchContextState.setAgentSessions(result.sessions, 'no-bctx-scan');
+  } catch (error) {
+    logger.error(
+      `[agent-sessions:indexer] scan failed mode=no-bctx reason=${reason} workspace=${state.workspaceRoot} branch=${state.currentBranch} error=${logger.formatError(error)}`,
+    );
+    branchContextState.setAgentSessions([], 'no-bctx-scan-error');
+  }
 }
 
 function scheduleFollowUpAgentSyncs(): void {
   clearFollowUpSyncTimers();
   followUpSyncTimers = FOLLOW_UP_SYNC_DELAYS_MS.map((delay) =>
     setTimeout(() => {
-      syncCurrentAgentSessions();
+      syncCurrentAgentSessions(`follow-up-${delay}`);
     }, delay),
   );
 }
@@ -151,8 +220,11 @@ function scheduleRolloverReset(): void {
   rolloverTimer = setTimeout(() => {
     watcherKey = null;
     resetAgentWatchers(branchContextState.get());
-    scheduleAgentSync();
+    scheduleAgentSync('day-rollover');
   }, nextDay.getTime() - now.getTime());
+  logger.debug(
+    `[agent-sessions:indexer] rollover reset scheduled ms=${nextDay.getTime() - now.getTime()}`,
+  );
 }
 
 function getStateBranchKey(state: BranchContextExtensionState): string {
@@ -170,6 +242,9 @@ function getStateWatcherKey(state: BranchContextExtensionState): string {
 }
 
 function disposeAgentWatchers(): void {
+  logger.debug(
+    `[agent-sessions:indexer] disposing provider watchers count=${watcherDisposables.length}`,
+  );
   for (const disposable of watcherDisposables) {
     disposable.dispose();
   }
@@ -196,5 +271,6 @@ function clearRolloverTimer(): void {
   if (rolloverTimer) {
     clearTimeout(rolloverTimer);
     rolloverTimer = undefined;
+    logger.debug('[agent-sessions:indexer] rollover reset cleared');
   }
 }

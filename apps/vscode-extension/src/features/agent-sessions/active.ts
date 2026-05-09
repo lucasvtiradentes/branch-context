@@ -54,9 +54,9 @@ export function initializeActiveAgentSessions(
       if (!session) {
         if (path) {
           logger.debug(`[active-agent-sessions] terminal closed path=${path}`);
-          clearActiveFilePath(path);
-          clearActiveProcessFilePath(path);
-          suppressFileActivity(path);
+          clearActiveFilePath(path, { log: false });
+          clearActiveProcessFilePath(path, { log: false });
+          suppressFileActivity(path, { log: false });
           refreshTree?.();
           return;
         }
@@ -155,11 +155,9 @@ export function isAgentSessionActive(session: ActiveAgentSessionSource): boolean
 
 export function markAgentSessionFileActive(path: string): void {
   if (suppressedFileTimers.has(path)) {
-    logger.debug(`[active-agent-sessions] file active suppressed path=${path}`);
     return;
   }
 
-  logger.debug(`[active-agent-sessions] file active path=${path}`);
   activeFilePaths.add(path);
   bindPendingTerminalToPath(path);
   refreshTree?.();
@@ -172,7 +170,6 @@ export function markAgentSessionFileActive(path: string): void {
   fileTimers.set(
     path,
     setTimeout(() => {
-      logger.debug(`[active-agent-sessions] file activity expired path=${path}`);
       fileTimers.delete(path);
       activeFilePaths.delete(path);
       refreshTree?.();
@@ -237,46 +234,51 @@ function clearPendingTerminal(execution: vscode.TerminalShellExecution): void {
 
 function clearActiveSession(session: ActiveSessionRef): void {
   logger.debug(
-    `[active-agent-sessions] clear active session=${session.key} path=${session.path ?? 'none'}`,
+    `[active-agent-sessions] clear active session=${session.key} path=${session.path ?? 'none'} clear=file+process suppress=file`,
   );
   activeTerminalKeys.delete(session.key);
   if (session.path) {
-    clearActiveFilePath(session.path);
-    clearActiveProcessFilePath(session.path);
-    suppressFileActivity(session.path);
+    clearActiveFilePath(session.path, { log: false });
+    clearActiveProcessFilePath(session.path, { log: false });
+    suppressFileActivity(session.path, { log: false });
   }
 }
 
-function clearActiveFilePath(path: string): void {
+function clearActiveFilePath(path: string, options: { log?: boolean } = {}): void {
   const timer = fileTimers.get(path);
   if (timer) {
     clearTimeout(timer);
     fileTimers.delete(path);
   }
-  logger.debug(`[active-agent-sessions] clear file active path=${path}`);
+  if (options.log !== false) {
+    logger.debug(`[active-agent-sessions] clear file active path=${path}`);
+  }
   activeFilePaths.delete(path);
 }
 
-function clearActiveProcessFilePath(path: string): void {
+function clearActiveProcessFilePath(path: string, options: { log?: boolean } = {}): void {
   if (!activeProcessFilePaths.delete(path)) {
     return;
   }
 
-  logger.debug(`[active-agent-sessions] clear process active path=${path}`);
+  if (options.log !== false) {
+    logger.debug(`[active-agent-sessions] clear process active path=${path}`);
+  }
 }
 
-function suppressFileActivity(path: string): void {
+function suppressFileActivity(path: string, options: { log?: boolean } = {}): void {
   const existingTimer = suppressedFileTimers.get(path);
   if (existingTimer) {
     clearTimeout(existingTimer);
   }
 
-  logger.debug(`[active-agent-sessions] suppress file active path=${path}`);
+  if (options.log !== false) {
+    logger.debug(`[active-agent-sessions] suppress file active path=${path}`);
+  }
   suppressedFileTimers.set(
     path,
     setTimeout(() => {
       suppressedFileTimers.delete(path);
-      logger.debug(`[active-agent-sessions] suppress file active expired path=${path}`);
     }, CLOSED_FILE_ACTIVITY_SUPPRESS_MS),
   );
 }
@@ -327,9 +329,6 @@ function refreshActiveProcessFiles(): void {
         .map((line) => line.slice(1)),
     );
     if (sameSet(activeProcessFilePaths, nextPaths)) {
-      if (activeProcessFilePaths.size > 0) {
-        refreshTree?.();
-      }
       return;
     }
 

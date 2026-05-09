@@ -28,6 +28,24 @@ class BranchContextStateStore {
     return this.currentState;
   }
 
+  setAgentSessions(agentSessions: AgentSession[], source: string): void {
+    if (agentSessionsEqual(this.currentState.agentSessions, agentSessions)) {
+      return;
+    }
+
+    const previousCount = this.currentState.agentSessions.length;
+    this.currentState = {
+      ...this.currentState,
+      agentSessions,
+    };
+    this.changeEmitter.fire(this.currentState);
+    if (previousCount !== agentSessions.length) {
+      logger.info(
+        `[agent-sessions:state] set sessions source=${source} count=${agentSessions.length} previous=${previousCount}`,
+      );
+    }
+  }
+
   refresh(): BranchContextExtensionState {
     const nextState = this.read();
     this.currentState = nextState;
@@ -53,7 +71,9 @@ class BranchContextStateStore {
 
     try {
       const status = getStatus(workspace.workspaceRoot);
-      const agentSessions = this.readAgentSessions(workspace.workspaceRoot, status.currentBranch);
+      const agentSessions = status.initialized
+        ? this.readAgentSessions(workspace.workspaceRoot, status.currentBranch)
+        : this.readUninitializedAgentSessions(workspace.workspaceRoot, status.currentBranch);
       const gitSummary = status.initialized
         ? getGitBranchSummary(workspace.workspaceRoot, status.baseBranch)
         : null;
@@ -104,8 +124,34 @@ class BranchContextStateStore {
   }
 
   private readAgentSessions(workspaceRoot: string, branch: string | null): AgentSession[] {
+    const startedAt = Date.now();
     const result = getCachedAgentSessions(workspaceRoot, { branch });
-    return result.ok ? result.sessions : [];
+    const durationMs = Date.now() - startedAt;
+    if (!result.ok) {
+      logger.warning(
+        `[agent-sessions:state] read mode=cache workspace=${workspaceRoot} branch=${branch ?? 'none'} ok=false reason=${result.reason} ms=${durationMs}`,
+      );
+      return [];
+    }
+
+    logger.debug(
+      `[agent-sessions:state] read mode=cache workspace=${workspaceRoot} branch=${branch ?? 'none'} agentsFile=${result.agentsFilePath ?? 'none'} count=${result.sessions.length} ms=${durationMs}`,
+    );
+    return result.sessions;
+  }
+
+  private readUninitializedAgentSessions(
+    workspaceRoot: string,
+    branch: string | null,
+  ): AgentSession[] {
+    const preserve =
+      this.currentState.workspaceRoot === workspaceRoot &&
+      this.currentState.currentBranch === branch;
+    const sessions = preserve ? this.currentState.agentSessions : [];
+    logger.debug(
+      `[agent-sessions:state] read mode=preserve-no-bctx workspace=${workspaceRoot} branch=${branch ?? 'none'} preserve=${preserve} count=${sessions.length}`,
+    );
+    return sessions;
   }
 
   private formatRefresh(state: BranchContextExtensionState): string {
@@ -137,3 +183,30 @@ class BranchContextStateStore {
 }
 
 export const branchContextState = new BranchContextStateStore();
+
+function agentSessionsEqual(left: AgentSession[], right: AgentSession[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((session, index) => {
+    const other = right[index];
+    if (!other) {
+      return false;
+    }
+
+    return (
+      session.provider === other.provider &&
+      session.sessionId === other.sessionId &&
+      session.branch === other.branch &&
+      session.scope === other.scope &&
+      session.path === other.path &&
+      session.model === other.model &&
+      session.title === other.title &&
+      session.startedAt === other.startedAt &&
+      session.updatedAt === other.updatedAt &&
+      session.pinned?.description === other.pinned?.description &&
+      session.pinned?.pinnedAt === other.pinned?.pinnedAt
+    );
+  });
+}
