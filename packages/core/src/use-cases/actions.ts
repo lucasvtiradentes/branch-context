@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { BRANCHES_DIR, CONFIG_DIR, CONFIG_FILE, DEFAULT_SYMLINK, HookType } from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
@@ -25,6 +25,7 @@ import {
   copyInitConfig,
   getBranchesDir,
   getConfigDir,
+  getLocalTemplatesDir,
   getTemplatesDir,
   listTemplates,
 } from '../data/config';
@@ -38,6 +39,7 @@ export enum BranchContextActionErrorReason {
   BaseBranchNotFound = 'base_branch_not_found',
   NoTemplates = 'no_templates',
   TemplateNotFound = 'template_not_found',
+  InvalidPath = 'invalid_path',
 }
 
 export type BranchContextActionError = {
@@ -127,21 +129,33 @@ export type InitProjectResult =
     }
   | BranchContextActionError;
 
+export type InitProjectOptions = {
+  branchesFolder?: string | null;
+  templatesFolder?: string | null;
+};
+
 export async function initProject(
   gitRoot: string,
   ask: PromptYesNo = yes,
+  options: InitProjectOptions = {},
 ): Promise<InitProjectResult> {
   const configDir = getConfigDir(gitRoot);
-  const templatesDir = getTemplatesDir(gitRoot);
-  const branchesDir = getBranchesDir(gitRoot);
   const alreadyInitialized = configExists(gitRoot);
 
   if (!alreadyInitialized) {
     mkdirSync(configDir, { recursive: true });
-    mkdirSync(branchesDir, { recursive: true });
     copyInitConfig(gitRoot);
-    copyInitTemplates(templatesDir);
   }
+
+  const configResult = configureInitFolders(gitRoot, options);
+  if (!configResult.ok) {
+    return configResult;
+  }
+  const templatesDir = getTemplatesDir(gitRoot);
+  const branchesDir = getBranchesDir(gitRoot);
+
+  mkdirSync(branchesDir, { recursive: true });
+  ensureInitTemplates(gitRoot, templatesDir, alreadyInitialized);
 
   const checkoutHook = await installHook(gitRoot, HookType.PostCheckout, ask);
   const commitHook = await installHook(gitRoot, HookType.PostCommit, ask);
@@ -160,6 +174,58 @@ export async function initProject(
     commitHook,
     syncResult: syncCurrentBranch(gitRoot, { sound: false }),
   };
+}
+
+function configureInitFolders(
+  gitRoot: string,
+  options: InitProjectOptions,
+): { ok: true; config: Config } | BranchContextActionError {
+  const config = Config.load(gitRoot);
+  let changed = false;
+
+  if (options.branchesFolder !== undefined && options.branchesFolder !== null) {
+    const branchesFolder = normalizeConfiguredFolder(options.branchesFolder);
+    if (branchesFolder !== '.' && !existsSync(branchesFolder)) {
+      return invalidPath(`branches folder does not exist: ${branchesFolder}`);
+    }
+    config.branchesFolder = branchesFolder;
+    changed = true;
+  }
+
+  if (options.templatesFolder !== undefined && options.templatesFolder !== null) {
+    const templatesFolder = normalizeConfiguredFolder(options.templatesFolder);
+    if (templatesFolder !== '.' && !existsSync(templatesFolder)) {
+      return invalidPath(`templates folder does not exist: ${templatesFolder}`);
+    }
+    config.templatesFolder = templatesFolder;
+    changed = true;
+  }
+
+  if (changed) {
+    config.save(gitRoot);
+  }
+  return { ok: true, config };
+}
+
+function ensureInitTemplates(gitRoot: string, templatesDir: string, alreadyInitialized: boolean) {
+  if (templatesDir === getLocalTemplatesDir(gitRoot) && !alreadyInitialized) {
+    copyInitTemplates(templatesDir);
+    return;
+  }
+
+  mkdirSync(templatesDir, { recursive: true });
+  if (listTemplates(gitRoot).length === 0) {
+    copyInitTemplates(templatesDir);
+  }
+}
+
+function normalizeConfiguredFolder(path: string) {
+  const trimmed = path.trim();
+  if (trimmed === '.') {
+    return '.';
+  }
+
+  return resolve(trimmed);
 }
 
 export function addToGitignore(gitRoot: string, value: string) {
@@ -458,5 +524,13 @@ function missingContext(branchKey: string): BranchContextActionError {
     reason: BranchContextActionErrorReason.MissingContext,
     message: `no context for '${branchKey}'`,
     branch: branchKey,
+  };
+}
+
+function invalidPath(message: string): BranchContextActionError {
+  return {
+    ok: false,
+    reason: BranchContextActionErrorReason.InvalidPath,
+    message,
   };
 }

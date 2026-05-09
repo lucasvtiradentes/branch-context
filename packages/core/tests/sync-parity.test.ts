@@ -163,9 +163,8 @@ describe('sync parity', () => {
     }
   });
 
-  it('creates branch context with template rules', () => {
+  it('creates branch context from a matching branch prefix template', () => {
     const workspace = createWorkspace();
-    new Config({ templateRules: [{ prefix: 'feature/', template: 'feature' }] }).save(workspace);
     expect(createBranchContext(workspace, 'feature/login')).toBe(
       CreateBranchContextResult.CreatedFromTemplate,
     );

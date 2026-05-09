@@ -269,7 +269,7 @@ function createContextTemplateResolver(gitRoot: string, config: Config) {
   });
 
   return (branch: string, contextDir: string) => {
-    const fallback = config.getTemplateForBranch(branch);
+    const fallback = config.getTemplateForBranch(branch, templates);
     const content = readTextFile(join(contextDir, CONTEXT_FILE_NAME));
     if (!content) {
       return fallback;

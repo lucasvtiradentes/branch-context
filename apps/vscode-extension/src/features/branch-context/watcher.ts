@@ -1,3 +1,4 @@
+import { sep as pathSeparator, relative } from 'node:path';
 import { CONFIG_DIR, DEFAULT_SYMLINK } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { logger } from '../../shared/logger';
@@ -9,14 +10,19 @@ let watcherDisposables: vscode.Disposable[] = [];
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 let pendingRefreshEventCount = 0;
 let pendingRefreshLastEvent = 'none';
+let watcherKey: string | null = null;
 
 export function initializeBranchContextWatcher(context: vscode.ExtensionContext): void {
   logger.info('watcher initialized');
   context.subscriptions.push(
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
       logger.info('workspace folders changed');
+      watcherKey = null;
       resetWatchers();
       branchContextState.refresh();
+    }),
+    branchContextState.onDidChange(() => {
+      resetWatchers();
     }),
     {
       dispose: () => {
@@ -35,9 +41,14 @@ export function initializeBranchContextWatcher(context: vscode.ExtensionContext)
 }
 
 function resetWatchers(): void {
+  const workspace = getWorkspaceInfo();
+  const nextWatcherKey = getWatcherKey(workspace);
+  if (nextWatcherKey === watcherKey) {
+    return;
+  }
+  watcherKey = nextWatcherKey;
   disposeWatchers();
 
-  const workspace = getWorkspaceInfo();
   if (!workspace.workspaceRoot) {
     logger.debug('watcher reset skipped: no workspace');
     return;
@@ -47,10 +58,23 @@ function resetWatchers(): void {
   for (const pattern of getWatchPatterns()) {
     registerWatcher(workspace.workspaceRoot, pattern);
   }
+  for (const externalRoot of [workspace.branchesDir, workspace.templatesDir]) {
+    if (externalRoot && isOutsideWorkspace(workspace.workspaceRoot, externalRoot)) {
+      registerWatcher(externalRoot, '**');
+    }
+  }
 }
 
 function getWatchPatterns(): string[] {
   return [`${CONFIG_DIR}/**`, `${DEFAULT_SYMLINK}/**`];
+}
+
+function getWatcherKey(workspace: ReturnType<typeof getWorkspaceInfo>): string {
+  return [
+    workspace.workspaceRoot ?? '',
+    workspace.branchesDir ?? '',
+    workspace.templatesDir ?? '',
+  ].join(':');
 }
 
 function registerWatcher(workspaceRoot: string, pattern: string): void {
@@ -65,6 +89,11 @@ function registerWatcher(workspaceRoot: string, pattern: string): void {
     watcher.onDidChange((uri) => scheduleRefresh('change', uri)),
     watcher.onDidDelete((uri) => scheduleRefresh('delete', uri)),
   );
+}
+
+function isOutsideWorkspace(workspaceRoot: string, path: string): boolean {
+  const relPath = relative(workspaceRoot, path);
+  return relPath === '..' || relPath.startsWith(`..${pathSeparator}`);
 }
 
 function disposeWatchers(): void {

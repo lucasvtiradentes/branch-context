@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import {
   BranchContextActionErrorReason,
   CLI_NAME,
@@ -23,16 +24,30 @@ const hookInstallMessages = {
 } as const satisfies Record<HookInstallResult, (hookName: string) => string | null>;
 
 export function registerInitCommand(program: Program) {
-  program.command('init', 'Initialize and install hook').action(() => cmdInit([]));
+  program
+    .command('init', 'Initialize and install hook')
+    .option('--branches-folder <path>', 'Branches folder path. Use "." for .bctx/branches')
+    .option('--templates-folder <path>', 'Templates folder path. Use "." for .bctx/templates')
+    .action(() => cmdInit([]));
 }
 
-async function cmdInit(_args: string[]) {
+export async function runInitCommand(args: string[]) {
+  return await cmdInit(args);
+}
+
+async function cmdInit(args: string[]) {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;
   }
 
-  const result = await initProject(gitRoot, promptYesNo);
+  const initOptions = parseInitOptions(args);
+  if (!initOptions.ok) {
+    console.log(`error: ${initOptions.message}`);
+    return 1;
+  }
+
+  const result = await initProject(gitRoot, promptYesNo, initOptions.options);
   if (!result.ok) {
     console.log(`error: ${result.message}`);
     return 1;
@@ -57,6 +72,43 @@ async function cmdInit(_args: string[]) {
 
   console.log(`warning: ${result.syncResult.message}`);
   return 0;
+}
+
+function parseInitOptions(
+  args: string[],
+): { ok: true; options: Parameters<typeof initProject>[2] } | { ok: false; message: string } {
+  const branchesFolder = argValue(args, '--branches-folder');
+  const templatesFolder = argValue(args, '--templates-folder');
+  const initOptions: Parameters<typeof initProject>[2] = {};
+
+  if (branchesFolder) {
+    initOptions.branchesFolder = normalizeFolderArg(branchesFolder);
+  }
+
+  if (templatesFolder) {
+    initOptions.templatesFolder = normalizeFolderArg(templatesFolder);
+  }
+
+  return { ok: true, options: initOptions };
+}
+
+function normalizeFolderArg(path: string) {
+  return path === '.' ? '.' : resolve(path);
+}
+
+function argValue(args: string[], name: string) {
+  const equalPrefix = `${name}=`;
+  const equalValue = args.find((arg) => arg.startsWith(equalPrefix));
+  if (equalValue) {
+    return equalValue.slice(equalPrefix.length).trim() || null;
+  }
+
+  const index = args.indexOf(name);
+  if (index === -1) {
+    return null;
+  }
+  const value = args[index + 1];
+  return value && !value.startsWith('--') ? value.trim() : null;
 }
 
 function printInitResult(result: Extract<InitProjectResult, { ok: true }>) {

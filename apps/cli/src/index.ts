@@ -8,7 +8,7 @@ import type { Program as CaporalProgram } from '@caporal/core';
 import { registerAgentsCommands } from './commands/agents/register';
 import { registerBaseCommand } from './commands/base';
 import { registerCompletionCommand } from './commands/completion';
-import { registerInitCommand } from './commands/init';
+import { registerInitCommand, runInitCommand } from './commands/init';
 import { registerOnCheckoutCommand } from './commands/on-checkout';
 import { registerOnCommitCommand } from './commands/on-commit';
 import { registerPruneCommand } from './commands/prune';
@@ -22,6 +22,9 @@ let programInstanceBin: string | undefined;
 
 export async function runCli(args = process.argv.slice(2)) {
   try {
+    if (args[0] === 'init' && !args.includes('--help') && !args.includes('-h')) {
+      return await runInitCommand(args);
+    }
     const result = await getProgram().run(args.length === 0 ? ['--help'] : args);
     return typeof result === 'number' && result > 0 ? result : 0;
   } catch (error) {

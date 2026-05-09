@@ -17,6 +17,8 @@ const actionErrorMessages = {
   [BranchContextActionErrorReason.NoTemplates]: () => `${APP_NAME}: no templates found`,
   [BranchContextActionErrorReason.TemplateNotFound]: (error: BranchContextActionError) =>
     `${APP_NAME}: ${error.message}`,
+  [BranchContextActionErrorReason.InvalidPath]: (error: BranchContextActionError) =>
+    `${APP_NAME}: ${error.message}`,
 } as const satisfies Record<
   BranchContextActionErrorReason,
   (error: BranchContextActionError) => string

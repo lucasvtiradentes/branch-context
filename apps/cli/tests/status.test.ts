@@ -59,7 +59,7 @@ describe('status command', () => {
   it('detects manually applied template from context content', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
-    new Config({ sound: false, templateRules: [{ prefix: 'fix/', template: 'fix' }] }).save(repo);
+    new Config({ sound: false }).save(repo);
 
     const batchTemplateDir = join(repo, '.bctx', 'templates', 'batch');
     mkdirSync(batchTemplateDir);

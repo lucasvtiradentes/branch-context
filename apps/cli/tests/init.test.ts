@@ -2,7 +2,9 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   addToGitignore,
+  Config,
   DEFAULT_SYMLINK,
+  DEFAULT_TEMPLATE,
   gitAdd,
   gitCheckout,
   gitCommit,
@@ -90,5 +92,55 @@ describe('init command', () => {
 
     expect(result).toBe(0);
     expect(capture.output).toContain('warning: base branch not found: main');
+  });
+
+  it('init can store branch contexts in a custom folder', async () => {
+    const repo = createGitRepo();
+    const branchesFolder = createTempDir();
+    process.chdir(repo);
+
+    const result = await runCli(['init', '--branches-folder', branchesFolder]);
+
+    expect(result).toBe(0);
+    const config = Config.load(repo);
+    expect(config.branchesFolder).toBe(branchesFolder);
+    expect(existsSync(join(branchesFolder, 'main', 'context.md'))).toBe(true);
+    expect(existsSync(join(repo, DEFAULT_SYMLINK, 'context.md'))).toBe(true);
+  });
+
+  it('init rejects missing custom branch folders', async () => {
+    const repo = createGitRepo();
+    process.chdir(repo);
+    const capture = captureConsole();
+
+    const result = await runCli(['init', '--branches-folder', join(repo, 'contexts')]);
+
+    expect(result).toBe(1);
+    expect(capture.output).toContain('error: branches folder does not exist');
+  });
+
+  it('init can use a custom templates folder', async () => {
+    const repo = createGitRepo();
+    const templatesPath = createTempDir();
+    process.chdir(repo);
+
+    const result = await runCli(['init', '--templates-folder', templatesPath]);
+
+    expect(result).toBe(0);
+    const config = Config.load(repo);
+    expect(config.templatesFolder).toBe(templatesPath);
+    expect(existsSync(join(templatesPath, DEFAULT_TEMPLATE, 'context.md'))).toBe(true);
+  });
+
+  it('template source updates the templates folder', async () => {
+    const repo = createGitRepo();
+    const templatesPath = createTempDir();
+    process.chdir(repo);
+    await runCli(['init']);
+
+    const result = await runCli(['template', 'source', templatesPath]);
+
+    expect(result).toBe(0);
+    expect(Config.load(repo).templatesFolder).toBe(templatesPath);
   });
 });

@@ -13,6 +13,7 @@ import {
   getConfigDir,
   getResourcesDir,
   getTemplateDir,
+  getTemplatesDir,
   TEMPLATES_DIR,
 } from '../src/index';
 import { createTempDir } from './helpers';
@@ -30,6 +31,15 @@ describe('config', () => {
     expect(getBranchesDir(workspace)).toBe(join(workspace, CONFIG_DIR, BRANCHES_DIR));
   });
 
+  it('gets external branches dir from config', () => {
+    const workspace = createTempDir();
+    const externalPath = join(createTempDir(), 'branches');
+    new Config({
+      branchesFolder: externalPath,
+    }).save(workspace);
+    expect(getBranchesDir(workspace)).toBe(externalPath);
+  });
+
   it('gets default template dir', () => {
     const workspace = createTempDir();
     expect(getTemplateDir(workspace)).toBe(
@@ -42,6 +52,16 @@ describe('config', () => {
     expect(getTemplateDir(workspace, 'feature')).toBe(
       join(workspace, CONFIG_DIR, TEMPLATES_DIR, 'feature'),
     );
+  });
+
+  it('gets external template dir from config', () => {
+    const workspace = createTempDir();
+    const templatesPath = join(createTempDir(), 'templates');
+    new Config({
+      templatesFolder: templatesPath,
+    }).save(workspace);
+    expect(getTemplatesDir(workspace)).toBe(templatesPath);
+    expect(getTemplateDir(workspace, 'feature')).toBe(join(templatesPath, 'feature'));
   });
 
   it('returns false when config is missing', async () => {
@@ -73,7 +93,8 @@ describe('config', () => {
     copyInitConfig(workspace);
     const loaded = Config.load(workspace);
     expect(loaded.defaultBaseBranch).toBe('main');
-    expect(loaded.templateRules).toContainEqual({ prefix: 'feature/', template: 'feature' });
+    expect(loaded.branchesFolder).toBe('.');
+    expect(loaded.templatesFolder).toBe('.');
   });
 
   it('finds resources when cwd is outside the package', () => {
@@ -88,33 +109,28 @@ describe('config', () => {
     expect(Config.load(workspace).sound).toBe(true);
   });
 
-  it('persists template rules', () => {
+  it('persists branch and template folders', () => {
     const workspace = createTempDir();
     mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
+    const branchesFolder = join(createTempDir(), 'branches');
+    const templatesFolder = join(createTempDir(), 'templates');
     new Config({
-      templateRules: [
-        { prefix: 'feature/', template: 'feature' },
-        { prefix: 'bugfix/', template: 'bugfix' },
-      ],
+      branchesFolder,
+      templatesFolder,
     }).save(workspace);
 
     const loaded = Config.load(workspace);
-    expect(loaded.templateRules).toHaveLength(2);
-    expect(loaded.templateRules[0]).toEqual({ prefix: 'feature/', template: 'feature' });
+    expect(loaded.branchesFolder).toBe(branchesFolder);
+    expect(loaded.templatesFolder).toBe(templatesFolder);
   });
 
-  it('selects template by branch prefix', () => {
-    const config = new Config({
-      templateRules: [
-        { prefix: 'feature/', template: 'feature' },
-        { prefix: 'bugfix/', template: 'bugfix' },
-      ],
-    });
+  it('selects template by branch prefix when the template exists', () => {
+    const config = new Config();
 
-    expect(config.getTemplateForBranch('feature/login')).toBe('feature');
-    expect(config.getTemplateForBranch('bugfix/123')).toBe('bugfix');
-    expect(config.getTemplateForBranch('main')).toBe(DEFAULT_TEMPLATE);
-    expect(config.getTemplateForBranch('develop')).toBe(DEFAULT_TEMPLATE);
+    expect(config.getTemplateForBranch('feature/login', ['feature'])).toBe('feature');
+    expect(config.getTemplateForBranch('bugfix/123', ['feature', 'fix'])).toBe(DEFAULT_TEMPLATE);
+    expect(config.getTemplateForBranch('main', ['main'])).toBe(DEFAULT_TEMPLATE);
+    expect(config.getTemplateForBranch('develop', ['develop'])).toBe(DEFAULT_TEMPLATE);
   });
 
   it('uses default commit description setting', () => {
@@ -126,6 +142,40 @@ describe('config', () => {
     mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
     new Config({ commitDescription: true }).save(workspace);
     expect(Config.load(workspace).commitDescription).toBe(true);
+  });
+
+  it('loads old storage and templates settings as folder paths', () => {
+    const workspace = createTempDir();
+    const externalPath = join(createTempDir(), 'project');
+    const templatesPath = join(createTempDir(), 'templates');
+    mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
+    writeFileSync(
+      join(workspace, CONFIG_DIR, 'config.json'),
+      JSON.stringify({
+        storage: { mode: 'external', external_path: externalPath },
+        templates: { mode: 'external', path: templatesPath },
+      }),
+    );
+
+    const loaded = Config.load(workspace);
+    expect(loaded.branchesFolder).toBe(join(externalPath, BRANCHES_DIR));
+    expect(loaded.templatesFolder).toBe(templatesPath);
+  });
+
+  it('falls back to local folders when custom folder paths are invalid', () => {
+    const workspace = createTempDir();
+    mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
+    writeFileSync(
+      join(workspace, CONFIG_DIR, 'config.json'),
+      JSON.stringify({
+        branches_folder: '',
+        templates_folder: '',
+      }),
+    );
+
+    const loaded = Config.load(workspace);
+    expect(loaded.branchesFolder).toBe('.');
+    expect(loaded.templatesFolder).toBe('.');
   });
 
   it('loads missing commit description as backward compatible default', () => {
@@ -144,7 +194,8 @@ describe('config', () => {
       default_base_branch: 'main',
       sound: false,
       commit_description: true,
-      template_rules: [{ prefix: 'feature/', template: 'feature' }],
+      branches_folder: '/tmp/bctx-contexts/project/branches',
+      templates_folder: '/tmp/bctx-templates',
     });
     expect(result.success).toBe(true);
   });
@@ -155,7 +206,8 @@ describe('config', () => {
       type: 'object',
       properties: {
         default_base_branch: { type: 'string' },
-        template_rules: { type: 'array' },
+        branches_folder: { type: 'string' },
+        templates_folder: { type: 'string' },
       },
     });
   });

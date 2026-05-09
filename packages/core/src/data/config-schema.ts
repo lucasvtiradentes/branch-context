@@ -1,12 +1,5 @@
 import { z } from 'zod';
 
-const TemplateRuleConfigSchema = z
-  .object({
-    prefix: z.string().describe('Branch name prefix matched against the current git branch'),
-    template: z.string().describe('Template directory name to use when the branch prefix matches'),
-  })
-  .describe('Template selection rule');
-
 export const BranchContextConfigSchema = z
   .object({
     $schema: z.string().optional().describe('JSON Schema reference'),
@@ -20,15 +13,18 @@ export const BranchContextConfigSchema = z
       .boolean()
       .optional()
       .describe('Include commit body text in the generated commits section'),
-    template_rules: z
-      .array(TemplateRuleConfigSchema)
+    branches_folder: z
+      .string()
       .optional()
-      .describe('Rules that map branch prefixes to template names'),
+      .describe('Branches folder path. "." means .bctx/branches. Absolute paths are used as-is.'),
+    templates_folder: z
+      .string()
+      .optional()
+      .describe('Templates folder path. "." means .bctx/templates. Absolute paths are used as-is.'),
   })
   .describe('Branch Context configuration file');
 
 export type BranchContextConfigFile = z.infer<typeof BranchContextConfigSchema>;
-export type TemplateRuleConfig = z.infer<typeof TemplateRuleConfigSchema>;
 
 export function createBranchContextConfigJsonSchema() {
   return z.toJSONSchema(BranchContextConfigSchema, { target: 'draft-7' });

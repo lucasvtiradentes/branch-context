@@ -2,12 +2,12 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   ARCHIVED_DIR,
-  BRANCHES_DIR,
   CONFIG_DIR,
   CONFIG_FILE,
   DEFAULT_SYMLINK,
+  getBranchesDir,
+  getTemplatesDir,
   META_FILE,
-  TEMPLATES_DIR,
 } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { CONTEXT_FILE_NAME } from '../constants';
@@ -36,9 +36,9 @@ export function getWorkspaceInfo(workspaceRoot = getWorkspaceRoot()): BranchCont
 
   const bctxDir = join(workspaceRoot, CONFIG_DIR);
   const branchSymlinkPath = join(workspaceRoot, DEFAULT_SYMLINK);
-  const branchesDir = join(bctxDir, BRANCHES_DIR);
+  const branchesDir = getBranchesDir(workspaceRoot);
   const archivedDir = join(branchesDir, ARCHIVED_DIR);
-  const templatesDir = join(bctxDir, TEMPLATES_DIR);
+  const templatesDir = getTemplatesDir(workspaceRoot);
   const currentContextFile = getCurrentContextFile(branchSymlinkPath);
 
   return {

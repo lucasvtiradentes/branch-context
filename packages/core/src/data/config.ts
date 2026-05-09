@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 import {
   BRANCHES_DIR,
   CONFIG_DIR,
@@ -10,11 +10,6 @@ import {
 } from '../constants';
 import { copyInitConfigResource, loadDefaultConfigResource } from '../resources';
 
-export type TemplateRule = {
-  prefix: string;
-  template: string;
-};
-
 let defaultConfig: ReturnType<typeof loadDefaultConfigResource> | null = null;
 
 export class Config {
@@ -22,7 +17,8 @@ export class Config {
   sound: boolean;
   soundFile: string | null;
   commitDescription: boolean;
-  templateRules: TemplateRule[];
+  branchesFolder: string;
+  templatesFolder: string;
 
   constructor(options: Partial<Config> = {}) {
     const defaults = getDefaultConfig();
@@ -31,12 +27,8 @@ export class Config {
     this.sound = options.sound ?? defaults.sound ?? true;
     this.soundFile = options.soundFile ?? null;
     this.commitDescription = options.commitDescription ?? defaults.commit_description ?? false;
-    this.templateRules =
-      options.templateRules ??
-      (defaults.template_rules ?? []).map((rule) => ({
-        prefix: rule.prefix,
-        template: rule.template,
-      }));
+    this.branchesFolder = options.branchesFolder ?? defaults.branches_folder ?? '.';
+    this.templatesFolder = options.templatesFolder ?? defaults.templates_folder ?? '.';
   }
 
   static load(workspace: string) {
@@ -48,7 +40,6 @@ export class Config {
     try {
       const defaults = getDefaultConfig();
       const data = JSON.parse(readFileSync(configPath, 'utf8')) as Record<string, unknown>;
-      const rawRules = Array.isArray(data.template_rules) ? data.template_rules : [];
 
       return new Config({
         defaultBaseBranch:
@@ -61,14 +52,8 @@ export class Config {
           typeof data.commit_description === 'boolean'
             ? data.commit_description
             : (defaults.commit_description ?? false),
-        templateRules: rawRules
-          .filter(
-            (rule): rule is Record<string, unknown> => typeof rule === 'object' && rule !== null,
-          )
-          .map((rule) => ({
-            prefix: String(rule.prefix ?? ''),
-            template: String(rule.template ?? ''),
-          })),
+        branchesFolder: parseBranchesFolder(data),
+        templatesFolder: parseTemplatesFolder(data),
       });
     } catch {
       return new Config();
@@ -83,10 +68,8 @@ export class Config {
       default_base_branch: this.defaultBaseBranch,
       sound: this.sound,
       commit_description: this.commitDescription,
-      template_rules: this.templateRules.map((rule) => ({
-        prefix: rule.prefix,
-        template: rule.template,
-      })),
+      branches_folder: this.branchesFolder,
+      templates_folder: this.templatesFolder,
     };
 
     if (this.soundFile) {
@@ -96,11 +79,10 @@ export class Config {
     writeFileSync(configPath, `${JSON.stringify(data, null, 2)}\n`);
   }
 
-  getTemplateForBranch(branch: string) {
-    for (const rule of this.templateRules) {
-      if (branch.startsWith(rule.prefix)) {
-        return rule.template;
-      }
+  getTemplateForBranch(branch: string, templates: string[] = []) {
+    const prefix = getBranchTemplatePrefix(branch);
+    if (prefix && templates.includes(prefix)) {
+      return prefix;
     }
     return DEFAULT_TEMPLATE;
   }
@@ -120,14 +102,24 @@ export function getConfigDir(workspace: string) {
 }
 
 export function getTemplatesDir(workspace: string) {
-  return join(workspace, CONFIG_DIR, TEMPLATES_DIR);
+  const config = Config.load(workspace);
+  return resolveConfiguredFolder(workspace, config.templatesFolder, TEMPLATES_DIR);
 }
 
 export function getTemplateDir(workspace: string, template = getDefaultTemplate()) {
-  return join(workspace, CONFIG_DIR, TEMPLATES_DIR, template);
+  return join(getTemplatesDir(workspace), template);
 }
 
 export function getBranchesDir(workspace: string) {
+  const config = Config.load(workspace);
+  return resolveConfiguredFolder(workspace, config.branchesFolder, BRANCHES_DIR);
+}
+
+export function getLocalTemplatesDir(workspace: string) {
+  return join(workspace, CONFIG_DIR, TEMPLATES_DIR);
+}
+
+export function getLocalBranchesDir(workspace: string) {
   return join(workspace, CONFIG_DIR, BRANCHES_DIR);
 }
 
@@ -152,4 +144,45 @@ function readdirDirectoryNames(dir: string) {
   return readdirSync(dir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
+}
+
+function resolveConfiguredFolder(workspace: string, value: string, localFolderName: string) {
+  if (value === '.') {
+    return join(workspace, CONFIG_DIR, localFolderName);
+  }
+
+  return isAbsolute(value) ? value : resolve(workspace, value);
+}
+
+function parseBranchesFolder(data: Record<string, unknown>) {
+  if (typeof data.branches_folder === 'string' && data.branches_folder.trim()) {
+    return data.branches_folder;
+  }
+
+  if (isObject(data.storage) && typeof data.storage.external_path === 'string') {
+    return join(data.storage.external_path, BRANCHES_DIR);
+  }
+
+  return getDefaultConfig().branches_folder ?? '.';
+}
+
+function parseTemplatesFolder(data: Record<string, unknown>) {
+  if (typeof data.templates_folder === 'string' && data.templates_folder.trim()) {
+    return data.templates_folder;
+  }
+
+  if (isObject(data.templates) && typeof data.templates.path === 'string') {
+    return data.templates.path;
+  }
+
+  return getDefaultConfig().templates_folder ?? '.';
+}
+
+function getBranchTemplatePrefix(branch: string) {
+  const [prefix] = branch.split('/');
+  return prefix && prefix !== branch ? prefix : null;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }

@@ -1,27 +1,7 @@
 {
-  "default_base_branch": "main",
+  "default_base_branch": "origin/main",
   "sound": true,
   "commit_description": false,
-  "template_rules": [
-    {
-      "prefix": "feature/",
-      "template": "feature"
-    },
-    {
-      "prefix": "fix/",
-      "template": "fix"
-    },
-    {
-      "prefix": "bugfix/",
-      "template": "fix"
-    },
-    {
-      "prefix": "chore/",
-      "template": "chore"
-    },
-    {
-      "prefix": "refactor/",
-      "template": "chore"
-    }
-  ]
+  "branches_folder": ".",
+  "templates_folder": "."
 }

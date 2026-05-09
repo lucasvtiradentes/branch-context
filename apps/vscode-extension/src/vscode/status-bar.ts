@@ -1,4 +1,10 @@
-import { BranchContextStatusIssueLevel, initProject } from '@branch-context/core';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import {
+  BranchContextStatusIssueLevel,
+  type InitProjectOptions,
+  initProject,
+} from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds, STATUS_BAR_PRIORITY } from '../constants';
 import { formatError } from '../shared/format/error';
@@ -98,18 +104,28 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
     return;
   }
 
+  const initOptions = await promptInitOptions();
+  if (!initOptions) {
+    logger.info('init prompt dismissed: folder selection cancelled');
+    return;
+  }
+
   logger.info(`init project started: workspace=${state.workspaceRoot}`);
-  const result = await initProject(state.workspaceRoot, async (question) => {
-    logger.info(`init hook prompt shown: question=${question}`);
-    const answer = await vscode.window.showWarningMessage(
-      question,
-      { modal: true },
-      PROMPT_YES,
-      PROMPT_NO,
-    );
-    logger.info(`init hook prompt answered: answer=${answer ?? 'none'}`);
-    return answer === PROMPT_YES;
-  });
+  const result = await initProject(
+    state.workspaceRoot,
+    async (question) => {
+      logger.info(`init hook prompt shown: question=${question}`);
+      const answer = await vscode.window.showWarningMessage(
+        question,
+        { modal: true },
+        PROMPT_YES,
+        PROMPT_NO,
+      );
+      logger.info(`init hook prompt answered: answer=${answer ?? 'none'}`);
+      return answer === PROMPT_YES;
+    },
+    initOptions,
+  );
   if (!result.ok) {
     logger.warning(`init project failed: reason=${result.reason} message=${result.message}`);
     await vscode.window.showErrorMessage(`${APP_NAME}: ${result.message}`);
@@ -127,6 +143,55 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
   );
   branchContextState.refresh();
   await vscode.window.showInformationMessage(`${APP_NAME}: initialized`);
+}
+
+async function promptInitOptions(): Promise<InitProjectOptions | null> {
+  const branchesFolder = await promptPathInput(
+    'Branches folder',
+    'Use "." for .bctx/branches, or paste an existing folder path',
+  );
+  if (branchesFolder === null) {
+    return null;
+  }
+
+  const templatesFolder = await promptPathInput(
+    'Templates folder',
+    'Use "." for .bctx/templates, or paste an existing folder path',
+  );
+  if (templatesFolder === null) {
+    return null;
+  }
+
+  return {
+    branchesFolder,
+    templatesFolder,
+  };
+}
+
+async function promptPathInput(title: string, prompt: string): Promise<string | null> {
+  const value = await vscode.window.showInputBox({
+    title,
+    prompt,
+    value: '.',
+    validateInput: (input) => {
+      const trimmed = input.trim();
+      if (!trimmed) {
+        return 'Path is required';
+      }
+      if (trimmed === '.') {
+        return null;
+      }
+
+      const resolved = resolve(trimmed);
+      return existsSync(resolved) ? null : `Folder does not exist: ${resolved}`;
+    },
+  });
+  if (value === undefined) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed === '.' ? '.' : resolve(trimmed);
 }
 
 enum StatusBarState {

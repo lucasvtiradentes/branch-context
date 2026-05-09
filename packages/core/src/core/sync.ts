@@ -23,7 +23,13 @@ import {
   DEFAULT_SYMLINK,
   TEMPLATE_FILE_EXTENSIONS,
 } from '../constants';
-import { Config, getBranchesDir, getDefaultTemplate, getTemplateDir } from '../data/config';
+import {
+  Config,
+  getBranchesDir,
+  getDefaultTemplate,
+  getTemplateDir,
+  listTemplates,
+} from '../data/config';
 import {
   archiveBranchMeta,
   createBranchMeta,
@@ -118,7 +124,8 @@ export function branchContextExists(workspace: string, branch: string) {
 
 function resolveTemplateDir(workspace: string, branch: string, template?: string | null) {
   const explicit = template != null;
-  const selectedTemplate = template ?? Config.load(workspace).getTemplateForBranch(branch);
+  const selectedTemplate =
+    template ?? Config.load(workspace).getTemplateForBranch(branch, listTemplates(workspace));
   let templateDir = getTemplateDir(workspace, selectedTemplate);
 
   if (!existsSync(templateDir)) {

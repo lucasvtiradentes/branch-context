@@ -20,6 +20,8 @@ const baseErrorMessages = {
     `error: ${result.message}`,
   [BranchContextActionErrorReason.TemplateNotFound]: (result: { message: string }) =>
     `error: ${result.message}`,
+  [BranchContextActionErrorReason.InvalidPath]: (result: { message: string }) =>
+    `error: ${result.message}`,
 } as const satisfies Record<
   BranchContextActionErrorReason,
   (result: { message: string; branch?: string }) => string

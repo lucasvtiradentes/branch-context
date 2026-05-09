@@ -1,10 +1,15 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { stdin as input } from 'node:process';
 import readline from 'node:readline/promises';
 import {
   applyTemplateToCurrentBranch,
   BranchContextActionErrorReason,
   CLI_NAME,
+  Config,
+  configExists,
   getCurrentBranch,
+  getTemplatesDir,
   listAvailableTemplates,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
@@ -19,9 +24,15 @@ const templateErrorMessages = {
   [BranchContextActionErrorReason.BaseBranchNotFound]: (message: string) => `error: ${message}`,
   [BranchContextActionErrorReason.NoTemplates]: (message: string) => `error: ${message}`,
   [BranchContextActionErrorReason.TemplateNotFound]: () => 'error: template not found',
+  [BranchContextActionErrorReason.InvalidPath]: (message: string) => `error: ${message}`,
 } as const satisfies Record<BranchContextActionErrorReason, (message: string) => string>;
 
 export function registerTemplateCommand(program: Program) {
+  program
+    .command('template source', 'Show or set the templates folder')
+    .argument('[path]', 'Templates folder path. Use "." for .bctx/templates')
+    .action(({ args }) => cmdTemplateSource(stringArg(args.path)));
+
   program
     .command('template', 'Apply template to current branch')
     .argument('[name]', 'Template name')
@@ -57,6 +68,47 @@ async function selectTemplate(templates: string[]) {
 
 function stringArgs(value: unknown) {
   return value == null || value === '' ? [] : [String(value)];
+}
+
+function stringArg(value: unknown) {
+  return value == null || value === '' ? null : String(value);
+}
+
+function normalizeFolderArg(path: string) {
+  const trimmed = path.trim();
+  return trimmed === '.' ? '.' : resolve(trimmed);
+}
+
+async function cmdTemplateSource(path: string | null) {
+  const gitRoot = requireGitRoot();
+  if (!gitRoot) {
+    return 1;
+  }
+
+  if (!configExists(gitRoot)) {
+    console.log(`error: ${CLI_NAME} not initialized (run '${CLI_NAME} init')`);
+    return 1;
+  }
+
+  if (!path) {
+    const config = Config.load(gitRoot);
+    console.log(`Templates folder: ${config.templatesFolder}`);
+    console.log(`Resolved: ${getTemplatesDir(gitRoot)}`);
+    return 0;
+  }
+
+  const templatesFolder = normalizeFolderArg(path);
+  if (templatesFolder !== '.' && !existsSync(templatesFolder)) {
+    console.log(`error: templates folder does not exist: ${templatesFolder}`);
+    return 1;
+  }
+
+  const config = Config.load(gitRoot);
+  config.templatesFolder = templatesFolder;
+  config.save(gitRoot);
+  console.log(`Templates folder: ${templatesFolder}`);
+  console.log(`Resolved: ${getTemplatesDir(gitRoot)}`);
+  return 0;
 }
 
 async function cmdTemplate(args: string[]) {

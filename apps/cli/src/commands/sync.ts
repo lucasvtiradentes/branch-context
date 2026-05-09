@@ -18,6 +18,7 @@ const syncErrorMessages = {
   [BranchContextActionErrorReason.BaseBranchNotFound]: (message: string) => `error: ${message}`,
   [BranchContextActionErrorReason.NoTemplates]: (message: string) => `error: ${message}`,
   [BranchContextActionErrorReason.TemplateNotFound]: (message: string) => `error: ${message}`,
+  [BranchContextActionErrorReason.InvalidPath]: (message: string) => `error: ${message}`,
 } as const satisfies Record<BranchContextActionErrorReason, (message: string) => string>;
 const createResultStatuses: Partial<Record<CreateBranchContextResult, string>> = {
   [CreateBranchContextResult.CreatedFromTemplate]: 'created from template',
