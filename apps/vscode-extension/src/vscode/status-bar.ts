@@ -100,14 +100,14 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
 
   logger.info(`init project started: workspace=${state.workspaceRoot}`);
   const result = await initProject(state.workspaceRoot, async (question) => {
-    logger.warning(`init hook prompt shown: question=${question}`);
+    logger.info(`init hook prompt shown: question=${question}`);
     const answer = await vscode.window.showWarningMessage(
       question,
       { modal: true },
       PROMPT_YES,
       PROMPT_NO,
     );
-    logger.warning(`init hook prompt answered: answer=${answer ?? 'none'}`);
+    logger.info(`init hook prompt answered: answer=${answer ?? 'none'}`);
     return answer === PROMPT_YES;
   });
   if (!result.ok) {

@@ -7,6 +7,8 @@ import { consumeBranchContextRefreshSuppression } from './refresh-suppression';
 
 let watcherDisposables: vscode.Disposable[] = [];
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+let pendingRefreshEventCount = 0;
+let pendingRefreshLastEvent = 'none';
 
 export function initializeBranchContextWatcher(context: vscode.ExtensionContext): void {
   logger.info('watcher initialized');
@@ -23,6 +25,8 @@ export function initializeBranchContextWatcher(context: vscode.ExtensionContext)
           clearTimeout(refreshTimer);
           refreshTimer = undefined;
         }
+        pendingRefreshEventCount = 0;
+        pendingRefreshLastEvent = 'none';
       },
     },
   );
@@ -79,14 +83,19 @@ function scheduleRefresh(event: string, uri: vscode.Uri): void {
     return;
   }
 
-  logger.debug(`watcher event: type=${event} path=${uri.fsPath}`);
+  pendingRefreshEventCount += 1;
+  pendingRefreshLastEvent = `type=${event} path=${uri.fsPath}`;
   if (refreshTimer) {
     clearTimeout(refreshTimer);
   }
 
   refreshTimer = setTimeout(() => {
     refreshTimer = undefined;
-    logger.debug('watcher refresh fired');
+    const eventCount = pendingRefreshEventCount;
+    const lastEvent = pendingRefreshLastEvent;
+    pendingRefreshEventCount = 0;
+    pendingRefreshLastEvent = 'none';
+    logger.debug(`watcher refresh fired events=${eventCount} last=${lastEvent}`);
     branchContextState.refresh();
   }, 100);
 }

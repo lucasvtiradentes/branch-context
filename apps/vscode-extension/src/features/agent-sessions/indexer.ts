@@ -31,14 +31,17 @@ export function initializeAgentIndexer(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     branchContextState.onDidChange((nextState) => {
       const nextBranchKey = getStateBranchKey(nextState);
-      if (nextBranchKey !== branchKey) {
+      const branchChanged = nextBranchKey !== branchKey;
+      if (branchChanged) {
         logger.info(
           `[agent-sessions:indexer] branch key changed from=${branchKey ?? 'none'} to=${nextBranchKey}`,
         );
         branchKey = nextBranchKey;
         scheduleAgentSync('branch-change');
       }
-      resetAgentWatchers(nextState);
+      if (resetAgentWatchers(nextState) && !branchChanged) {
+        scheduleAgentSync('watcher-reset');
+      }
     }),
     {
       dispose: () => {
@@ -49,10 +52,10 @@ export function initializeAgentIndexer(context: vscode.ExtensionContext): void {
   );
 }
 
-function resetAgentWatchers(state: BranchContextExtensionState): void {
+function resetAgentWatchers(state: BranchContextExtensionState): boolean {
   const nextWatcherKey = getStateWatcherKey(state);
   if (nextWatcherKey === watcherKey) {
-    return;
+    return false;
   }
 
   logger.info(
@@ -64,11 +67,12 @@ function resetAgentWatchers(state: BranchContextExtensionState): void {
 
   if (!state.workspaceRoot) {
     logger.warning('[agent-sessions:indexer] watcher registration skipped: no workspace');
-    return;
+    return true;
   }
 
   registerProviderWatchers(state.workspaceRoot);
   scheduleRolloverReset();
+  return true;
 }
 
 function registerProviderWatchers(workspaceRoot: string): void {
