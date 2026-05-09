@@ -357,9 +357,20 @@ function groupUnpinnedAgentSessions(items: AgentSessionViewItem[]) {
 function getPinnedItems(items: AgentSessionViewItem[]) {
   return items
     .filter((item) => isPinned(item.session))
-    .sort((left, right) =>
-      (right.session.pinnedAt ?? '').localeCompare(left.session.pinnedAt ?? ''),
-    );
+    .sort((left, right) => {
+      const pinnedAtCompare = (right.session.pinnedAt ?? '').localeCompare(
+        left.session.pinnedAt ?? '',
+      );
+      if (pinnedAtCompare !== 0) {
+        return pinnedAtCompare;
+      }
+
+      if (left.session.provider !== right.session.provider) {
+        return left.session.provider.localeCompare(right.session.provider);
+      }
+
+      return left.session.sessionId.localeCompare(right.session.sessionId);
+    });
 }
 
 function createAgentSessionContextValue(options: {

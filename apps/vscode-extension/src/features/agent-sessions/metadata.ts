@@ -2,7 +2,7 @@ import {
   type AgentSession,
   getBranchAgentsFilePath,
   getCurrentAgentsFilePath,
-  updateAgentSessionMetadata,
+  updateAgentSessionMetadata as updateCoreAgentSessionMetadata,
 } from '@branch-context/core';
 import { branchContextState } from '../../vscode/state';
 
@@ -18,7 +18,7 @@ export function updateAgentSessionDescription(
     return;
   }
 
-  updateAgentSessionMetadata(path, provider, sessionId, { description });
+  updateCoreAgentSessionMetadata(path, provider, sessionId, { description });
 }
 
 export function updateAgentSessionPinnedAt(
@@ -33,7 +33,7 @@ export function updateAgentSessionPinnedAt(
     return;
   }
 
-  updateAgentSessionMetadata(path, provider, sessionId, { pinnedAt });
+  updateCoreAgentSessionMetadata(path, provider, sessionId, { pinnedAt });
 }
 
 function getAgentsFilePath(branch?: string, sourceAgentsFilePath?: string): string | null {
