@@ -103,7 +103,7 @@ type UserMessageExtraction = {
 };
 
 let agentSessionsGroupBy: AgentSessionsGroupBy = AgentSessionsGroupBy.Flat;
-let agentSessionTextMode: AgentSessionTextMode = AgentSessionTextMode.Initial;
+let agentSessionTextMode: AgentSessionTextMode = AgentSessionTextMode.Last;
 
 export function initializeAgentSessionsViewState(context: vscode.ExtensionContext): void {
   const savedGroupBy = context.workspaceState.get<unknown>(agentSessionsGroupByWorkspaceKey);
