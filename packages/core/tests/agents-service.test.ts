@@ -110,7 +110,7 @@ describe('agent session service', () => {
     expect(readAgentsFile(result.agentsFilePath ?? '').sessions).toEqual([]);
   });
 
-  it('preserves pinned sessions while syncing current agents file', () => {
+  it('preserves session metadata while syncing current agents file', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     expectOk(gitCheckout(repo, 'feature/test', true));
@@ -126,10 +126,8 @@ describe('agent session service', () => {
           title: null,
           startedAt: null,
           updatedAt: '2026-05-01T10:00:00.000Z',
-          pinned: {
-            description: 'Pinned work',
-            pinnedAt: '2026-05-01T10:00:00.000Z',
-          },
+          description: 'Pinned work',
+          pinnedAt: '2026-05-01T10:00:00.000Z',
         },
       ],
     });
@@ -146,7 +144,7 @@ describe('agent session service', () => {
     if (!result.ok) {
       return;
     }
-    expect(readAgentsFile(agentsFilePath).sessions[0]?.pinned).toEqual({
+    expect(readAgentsFile(agentsFilePath).sessions[0]).toMatchObject({
       description: 'Pinned work',
       pinnedAt: '2026-05-01T10:00:00.000Z',
     });
@@ -285,7 +283,8 @@ describe('agent session service', () => {
           title: null,
           startedAt: '2026-05-01T10:00:00.000Z',
           updatedAt: '2026-05-01T10:00:00.000Z',
-          pinned: null,
+          description: null,
+          pinnedAt: null,
         },
       ],
     });
@@ -332,7 +331,8 @@ describe('agent session service', () => {
           title: 'hello',
           startedAt: '2026-05-01T10:00:00.000Z',
           updatedAt: '2026-05-01T10:00:00.000Z',
-          pinned: null,
+          description: null,
+          pinnedAt: null,
         },
       ],
     });

@@ -29,7 +29,8 @@ export type BranchContextTreeNode = {
   sessionId?: string;
   agentsFilePath?: string;
   pinned?: boolean;
-  pinDescription?: string;
+  sessionDescription?: string | null;
+  sessionDisplayText?: string;
   commit?: GitCommitSummary;
   contextValue?: string;
   description?: string;

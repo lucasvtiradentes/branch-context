@@ -205,8 +205,8 @@ function agentSessionsEqual(left: AgentSession[], right: AgentSession[]): boolea
       session.title === other.title &&
       session.startedAt === other.startedAt &&
       session.updatedAt === other.updatedAt &&
-      session.pinned?.description === other.pinned?.description &&
-      session.pinned?.pinnedAt === other.pinned?.pinnedAt
+      session.description === other.description &&
+      session.pinnedAt === other.pinnedAt
     );
   });
 }

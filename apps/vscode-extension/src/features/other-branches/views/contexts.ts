@@ -488,8 +488,8 @@ function compareByUpdatedAt(left: ContextViewItem, right: ContextViewItem) {
 }
 
 function compareAgentSessions(left: AgentSession, right: AgentSession) {
-  if (Boolean(left.pinned) !== Boolean(right.pinned)) {
-    return left.pinned ? -1 : 1;
+  if (Boolean(left.pinnedAt) !== Boolean(right.pinnedAt)) {
+    return left.pinnedAt ? -1 : 1;
   }
 
   const leftTime = left.updatedAt ?? left.startedAt ?? '';

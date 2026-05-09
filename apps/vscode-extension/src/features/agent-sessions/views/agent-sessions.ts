@@ -26,7 +26,6 @@ import {
 } from '../../../shared/tree-items';
 import { branchContextState } from '../../../vscode/state';
 import { isAgentSessionActive } from '../active';
-import { type AgentSessionPin, readAgentSessionPins } from '../pins';
 
 export enum AgentSessionsGroupBy {
   Flat = 'flat',
@@ -89,7 +88,6 @@ type AgentSessionViewItem = {
   session: AgentSession;
   details: AgentSessionDetails;
   sizeBytes: number;
-  pin: AgentSessionPin | null;
 };
 
 type AgentSessionDetails = {
@@ -159,14 +157,13 @@ export function createAgentSessionsProvider(): StateTreeProvider {
       return [createMessageNode('No workspace')];
     }
 
-    const pins = readAgentSessionPins();
-    const items = state.agentSessions.map((session) => createSessionViewItem(session, pins));
+    const items = state.agentSessions.map((session) => createSessionViewItem(session));
     logAgentSessionsRender({
       workspaceRoot: state.workspaceRoot,
       initialized: state.initialized,
       branch: state.currentBranch,
       sessions: state.agentSessions.length,
-      pins: pins.length,
+      pins: items.filter((item) => isPinned(item.session)).length,
       items: items.length,
     });
     if (items.length === 0) {
@@ -239,12 +236,11 @@ export function createAgentSessionNode(
   const path = session.path ?? undefined;
   const active = isAgentSessionActive(session);
   const showIcon = options.showIcon ?? true;
-  const pinned = options.pinned ?? Boolean(item.pin);
+  const pinned = options.pinned ?? isPinned(session);
+  const displayText = getSessionDisplayText(item);
 
   return {
-    label: pinned
-      ? (item.pin?.description ?? getSessionDisplayText(item))
-      : getSessionDisplayText(item),
+    label: getSessionLabel(item),
     kind: BranchContextTreeNodeKind.Agent,
     path,
     branch: session.branch,
@@ -252,7 +248,8 @@ export function createAgentSessionNode(
     sessionId: session.sessionId,
     agentsFilePath: options.agentsFilePath,
     pinned,
-    pinDescription: item.pin?.description,
+    sessionDescription: session.description,
+    sessionDisplayText: displayText,
     description: pinned ? `${formatProviderName(session.provider)} ${description}` : description,
     tooltip: createAgentTooltip(item),
     icon: showIcon ? getProviderIcon(session.provider, active) : new vscode.ThemeIcon('blank'),
@@ -269,35 +266,18 @@ export function createAgentSessionNode(
   };
 }
 
-export function createSessionViewItem(
-  session: AgentSession,
-  pins: AgentSessionPin[] = [],
-): AgentSessionViewItem {
+export function createSessionViewItem(session: AgentSession): AgentSessionViewItem {
   const path = session.path ?? null;
-  const embeddedPin = session.pinned
-    ? {
-        provider: session.provider,
-        sessionId: session.sessionId,
-        description: session.pinned.description,
-        pinnedAt: session.pinned.pinnedAt,
-      }
-    : null;
   return {
     session,
     details: readSessionDetails(path),
     sizeBytes: getSessionSize(path),
-    pin:
-      pins.find(
-        (pin) => pin.provider === session.provider && pin.sessionId === session.sessionId,
-      ) ??
-      embeddedPin ??
-      null,
   };
 }
 
 function groupAgentSessions(items: AgentSessionViewItem[]) {
   const pinnedItems = getPinnedItems(items);
-  const unpinnedItems = items.filter((item) => !item.pin);
+  const unpinnedItems = items.filter((item) => !isPinned(item.session));
   const groupedItems = groupUnpinnedAgentSessions(unpinnedItems);
 
   if (pinnedItems.length === 0) {
@@ -375,23 +355,11 @@ function groupUnpinnedAgentSessions(items: AgentSessionViewItem[]) {
 }
 
 function getPinnedItems(items: AgentSessionViewItem[]) {
-  const itemsByKey = new Map(
-    items.map((item) => [getAgentSessionKey(item.session.provider, item.session.sessionId), item]),
-  );
-  const pinnedItems: AgentSessionViewItem[] = [];
-
-  for (const pin of readAgentSessionPins()) {
-    const item = itemsByKey.get(getAgentSessionKey(pin.provider, pin.sessionId));
-    if (item) {
-      pinnedItems.push({ ...item, pin });
-    }
-  }
-
-  return pinnedItems;
-}
-
-function getAgentSessionKey(provider: AgentSession['provider'], sessionId: string) {
-  return `${provider}:${sessionId}`;
+  return items
+    .filter((item) => isPinned(item.session))
+    .sort((left, right) =>
+      (right.session.pinnedAt ?? '').localeCompare(left.session.pinnedAt ?? ''),
+    );
 }
 
 function createAgentSessionContextValue(options: {
@@ -403,6 +371,7 @@ function createAgentSessionContextValue(options: {
     'branchContext',
     'agentSession',
     options.active ? 'active' : 'resumable',
+    branchContextState.get().initialized ? 'bctx' : null,
     options.pinned ? 'pinned' : branchContextState.get().initialized ? 'pinnable' : null,
     options.movable ? 'movable' : null,
   ]
@@ -441,6 +410,10 @@ function getSizeGroup(item: AgentSessionViewItem) {
 }
 
 function getSessionDisplayText(item: AgentSessionViewItem) {
+  if (item.session.description?.trim()) {
+    return item.session.description.trim();
+  }
+
   if (agentSessionTextMode === AgentSessionTextMode.Last) {
     return firstText(
       item.details.lastMessage,
@@ -456,6 +429,18 @@ function getSessionDisplayText(item: AgentSessionViewItem) {
     isAgentSessionActive(item.session) ? 'Starting session' : null,
     item.session.sessionId.slice(0, 8),
   );
+}
+
+function getSessionLabel(item: AgentSessionViewItem) {
+  if (item.session.description?.trim() && !isPinned(item.session)) {
+    return `-> ${item.session.description.trim()}`;
+  }
+
+  return getSessionDisplayText(item);
+}
+
+function isPinned(session: AgentSession) {
+  return Boolean(session.pinnedAt);
 }
 
 function firstText(...values: Array<string | null | undefined>) {
@@ -617,7 +602,7 @@ function createAgentTooltip(item: AgentSessionViewItem) {
       markdownTooltipLine('model', session.model ?? 'unknown'),
       markdownTooltipLine('updated', formatRelativeTime(session.updatedAt ?? session.startedAt)),
       markdownTooltipLine('size', formatBytes(item.sizeBytes)),
-      item.pin ? markdownTooltipLine('pin', item.pin.description) : null,
+      session.description ? markdownTooltipLine('description', session.description) : null,
     ]
       .filter(Boolean)
       .join('  \n'),

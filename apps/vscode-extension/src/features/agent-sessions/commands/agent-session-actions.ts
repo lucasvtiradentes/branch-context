@@ -11,12 +11,13 @@ import { commandIds } from '../../../constants';
 import { formatError } from '../../../shared/format/error';
 import type { BranchContextTreeNodeDraft } from '../../../shared/tree-items';
 import { branchContextState } from '../../../vscode/state';
-import { removeAgentSessionPin, upsertAgentSessionPin } from '../pins';
+import { updateAgentSessionDescription, updateAgentSessionPinnedAt } from '../metadata';
 
 export function registerAgentSessionActionCommands(): vscode.Disposable[] {
   return [
     vscode.commands.registerCommand(commandIds.pinAgentSession, pinAgentSession),
     vscode.commands.registerCommand(commandIds.unpinAgentSession, unpinAgentSession),
+    vscode.commands.registerCommand(commandIds.renameAgentSession, renameAgentSession),
     vscode.commands.registerCommand(commandIds.copyAgentSessionId, copyAgentSessionId),
     vscode.commands.registerCommand(commandIds.deleteAgentSession, deleteAgentSession),
   ];
@@ -31,18 +32,26 @@ async function pinAgentSession(node: unknown): Promise<void> {
 
   const description = await vscode.window.showInputBox({
     title: 'Pin agent session',
-    prompt: 'Session description',
-    value: session.pinDescription,
+    prompt: 'Session name (optional)',
+    placeHolder: session.sessionDisplayText,
+    value: session.sessionDescription ?? '',
   });
-  if (!description?.trim()) {
+  if (description == null) {
     return;
   }
 
   try {
-    upsertAgentSessionPin(
+    updateAgentSessionDescription(
       session.agentProvider,
       session.sessionId,
-      description.trim(),
+      description.trim() || null,
+      session.branch,
+      session.agentsFilePath,
+    );
+    updateAgentSessionPinnedAt(
+      session.agentProvider,
+      session.sessionId,
+      new Date().toISOString(),
       session.branch,
       session.agentsFilePath,
     );
@@ -60,7 +69,7 @@ async function unpinAgentSession(node: unknown): Promise<void> {
   }
 
   const confirmed = await vscode.window.showWarningMessage(
-    `Unpin agent session ${session.pinDescription ?? session.sessionId.slice(0, 7)}?`,
+    `Unpin agent session ${session.sessionDescription ?? session.sessionId.slice(0, 7)}?`,
     { modal: true },
     'Unpin',
   );
@@ -69,9 +78,41 @@ async function unpinAgentSession(node: unknown): Promise<void> {
   }
 
   try {
-    removeAgentSessionPin(
+    updateAgentSessionPinnedAt(
       session.agentProvider,
       session.sessionId,
+      null,
+      session.branch,
+      session.agentsFilePath,
+    );
+    branchContextState.refresh();
+  } catch (error) {
+    await vscode.window.showErrorMessage(formatError(error));
+  }
+}
+
+async function renameAgentSession(node: unknown): Promise<void> {
+  const session = node as BranchContextTreeNodeDraft | undefined;
+  if (!session?.agentProvider || !session.sessionId) {
+    await vscode.window.showErrorMessage('Missing agent session metadata.');
+    return;
+  }
+
+  const description = await vscode.window.showInputBox({
+    title: 'Rename agent session',
+    prompt: 'Custom session name. Leave empty to clear.',
+    placeHolder: session.sessionDisplayText,
+    value: session.sessionDescription ?? '',
+  });
+  if (description == null) {
+    return;
+  }
+
+  try {
+    updateAgentSessionDescription(
+      session.agentProvider,
+      session.sessionId,
+      description.trim() || null,
       session.branch,
       session.agentsFilePath,
     );

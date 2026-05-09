@@ -355,6 +355,8 @@ export function scanClaudeSessions(options: AgentSessionScanOptions): AgentSessi
         title: session.title,
         startedAt: session.startedAt,
         updatedAt: session.updatedAt,
+        description: null,
+        pinnedAt: null,
       }),
     );
 }
@@ -502,6 +504,8 @@ function codexSessionToAgent(
     title: session.title,
     startedAt: session.startedAt,
     updatedAt: session.updatedAt,
+    description: null,
+    pinnedAt: null,
   });
 }
 
@@ -537,7 +541,8 @@ function mergeSessions(...groups: AgentSession[][]) {
     sessions.set(`${session.provider}:${session.sessionId}`, {
       ...existing,
       ...session,
-      pinned: session.pinned ?? existing?.pinned ?? null,
+      description: session.description ?? existing?.description ?? null,
+      pinnedAt: session.pinnedAt ?? existing?.pinnedAt ?? null,
     });
   }
   return Array.from(sessions.values());

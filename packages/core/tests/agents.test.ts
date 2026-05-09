@@ -9,10 +9,9 @@ import {
   getBranchAgentsFilePathByKey,
   getCurrentAgentsFilePath,
   readAgentsFile,
-  removeAgentSessionPin,
   syncBranch,
+  updateAgentSessionMetadata,
   upsertAgentSession,
-  upsertAgentSessionPin,
   writeAgentsFile,
 } from '../src/index';
 import { createWorkspace } from './helpers';
@@ -27,6 +26,8 @@ function createSession(overrides: Partial<ReturnType<typeof createAgentSession>>
     title: 'First prompt',
     startedAt: '2026-05-01T10:00:00.000Z',
     updatedAt: '2026-05-01T10:00:00.000Z',
+    description: null,
+    pinnedAt: null,
     ...overrides,
   });
 }
@@ -57,31 +58,6 @@ describe('agents file', () => {
     expect(sessions).toHaveLength(1);
     expect(sessions[0]).not.toHaveProperty('branch');
     expect(sessions[0]).not.toHaveProperty('scope');
-  });
-
-  it('reads legacy agents file with top-level pinned sessions', () => {
-    const workspace = createWorkspace();
-    const path = join(workspace, 'agents.json');
-    writeFileSync(
-      path,
-      `${JSON.stringify({
-        version: 1,
-        sessions: [createSession()],
-        pinnedSessions: [
-          {
-            provider: AgentSessionProvider.Codex,
-            sessionId: 'codex-1',
-            description: 'Pinned work',
-            pinnedAt: '2026-05-01T10:00:00.000Z',
-          },
-        ],
-      })}\n`,
-    );
-
-    expect(readAgentsFile(path).sessions[0]?.pinned).toEqual({
-      description: 'Pinned work',
-      pinnedAt: '2026-05-01T10:00:00.000Z',
-    });
   });
 
   it('upserts sessions by provider and id', () => {
@@ -120,31 +96,20 @@ describe('agents file', () => {
     expect(updated.sessions.map((session) => session.sessionId)).toEqual(['new', 'old']);
   });
 
-  it('upserts and removes pinned sessions', () => {
+  it('updates session metadata', () => {
     const workspace = createWorkspace();
     const path = join(workspace, 'agents.json');
 
     upsertAgentSession(path, createSession());
-    upsertAgentSessionPin(path, {
-      provider: AgentSessionProvider.Codex,
-      sessionId: 'codex-1',
-      description: 'Old label',
-      pinnedAt: '2026-05-01T10:00:00.000Z',
-    });
-    const pinned = upsertAgentSessionPin(path, {
-      provider: AgentSessionProvider.Codex,
-      sessionId: 'codex-1',
+    const updated = updateAgentSessionMetadata(path, AgentSessionProvider.Codex, 'codex-1', {
       description: 'New label',
       pinnedAt: '2026-05-01T11:00:00.000Z',
     });
 
-    expect(pinned.sessions[0]?.pinned).toEqual({
+    expect(updated.sessions[0]).toMatchObject({
       description: 'New label',
       pinnedAt: '2026-05-01T11:00:00.000Z',
     });
-    expect(
-      removeAgentSessionPin(path, AgentSessionProvider.Codex, 'codex-1').sessions[0]?.pinned,
-    ).toBeNull();
   });
 
   it('resolves current and branch-local paths', () => {

@@ -189,6 +189,11 @@
         "icon": "$(pinned-dirty)"
       },
       {
+        "command": "branch-context.renameAgentSession",
+        "title": "Branch Context: Rename Agent Session",
+        "icon": "$(edit)"
+      },
+      {
         "command": "branch-context.copyAgentSessionId",
         "title": "Branch Context: Copy Session ID",
         "icon": "$(copy)"
@@ -391,6 +396,10 @@
           "when": "false"
         },
         {
+          "command": "branch-context.renameAgentSession",
+          "when": "false"
+        },
+        {
           "command": "branch-context.copyAgentSessionId",
           "when": "false"
         },
@@ -556,6 +565,11 @@
           "command": "branch-context.unpinAgentSession",
           "when": "(view == branch-context.agentSessions || view == branch-context.contexts) && viewItem =~ /branchContext\\.agentSession.*pinned/",
           "group": "inline@0"
+        },
+        {
+          "command": "branch-context.renameAgentSession",
+          "when": "(view == branch-context.agentSessions || view == branch-context.contexts) && viewItem =~ /branchContext\\.agentSession.*bctx/",
+          "group": "navigation@1"
         },
         {
           "command": "branch-context.moveAgentSessionToBranch",
