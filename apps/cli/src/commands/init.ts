@@ -1,7 +1,8 @@
-import { resolve } from 'node:path';
 import {
   BranchContextActionErrorReason,
   CLI_NAME,
+  Config,
+  configExists,
   DEFAULT_SYMLINK,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
@@ -27,7 +28,7 @@ export function registerInitCommand(program: Program) {
   program
     .command('init', 'Initialize and install hook')
     .option('--branches-parent-folder <path>', 'Parent folder where branches/ will be created')
-    .option('--templates-folder <path>', 'Templates folder path. Use "." for .bctx/templates')
+    .option('--templates-folder <path>', 'Templates folder path')
     .action(() => cmdInit([]));
 }
 
@@ -82,30 +83,51 @@ async function parseInitOptions(
   const branchesParentFolder = argValue(args, '--branches-parent-folder');
   const templatesFolder = argValue(args, '--templates-folder');
   const initOptions: Parameters<typeof initProject>[2] = {};
+  const gitRoot = requireGitRoot();
+  const alreadyInitialized = gitRoot ? configExists(gitRoot) : false;
 
   if (branchesParentFolder) {
     initOptions.branchesParentFolder = normalizeFolderArg(branchesParentFolder);
-  } else if (shouldPromptInitFolders(args)) {
+  } else if (shouldPromptInitFolders(args, alreadyInitialized)) {
     initOptions.branchesParentFolder = normalizeFolderArg(
-      await promptText('Branches parent folder', '.'),
+      await promptText('Branches parent folder', getBranchesParentFolderDefault(gitRoot)),
     );
   }
 
   if (templatesFolder) {
     initOptions.templatesFolder = normalizeFolderArg(templatesFolder);
-  } else if (shouldPromptInitFolders(args)) {
-    initOptions.templatesFolder = normalizeFolderArg(await promptText('Templates folder', '.'));
+  } else if (shouldPromptInitFolders(args, alreadyInitialized)) {
+    initOptions.templatesFolder = normalizeFolderArg(
+      await promptText('Templates folder', getTemplatesFolderDefault(gitRoot)),
+    );
   }
 
   return { ok: true, options: initOptions };
 }
 
-function shouldPromptInitFolders(args: string[]) {
-  return args.length === 1 && process.stdin.isTTY;
+function shouldPromptInitFolders(args: string[], alreadyInitialized: boolean) {
+  return !alreadyInitialized && args.length === 1 && process.stdin.isTTY;
+}
+
+function getBranchesParentFolderDefault(gitRoot: string | null) {
+  if (!gitRoot || !configExists(gitRoot)) {
+    return '.bctx';
+  }
+
+  const branchesFolder = Config.load(gitRoot).branchesFolder;
+  return branchesFolder.endsWith('/branches')
+    ? branchesFolder.slice(0, -'/branches'.length) || '.'
+    : branchesFolder;
+}
+
+function getTemplatesFolderDefault(gitRoot: string | null) {
+  return gitRoot && configExists(gitRoot)
+    ? Config.load(gitRoot).templatesFolder
+    : '.bctx/templates';
 }
 
 function normalizeFolderArg(path: string) {
-  return path === '.' ? '.' : resolve(path);
+  return path.trim();
 }
 
 function argValue(args: string[], name: string) {

@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { isAbsolute, resolve } from 'node:path';
 import {
   BranchContextStatusIssueLevel,
   type InitProjectOptions,
@@ -15,6 +15,7 @@ import { type BranchContextExtensionState, branchContextState } from './state';
 
 const PROMPT_YES = 'Yes';
 const PROMPT_NO = 'No';
+const PROMPT_INSTALL_HOOKS = 'Install Hooks';
 const PROMPT_UPDATE_CLI = 'Update CLI';
 const PROMPT_IGNORE = 'Ignore';
 
@@ -80,11 +81,63 @@ async function showStatusBarActions(): Promise<void> {
       return;
     }
 
+    if (hasMissingHooks(state)) {
+      await promptInstallHooks(state);
+      return;
+    }
+
     await vscode.commands.executeCommand(commandIds.openCurrentContext);
   } catch (error) {
     logger.error(`status bar action error: ${logger.formatError(error)}`);
     await vscode.window.showErrorMessage(formatError(error));
   }
+}
+
+function hasMissingHooks(state: BranchContextExtensionState): boolean {
+  return (
+    state.initialized &&
+    !!state.status &&
+    (!state.status.hooks.checkout || !state.status.hooks.commit)
+  );
+}
+
+async function promptInstallHooks(state: BranchContextExtensionState): Promise<void> {
+  if (!state.workspaceRoot) {
+    logger.warning('install hooks prompt aborted: no workspace');
+    return;
+  }
+
+  const selected = await vscode.window.showWarningMessage(
+    `${APP_NAME}: Git hooks are not installed. Install them now?`,
+    PROMPT_INSTALL_HOOKS,
+    PROMPT_IGNORE,
+  );
+  if (selected !== PROMPT_INSTALL_HOOKS) {
+    logger.info(`install hooks prompt dismissed: selected=${selected ?? 'none'}`);
+    return;
+  }
+
+  logger.info(`install hooks started: workspace=${state.workspaceRoot}`);
+  const result = await initProject(
+    state.workspaceRoot,
+    async (question) => {
+      logger.info(`install hooks prompt shown: question=${question}`);
+      const answer = await promptYesNoInput('Configure Git Hooks', question);
+      logger.info(`install hooks prompt answered: answer=${answer}`);
+      return answer;
+    },
+    {
+      hookCommandName: state.cliCompatibility.command,
+    },
+  );
+  if (!result.ok) {
+    logger.warning(`install hooks failed: reason=${result.reason} message=${result.message}`);
+    await vscode.window.showErrorMessage(`${APP_NAME}: ${result.message}`);
+    return;
+  }
+
+  branchContextState.refresh();
+  await vscode.window.showInformationMessage(`${APP_NAME}: hooks installed`);
 }
 
 async function promptInitProject(state: BranchContextExtensionState): Promise<void> {
@@ -104,7 +157,7 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
     return;
   }
 
-  const initOptions = await promptInitOptions();
+  const initOptions = await promptInitOptions(state.workspaceRoot);
   if (!initOptions) {
     logger.info('init prompt dismissed: folder selection cancelled');
     return;
@@ -115,16 +168,14 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
     state.workspaceRoot,
     async (question) => {
       logger.info(`init hook prompt shown: question=${question}`);
-      const answer = await vscode.window.showWarningMessage(
-        question,
-        { modal: true },
-        PROMPT_YES,
-        PROMPT_NO,
-      );
-      logger.info(`init hook prompt answered: answer=${answer ?? 'none'}`);
-      return answer === PROMPT_YES;
+      const answer = await promptYesNoInput('Configure Git Hooks', question);
+      logger.info(`init hook prompt answered: answer=${answer}`);
+      return answer;
     },
-    initOptions,
+    {
+      ...initOptions,
+      hookCommandName: state.cliCompatibility.command,
+    },
   );
   if (!result.ok) {
     logger.warning(`init project failed: reason=${result.reason} message=${result.message}`);
@@ -145,10 +196,13 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
   await vscode.window.showInformationMessage(`${APP_NAME}: initialized`);
 }
 
-async function promptInitOptions(): Promise<InitProjectOptions | null> {
+async function promptInitOptions(workspaceRoot: string): Promise<InitProjectOptions | null> {
   const branchesParentFolder = await promptPathInput(
     'Branches parent folder',
-    'Use "." for .bctx/branches, or paste an existing parent folder where branches/ will be created',
+    'Paste an existing parent folder where branches/ will be created',
+    '.bctx',
+    workspaceRoot,
+    true,
   );
   if (branchesParentFolder === null) {
     return null;
@@ -156,7 +210,10 @@ async function promptInitOptions(): Promise<InitProjectOptions | null> {
 
   const templatesFolder = await promptPathInput(
     'Templates folder',
-    'Use "." for .bctx/templates, or paste an existing folder path',
+    'Paste an existing templates folder path',
+    '.bctx/templates',
+    workspaceRoot,
+    true,
   );
   if (templatesFolder === null) {
     return null;
@@ -168,21 +225,27 @@ async function promptInitOptions(): Promise<InitProjectOptions | null> {
   };
 }
 
-async function promptPathInput(title: string, prompt: string): Promise<string | null> {
+async function promptPathInput(
+  title: string,
+  prompt: string,
+  defaultValue: string,
+  workspaceRoot: string,
+  allowMissingDefault = false,
+): Promise<string | null> {
   const value = await vscode.window.showInputBox({
     title,
     prompt,
-    value: '.',
+    value: defaultValue,
     validateInput: (input) => {
       const trimmed = input.trim();
       if (!trimmed) {
         return 'Path is required';
       }
-      if (trimmed === '.') {
+
+      const resolved = isAbsolute(trimmed) ? trimmed : resolve(workspaceRoot, trimmed);
+      if (allowMissingDefault && trimmed === defaultValue) {
         return null;
       }
-
-      const resolved = resolve(trimmed);
       return existsSync(resolved) ? null : `Folder does not exist: ${resolved}`;
     },
   });
@@ -190,8 +253,16 @@ async function promptPathInput(title: string, prompt: string): Promise<string | 
     return null;
   }
 
-  const trimmed = value.trim();
-  return trimmed === '.' ? '.' : resolve(trimmed);
+  return value.trim();
+}
+
+async function promptYesNoInput(title: string, placeHolder: string): Promise<boolean> {
+  const selected = await vscode.window.showQuickPick([PROMPT_YES, PROMPT_NO], {
+    title,
+    placeHolder,
+    ignoreFocusOut: true,
+  });
+  return selected === PROMPT_YES;
 }
 
 enum StatusBarState {

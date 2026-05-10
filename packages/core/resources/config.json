@@ -2,6 +2,6 @@
   "default_base_branch": "origin/main",
   "sound": true,
   "commit_description": false,
-  "branches_folder": ".",
-  "templates_folder": "."
+  "branches_folder": ".bctx/branches",
+  "templates_folder": ".bctx/templates"
 }

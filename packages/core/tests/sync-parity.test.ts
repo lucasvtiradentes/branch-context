@@ -36,6 +36,7 @@ import {
   createGitRepo,
   createWorkspace,
   createWorkspaceNoTemplate,
+  expectOk,
   initBctxWorkspace,
 } from './helpers';
 
@@ -260,6 +261,8 @@ describe('sync parity', () => {
 
   it('syncs current branch through service', () => {
     const repo = createGitRepo();
+    expectOk(gitCheckout(repo, 'origin/main', true));
+    expectOk(gitCheckout(repo, 'main'));
     initBctxWorkspace(repo);
     const result = syncCurrentBranch(repo, { sound: false });
     expect(result.ok).toBe(true);
@@ -270,12 +273,14 @@ describe('sync parity', () => {
     expect(result.branchKey).toBe('main');
     expect(result.createResult).toBe(CreateBranchContextResult.CreatedFromTemplate);
     expect(result.symlinkResult).toBe(UpdateSymlinkResult.Updated);
-    expect(result.baseBranch).toBe('main');
+    expect(result.baseBranch).toBe('origin/main');
     expect(existsSync(join(repo, DEFAULT_SYMLINK))).toBe(true);
   });
 
   it('initializes project and creates current context from template', async () => {
     const repo = createGitRepo();
+    expectOk(gitCheckout(repo, 'origin/main', true));
+    expectOk(gitCheckout(repo, 'main'));
     const result = await initProject(repo);
     expect(result.ok).toBe(true);
     if (!result.ok) {
@@ -321,6 +326,8 @@ describe('sync parity', () => {
 
   it('gets and sets current base through service', () => {
     const repo = createGitRepo();
+    expectOk(gitCheckout(repo, 'origin/main', true));
+    expectOk(gitCheckout(repo, 'main'));
     initBctxWorkspace(repo);
     syncCurrentBranch(repo, { sound: false });
     const initial = getCurrentBase(repo);
@@ -328,7 +335,7 @@ describe('sync parity', () => {
     if (!initial.ok) {
       return;
     }
-    expect(initial.baseBranch).toBe('main');
+    expect(initial.baseBranch).toBe('origin/main');
     const updated = setCurrentBase(repo, 'develop');
     expect(updated.ok).toBe(true);
     if (!updated.ok) {

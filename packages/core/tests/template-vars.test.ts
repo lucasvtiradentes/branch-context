@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { gitCheckout } from '../src/git';
 import {
   applyTemplateToCurrentBranch,
   BranchContextActionErrorReason,
@@ -63,6 +64,8 @@ describe('template variables', () => {
 
   it('applies template to current branch through service', () => {
     const repo = createGitRepo();
+    expect(gitCheckout(repo, 'origin/main', true).status).toBe(0);
+    expect(gitCheckout(repo, 'main').status).toBe(0);
     initBctxWorkspace(repo);
     syncCurrentBranch(repo, { sound: false });
     const contextPath = join(getBranchDir(repo, 'main'), 'context.md');

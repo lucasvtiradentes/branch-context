@@ -16,11 +16,11 @@ export const BranchContextConfigSchema = z
     branches_folder: z
       .string()
       .optional()
-      .describe('Branches folder path. "." means .bctx/branches. Absolute paths are used as-is.'),
+      .describe('Branches folder path. Relative paths are resolved from the repository root.'),
     templates_folder: z
       .string()
       .optional()
-      .describe('Templates folder path. "." means .bctx/templates. Absolute paths are used as-is.'),
+      .describe('Templates folder path. Relative paths are resolved from the repository root.'),
   })
   .describe('Branch Context configuration file');
 

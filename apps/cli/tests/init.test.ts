@@ -48,6 +48,29 @@ describe('init command', () => {
     expect(existsSync(join(repo, DEFAULT_SYMLINK))).toBe(true);
   });
 
+  it('init skips folder prompts when already initialized', async () => {
+    const repo = createGitRepo();
+    process.chdir(repo);
+    await runCli(['init']);
+    const capture = captureConsole();
+    const previousIsTty = process.stdin.isTTY;
+    Object.defineProperty(process.stdin, 'isTTY', { configurable: true, value: true });
+
+    try {
+      const result = await runCli(['init']);
+
+      expect(result).toBe(0);
+      expect(capture.output).not.toContain('Branches parent folder');
+      expect(capture.output).not.toContain('Templates folder');
+      expect(capture.output).toContain('Already initialized');
+    } finally {
+      Object.defineProperty(process.stdin, 'isTTY', {
+        configurable: true,
+        value: previousIsTty,
+      });
+    }
+  });
+
   it('init gitignores local machine state but leaves templates trackable', async () => {
     const repo = createGitRepo();
     process.chdir(repo);

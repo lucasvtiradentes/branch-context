@@ -25,8 +25,11 @@ describe('agents command', () => {
     expect(capture.output).toContain('#compdef bctxd');
     expect(capture.output).toContain("'status:Show agent integration status'");
     expect(capture.output).toContain("'sync:Sync agent sessions'");
+    expect(capture.output).toContain("'apply:Apply template to current branch'");
+    expect(capture.output).toContain("'source:Show or set the templates folder'");
     expect(capture.output).toContain('_bctxd_templates');
-    expect(capture.output).toContain('.bctx/templates');
+    expect(capture.output).toContain('bctxd template source');
+    expect(capture.output).toContain("'template apply')\n          _bctxd_templates");
   });
 
   it('generates bash completion with agents subcommands', async () => {
@@ -39,7 +42,8 @@ describe('agents command', () => {
     expect(capture.output).toContain('complete -F _bctxd_completion bctxd');
     expect(capture.output).toContain('base init uninstall sync status agents prune template');
     expect(capture.output).toContain('status sync');
-    expect(capture.output).toContain('.bctx/templates');
+    expect(capture.output).toContain('apply source');
+    expect(capture.output).toContain('bctxd template source');
   });
 
   it('generates fish completion with agents subcommands', async () => {
@@ -52,8 +56,11 @@ describe('agents command', () => {
     expect(capture.output).toContain('complete -c bctxd -f');
     expect(capture.output).toContain("-a 'agents' -d 'Agent integration commands'");
     expect(capture.output).toContain("-a 'sync' -d 'Sync agent sessions'");
+    expect(capture.output).toContain("-a 'apply' -d 'Apply template to current branch'");
+    expect(capture.output).toContain("-a 'source' -d 'Show or set the templates folder'");
     expect(capture.output).toContain('__bctxd_templates');
-    expect(capture.output).toContain('.bctx/templates');
+    expect(capture.output).toContain('bctxd template source');
+    expect(capture.output).toContain("__bctxd_using_subcommand 'template' 'apply'");
   });
 
   it('prints help when no command is provided', async () => {
@@ -80,6 +87,26 @@ describe('agents command', () => {
     expect(await runCli(['agents', 'status'])).toBe(0);
     expect(capture.output).toContain('Branch:');
     expect(capture.output).toContain('Providers:    none');
+  });
+
+  it('uses original cwd from dev shim', async () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    const capture = captureConsole();
+    const previous = process.env.BCTX_ORIGINAL_CWD;
+    process.env.BCTX_ORIGINAL_CWD = repo;
+    try {
+      expect(await runCli(['status'])).toBe(1);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.BCTX_ORIGINAL_CWD;
+      } else {
+        process.env.BCTX_ORIGINAL_CWD = previous;
+      }
+    }
+
+    expect(capture.output).toContain('Branch:      main');
+    expect(capture.output).not.toContain('not initialized');
   });
 
   it('syncs agents through cli dispatch', async () => {

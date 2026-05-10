@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, sep as pathSeparator, relative, resolve } from 'node:path';
-import { CONFIG_DIR, CONFIG_FILE, DEFAULT_SYMLINK, HookType } from '../constants';
+import { CONFIG_DIR, CONFIG_FILE, DEFAULT_SYMLINK, HookType, TEMPLATES_DIR } from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
 import { getCurrentBranch, installHook, type PromptYesNo } from '../core/hooks';
@@ -131,6 +131,7 @@ export type InitProjectResult =
 
 export type InitProjectOptions = {
   branchesParentFolder?: string | null;
+  hookCommandName?: string | null;
   templatesFolder?: string | null;
 };
 
@@ -157,8 +158,12 @@ export async function initProject(
   mkdirSync(branchesDir, { recursive: true });
   ensureInitTemplates(gitRoot, templatesDir, alreadyInitialized);
 
-  const checkoutHook = await installHook(gitRoot, HookType.PostCheckout, ask);
-  const commitHook = await installHook(gitRoot, HookType.PostCommit, ask);
+  const checkoutHook = await installHook(gitRoot, HookType.PostCheckout, ask, {
+    commandName: options.hookCommandName,
+  });
+  const commitHook = await installHook(gitRoot, HookType.PostCommit, ask, {
+    commandName: options.hookCommandName,
+  });
 
   addInitGitignoreEntries(gitRoot, branchesDir, templatesDir);
 
@@ -184,11 +189,9 @@ function configureInitFolders(
 
   if (options.branchesParentFolder !== undefined && options.branchesParentFolder !== null) {
     const branchesFolder = normalizeBranchesFolder(options.branchesParentFolder);
-    if (branchesFolder !== '.') {
-      const parentFolder = resolve(branchesFolder, '..');
-      if (!existsSync(parentFolder)) {
-        return invalidPath(`branches parent folder does not exist: ${parentFolder}`);
-      }
+    const parentFolder = resolve(resolveConfiguredFolder(gitRoot, branchesFolder), '..');
+    if (!existsSync(parentFolder)) {
+      return invalidPath(`branches parent folder does not exist: ${parentFolder}`);
     }
     config.branchesFolder = branchesFolder;
     changed = true;
@@ -196,8 +199,12 @@ function configureInitFolders(
 
   if (options.templatesFolder !== undefined && options.templatesFolder !== null) {
     const templatesFolder = normalizeConfiguredFolder(options.templatesFolder);
-    if (templatesFolder !== '.' && !existsSync(templatesFolder)) {
-      return invalidPath(`templates folder does not exist: ${templatesFolder}`);
+    const resolvedTemplatesFolder = resolveConfiguredFolder(gitRoot, templatesFolder);
+    if (
+      templatesFolder !== `${CONFIG_DIR}/${TEMPLATES_DIR}` &&
+      !existsSync(resolvedTemplatesFolder)
+    ) {
+      return invalidPath(`templates folder does not exist: ${resolvedTemplatesFolder}`);
     }
     config.templatesFolder = templatesFolder;
     changed = true;
@@ -222,17 +229,29 @@ function ensureInitTemplates(gitRoot: string, templatesDir: string, alreadyIniti
 }
 
 function normalizeConfiguredFolder(path: string) {
-  const trimmed = path.trim();
-  if (trimmed === '.') {
-    return '.';
-  }
-
-  return resolve(trimmed);
+  return normalizeConfiguredPathValue(path.trim());
 }
 
 function normalizeBranchesFolder(path: string) {
   const parentFolder = normalizeConfiguredFolder(path);
-  return parentFolder === '.' ? '.' : join(parentFolder, 'branches');
+  return appendConfiguredPathSegment(parentFolder, 'branches');
+}
+
+function resolveConfiguredFolder(gitRoot: string, path: string) {
+  return isAbsolute(path) ? path : resolve(gitRoot, path);
+}
+
+function appendConfiguredPathSegment(path: string, segment: string) {
+  if (isAbsolute(path)) {
+    return join(path, segment);
+  }
+
+  const normalized = normalizeConfiguredPathValue(path).replace(/[\\/]+$/, '');
+  return normalized && normalized !== '.' ? `${normalized}/${segment}` : segment;
+}
+
+function normalizeConfiguredPathValue(path: string) {
+  return isAbsolute(path) ? path : path.replaceAll('\\', '/');
 }
 
 export function addToGitignore(gitRoot: string, value: string) {

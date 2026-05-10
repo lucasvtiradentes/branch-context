@@ -107,7 +107,7 @@ describe('meta e2e', () => {
     await runCli(['on-commit']);
     const branchKey = sanitizeBranchName('feature/template-test');
     const metaBefore = getBranchMeta(repo, branchKey);
-    await runCli(['template', '_default']);
+    await runCli(['template', 'apply', '_default']);
     const metaAfter = getBranchMeta(repo, branchKey);
     expect(metaAfter?.commits).toBe(metaBefore?.commits);
     expect(metaAfter?.changed_files).toBe(metaBefore?.changed_files);

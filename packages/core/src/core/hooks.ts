@@ -7,12 +7,23 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { basename, delimiter, dirname, isAbsolute, join, relative } from 'node:path';
+import {
+  basename,
+  delimiter,
+  dirname,
+  isAbsolute,
+  join,
+  sep as pathSeparator,
+  relative,
+} from 'node:path';
 import { CLI_NAME, GIT_DIR, HOOK_MARKER, HookType } from '../constants';
-import { gitConfigUnset, gitCurrentBranch, gitHooksPath, gitInfoExcludeAdd, gitRoot } from '../git';
+import { gitConfigUnset, gitCurrentBranch, gitHooksPath, gitRoot } from '../git';
 import { loadHookTemplateResource } from '../resources';
 
 export type PromptYesNo = (question: string) => Promise<boolean>;
+export type InstallHookOptions = {
+  commandName?: string | null;
+};
 
 export enum HookInstallResult {
   Installed = 'installed',
@@ -29,7 +40,6 @@ export enum HookUninstallResult {
 }
 
 const customHooksConfirmed = new Map<string, boolean>();
-const excludeConfirmed = new Map<string, boolean>();
 const appendConfirmed = new Map<string, boolean>();
 const hookCallbacks = {
   [HookType.PostCheckout]: 'on-checkout',
@@ -39,7 +49,6 @@ const noPrompt: PromptYesNo = async () => false;
 
 export function resetConfirmationState() {
   customHooksConfirmed.clear();
-  excludeConfirmed.clear();
   appendConfirmed.clear();
 }
 
@@ -53,13 +62,13 @@ function findOnPath(name: string) {
   return null;
 }
 
-export function getBranchctxPath() {
-  const progName = process.env.BCTX_PROG_NAME ?? CLI_NAME;
+export function getBranchctxPath(commandName?: string | null) {
+  const progName = commandName ?? process.env.BCTX_PROG_NAME ?? CLI_NAME;
   return findOnPath(progName) ?? progName;
 }
 
-export function getCallback(hookType: HookType) {
-  const branchctxPath = getBranchctxPath();
+export function getCallback(hookType: HookType, options: InstallHookOptions = {}) {
+  const branchctxPath = getBranchctxPath(options.commandName);
   return `"${branchctxPath}" ${hookCallbacks[hookType]}`;
 }
 
@@ -131,16 +140,16 @@ function getHookTemplate(hookType: HookType) {
   return loadHookTemplateResource(hookType);
 }
 
-function getStandaloneHookContent(hookType: HookType) {
+function getStandaloneHookContent(hookType: HookType, options: InstallHookOptions = {}) {
   return getHookTemplate(hookType)
     .replace('{marker}', HOOK_MARKER)
-    .replace('{callback}', getCallback(hookType));
+    .replace('{callback}', getCallback(hookType, options));
 }
 
 const SNIPPET_END_MARKER = '# branch-ctx-end';
 
-function getAppendSnippet(hookType: HookType) {
-  const callback = getCallback(hookType);
+function getAppendSnippet(hookType: HookType, options: InstallHookOptions = {}) {
+  const callback = getCallback(hookType, options);
   if (hookType === HookType.PostCheckout) {
     return `
 ${HOOK_MARKER}
@@ -157,36 +166,46 @@ ${SNIPPET_END_MARKER}
 `;
 }
 
-function replaceBctxSnippet(content: string, hookType: HookType) {
+function replaceBctxSnippet(content: string, hookType: HookType, options: InstallHookOptions = {}) {
   const pattern = new RegExp(
     `${escapeRegex(HOOK_MARKER)}.*?${escapeRegex(SNIPPET_END_MARKER)}`,
     'gs',
   );
-  return content.replace(pattern, getAppendSnippet(hookType).trim());
+  return content.replace(pattern, getAppendSnippet(hookType, options).trim());
 }
 
 export async function installHook(
   gitRootPath: string,
   hookType: HookType = HookType.PostCheckout,
   ask?: PromptYesNo,
+  options: InstallHookOptions = {},
 ): Promise<HookInstallResult> {
   const prompt = ask ?? noPrompt;
   const customHooksDir = getCustomHooksDir(gitRootPath);
+  const managedHookPath = getExistingManagedHookPath(gitRootPath, hookType);
+  if (managedHookPath) {
+    const existing = readFileSync(managedHookPath, 'utf8');
+    const updated = isStandaloneBctxHook(existing)
+      ? getStandaloneHookContent(hookType, options)
+      : replaceBctxSnippet(existing, hookType, options);
+    if (updated !== existing) {
+      writeFileSync(managedHookPath, updated);
+      chmodSync(managedHookPath, statSync(managedHookPath).mode | 0o111);
+      return HookInstallResult.Updated;
+    }
+    return HookInstallResult.AlreadyInstalled;
+  }
+
   let useCustom = false;
 
   if (customHooksDir) {
     if (!customHooksConfirmed.has(gitRootPath)) {
       const relPath = relative(gitRootPath, customHooksDir);
       console.log(`\nDetected custom hooks directory: ${relPath}`);
-      useCustom = await prompt('Install hooks in this directory?');
+      useCustom = await prompt(`Install hooks in custom hooks directory '${relPath}'?`);
       customHooksConfirmed.set(gitRootPath, useCustom);
 
-      if (useCustom && !excludeConfirmed.has(gitRootPath)) {
-        excludeConfirmed.set(
-          gitRootPath,
-          await prompt('Exclude hooks from git tracking (.git/info/exclude)?'),
-        );
-      } else if (!useCustom) {
+      if (!useCustom) {
         console.log(
           `warning: hooks in .git/hooks/ won't run while core.hooksPath is set to '${relPath}'`,
         );
@@ -201,18 +220,6 @@ export async function installHook(
 
   if (existsSync(hookPath)) {
     const existing = readFileSync(hookPath, 'utf8');
-    if (existing.includes(HOOK_MARKER)) {
-      const updated = isStandaloneBctxHook(existing)
-        ? getStandaloneHookContent(hookType)
-        : replaceBctxSnippet(existing, hookType);
-      if (updated !== existing) {
-        writeFileSync(hookPath, updated);
-        chmodSync(hookPath, statSync(hookPath).mode | 0o111);
-        return HookInstallResult.Updated;
-      }
-      return HookInstallResult.AlreadyInstalled;
-    }
-
     const appendKey = `${gitRootPath}:${hookType}`;
     if (!appendConfirmed.has(appendKey)) {
       console.log(`\nExisting ${hookType} hook detected (not managed by bctx)`);
@@ -223,18 +230,30 @@ export async function installHook(
       return HookInstallResult.HookExists;
     }
 
-    writeFileSync(hookPath, `${existing}${getAppendSnippet(hookType)}`);
+    writeFileSync(hookPath, `${existing}${getAppendSnippet(hookType, options)}`);
     return HookInstallResult.Appended;
   }
 
-  writeFileSync(hookPath, getStandaloneHookContent(hookType));
+  writeFileSync(hookPath, getStandaloneHookContent(hookType, options));
   chmodSync(hookPath, statSync(hookPath).mode | 0o111);
 
-  if (useCustom && excludeConfirmed.get(gitRootPath)) {
-    gitInfoExcludeAdd(gitRootPath, relative(gitRootPath, hookPath));
+  return HookInstallResult.Installed;
+}
+
+function getExistingManagedHookPath(gitRootPath: string, hookType: HookType) {
+  const paths = new Set<string>();
+  if (getCustomHooksDir(gitRootPath)) {
+    paths.add(getHookPath(gitRootPath, hookType, true));
+  }
+  paths.add(getHookPath(gitRootPath, hookType, false));
+
+  for (const hookPath of paths) {
+    if (existsSync(hookPath) && readFileSync(hookPath, 'utf8').includes(HOOK_MARKER)) {
+      return hookPath;
+    }
   }
 
-  return HookInstallResult.Installed;
+  return null;
 }
 
 function removeBctxSnippet(content: string) {
@@ -292,12 +311,21 @@ export function uninstallHook(
   }
 
   for (const hookPath of getAllHookPaths(gitRootPath, hookType)) {
-    if (existsSync(hookPath)) {
+    if (existsSync(hookPath) && !isHuskyShimHook(gitRootPath, hookPath)) {
       return HookUninstallResult.NotManaged;
     }
   }
 
   return HookUninstallResult.NotInstalled;
+}
+
+function isHuskyShimHook(gitRootPath: string, hookPath: string) {
+  const customHooksDir = getCustomHooksDir(gitRootPath);
+  if (!customHooksDir || !isHuskyDir(customHooksDir)) {
+    return false;
+  }
+
+  return hookPath.startsWith(`${customHooksDir}${pathSeparator}`);
 }
 
 export function getCurrentBranch(path?: string) {

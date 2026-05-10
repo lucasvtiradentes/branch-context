@@ -76,7 +76,8 @@ ${formatSubcommandArrays(subcommands)}
   _${binName}_templates() {
     git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
     if [[ -n "$git_root" ]]; then
-      templates_dir="$git_root/${templatesRelDir}"
+      templates_dir="$(${binName} template source 2>/dev/null | sed -n 's/^Resolved: //p' | tail -n 1)"
+      templates_dir="\${templates_dir:-$git_root/${templatesRelDir}}"
       if [[ -d "$templates_dir" ]]; then
         _values 'template' $(ls "$templates_dir" 2>/dev/null)
       fi
@@ -86,6 +87,7 @@ ${formatSubcommandArrays(subcommands)}
   _arguments -C \\
     '1:command:->command' \\
     '2:subcommand:->subcommand' \\
+    '3:template_arg:->template_arg' \\
     '*::arg:->arg'
 
   case $state in
@@ -95,7 +97,11 @@ ${formatSubcommandArrays(subcommands)}
     subcommand)
       case $words[2] in
 ${formatSubcommandCases(binName, subcommands)}
-        template)
+      esac
+      ;;
+    template_arg)
+      case "$words[2] $words[3]" in
+        'template apply')
           _${binName}_templates
           ;;
       esac
@@ -122,17 +128,20 @@ function getBashCompletionScript(
       ;;
     2)
       case "\${COMP_WORDS[1]}" in
-        template)
-          git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
-          if [[ -n "$git_root" ]]; then
-            templates_dir="$git_root/${templatesRelDir}"
-            if [[ -d "$templates_dir" ]]; then
-              COMPREPLY=($(compgen -W "$(ls "$templates_dir" 2>/dev/null)" -- "$cur"))
-            fi
-          fi
-          ;;
 ${formatBashSubcommandCases(subcommands)}
       esac
+      ;;
+    3)
+      if [[ "\${COMP_WORDS[1]}" == "template" && "\${COMP_WORDS[2]}" == "apply" ]]; then
+        git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
+        if [[ -n "$git_root" ]]; then
+          templates_dir="$(${binName} template source 2>/dev/null | sed -n 's/^Resolved: //p' | tail -n 1)"
+          templates_dir="\${templates_dir:-$git_root/${templatesRelDir}}"
+          if [[ -d "$templates_dir" ]]; then
+            COMPREPLY=($(compgen -W "$(ls "$templates_dir" 2>/dev/null)" -- "$cur"))
+          fi
+        fi
+      fi
       ;;
   esac
 }
@@ -162,10 +171,18 @@ function __${binName}_using_command
   test (count $tokens) -ge 2; and test "$tokens[2]" = "$argv[1]"
 end
 
+function __${binName}_using_subcommand
+  set -l tokens (commandline -opc)
+  test (count $tokens) -ge 3; and test "$tokens[2]" = "$argv[1]"; and test "$tokens[3]" = "$argv[2]"
+end
+
 function __${binName}_templates
   set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
   if test -n "$git_root"
-    set -l templates_dir "$git_root/${templatesRelDir}"
+    set -l templates_dir (${binName} template source 2>/dev/null | sed -n 's/^Resolved: //p' | tail -n 1)
+    if test -z "$templates_dir"
+      set -l templates_dir "$git_root/${templatesRelDir}"
+    end
     if test -d "$templates_dir"
       ls "$templates_dir" 2>/dev/null
     end
@@ -175,7 +192,7 @@ end
 complete -c ${binName} -f
 ${formatFishRootCompletions(binName, roots)}
 ${formatFishSubcommandCompletions(binName, subcommands)}
-complete -c ${binName} -f -n "__${binName}_using_command 'template'" -a "(__${binName}_templates)"`;
+complete -c ${binName} -f -n "__${binName}_using_subcommand 'template' 'apply'" -a "(__${binName}_templates)"`;
 }
 
 function getRootCommands(commands: Command[]) {

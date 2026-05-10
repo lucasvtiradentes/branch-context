@@ -19,9 +19,11 @@ import { registerUninstallCommand } from './commands/uninstall';
 
 let programInstance: CaporalProgram | undefined;
 let programInstanceBin: string | undefined;
+let originalCwdRestored = false;
 
 export async function runCli(args = process.argv.slice(2)) {
   try {
+    restoreOriginalCwd();
     if (args[0] === 'init' && !args.includes('--help') && !args.includes('-h')) {
       return await runInitCommand(args);
     }
@@ -32,6 +34,15 @@ export async function runCli(args = process.argv.slice(2)) {
     console.log(`error: ${message}`);
     return 1;
   }
+}
+
+function restoreOriginalCwd() {
+  if (originalCwdRestored || !process.env.BCTX_ORIGINAL_CWD) {
+    return;
+  }
+
+  originalCwdRestored = true;
+  process.chdir(process.env.BCTX_ORIGINAL_CWD);
 }
 
 function getProgram(): CaporalProgram {
@@ -86,8 +97,8 @@ function createProgram(binName: string): CaporalProgram {
       `  ${binName} status`,
       `  ${binName} agents status`,
       `  ${binName} prune`,
-      `  ${binName} template`,
-      `  ${binName} template feature`,
+      `  ${binName} template apply`,
+      `  ${binName} template apply feature`,
       `  ${binName} --install-completion`,
     ].join('\n'),
   );

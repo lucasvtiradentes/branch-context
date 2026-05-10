@@ -53,6 +53,7 @@ function getPosixShim() {
   return `#!/usr/bin/env sh
 set -eu
 export BCTX_PROG_NAME=bctxd
+export BCTX_ORIGINAL_CWD="$PWD"
 exec pnpm --dir ${shellQuote(rootDir)} --filter branch-context exec tsx --conditions=development ${shellQuote(join(appDir, 'src', 'index.ts'))} "$@"
 `;
 }
@@ -60,6 +61,7 @@ exec pnpm --dir ${shellQuote(rootDir)} --filter branch-context exec tsx --condit
 function getWindowsShim() {
   return `@echo off
 set "BCTX_PROG_NAME=bctxd"
+set "BCTX_ORIGINAL_CWD=%CD%"
 pnpm --dir "${rootDir}" --filter branch-context exec tsx --conditions=development "${join(appDir, 'src', 'index.ts')}" %*
 `;
 }

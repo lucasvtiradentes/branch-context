@@ -11,6 +11,8 @@ import {
 import { copyInitConfigResource, loadDefaultConfigResource } from '../resources';
 
 let defaultConfig: ReturnType<typeof loadDefaultConfigResource> | null = null;
+const DEFAULT_BRANCHES_FOLDER = `${CONFIG_DIR}/${BRANCHES_DIR}`;
+const DEFAULT_TEMPLATES_FOLDER = `${CONFIG_DIR}/${TEMPLATES_DIR}`;
 
 export class Config {
   defaultBaseBranch: string;
@@ -27,8 +29,10 @@ export class Config {
     this.sound = options.sound ?? defaults.sound ?? true;
     this.soundFile = options.soundFile ?? null;
     this.commitDescription = options.commitDescription ?? defaults.commit_description ?? false;
-    this.branchesFolder = options.branchesFolder ?? defaults.branches_folder ?? '.';
-    this.templatesFolder = options.templatesFolder ?? defaults.templates_folder ?? '.';
+    this.branchesFolder =
+      options.branchesFolder ?? defaults.branches_folder ?? DEFAULT_BRANCHES_FOLDER;
+    this.templatesFolder =
+      options.templatesFolder ?? defaults.templates_folder ?? DEFAULT_TEMPLATES_FOLDER;
   }
 
   static load(workspace: string) {
@@ -103,7 +107,7 @@ export function getConfigDir(workspace: string) {
 
 export function getTemplatesDir(workspace: string) {
   const config = Config.load(workspace);
-  return resolveConfiguredFolder(workspace, config.templatesFolder, TEMPLATES_DIR);
+  return resolveConfiguredFolder(workspace, config.templatesFolder);
 }
 
 export function getTemplateDir(workspace: string, template = getDefaultTemplate()) {
@@ -112,7 +116,7 @@ export function getTemplateDir(workspace: string, template = getDefaultTemplate(
 
 export function getBranchesDir(workspace: string) {
   const config = Config.load(workspace);
-  return resolveConfiguredFolder(workspace, config.branchesFolder, BRANCHES_DIR);
+  return resolveConfiguredFolder(workspace, config.branchesFolder);
 }
 
 export function getLocalTemplatesDir(workspace: string) {
@@ -146,11 +150,7 @@ function readdirDirectoryNames(dir: string) {
     .map((entry) => entry.name);
 }
 
-function resolveConfiguredFolder(workspace: string, value: string, localFolderName: string) {
-  if (value === '.') {
-    return join(workspace, CONFIG_DIR, localFolderName);
-  }
-
+function resolveConfiguredFolder(workspace: string, value: string) {
   return isAbsolute(value) ? value : resolve(workspace, value);
 }
 
@@ -163,7 +163,7 @@ function parseBranchesFolder(data: Record<string, unknown>) {
     return join(data.storage.external_path, BRANCHES_DIR);
   }
 
-  return getDefaultConfig().branches_folder ?? '.';
+  return getDefaultConfig().branches_folder ?? DEFAULT_BRANCHES_FOLDER;
 }
 
 function parseTemplatesFolder(data: Record<string, unknown>) {
@@ -175,7 +175,7 @@ function parseTemplatesFolder(data: Record<string, unknown>) {
     return data.templates.path;
   }
 
-  return getDefaultConfig().templates_folder ?? '.';
+  return getDefaultConfig().templates_folder ?? DEFAULT_TEMPLATES_FOLDER;
 }
 
 function getBranchTemplatePrefix(branch: string) {

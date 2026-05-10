@@ -1,5 +1,14 @@
-import { join, sep as pathSeparator, relative } from 'node:path';
-import { CONFIG_DIR, CONFIG_FILE, DEFAULT_SYMLINK, syncCurrentBranch } from '@branch-context/core';
+import { basename, dirname, join, sep as pathSeparator, relative } from 'node:path';
+import {
+  CONFIG_DIR,
+  CONFIG_FILE,
+  DEFAULT_SYMLINK,
+  getCustomHooksDir,
+  getHookPath,
+  HOOK_POST_CHECKOUT,
+  HOOK_POST_COMMIT,
+  syncCurrentBranch,
+} from '@branch-context/core';
 import * as vscode from 'vscode';
 import { logger } from '../../shared/logger';
 import { branchContextState } from '../../vscode/state';
@@ -65,6 +74,9 @@ function resetWatchers(): void {
       registerWatcher(externalRoot, '**');
     }
   }
+  for (const hookPath of getHookWatchPaths(workspace.workspaceRoot)) {
+    registerFileWatcher(hookPath);
+  }
 }
 
 function getWatchPatterns(): string[] {
@@ -76,7 +88,31 @@ function getWatcherKey(workspace: ReturnType<typeof getWorkspaceInfo>): string {
     workspace.workspaceRoot ?? '',
     workspace.branchesDir ?? '',
     workspace.templatesDir ?? '',
+    ...getHookWatchPaths(workspace.workspaceRoot),
   ].join(':');
+}
+
+function getHookWatchPaths(workspaceRoot: string | null): string[] {
+  if (!workspaceRoot) {
+    return [];
+  }
+
+  const paths = new Set([
+    join(workspaceRoot, '.git', 'config'),
+    getHookPath(workspaceRoot, HOOK_POST_CHECKOUT, false),
+    getHookPath(workspaceRoot, HOOK_POST_COMMIT, false),
+  ]);
+
+  if (getCustomHooksDir(workspaceRoot)) {
+    paths.add(getHookPath(workspaceRoot, HOOK_POST_CHECKOUT, true));
+    paths.add(getHookPath(workspaceRoot, HOOK_POST_COMMIT, true));
+  }
+
+  return [...paths];
+}
+
+function registerFileWatcher(path: string): void {
+  registerWatcher(dirname(path), basename(path));
 }
 
 function registerWatcher(workspaceRoot: string, pattern: string): void {

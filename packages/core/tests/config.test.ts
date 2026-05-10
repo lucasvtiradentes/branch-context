@@ -92,9 +92,9 @@ describe('config', () => {
     const workspace = createTempDir();
     copyInitConfig(workspace);
     const loaded = Config.load(workspace);
-    expect(loaded.defaultBaseBranch).toBe('main');
-    expect(loaded.branchesFolder).toBe('.');
-    expect(loaded.templatesFolder).toBe('.');
+    expect(loaded.defaultBaseBranch).toBe('origin/main');
+    expect(loaded.branchesFolder).toBe('.bctx/branches');
+    expect(loaded.templatesFolder).toBe('.bctx/templates');
   });
 
   it('finds resources when cwd is outside the package', () => {
@@ -162,7 +162,7 @@ describe('config', () => {
     expect(loaded.templatesFolder).toBe(templatesPath);
   });
 
-  it('falls back to local folders when custom folder paths are invalid', () => {
+  it('falls back to default folders when custom folder paths are invalid', () => {
     const workspace = createTempDir();
     mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
     writeFileSync(
@@ -174,8 +174,8 @@ describe('config', () => {
     );
 
     const loaded = Config.load(workspace);
-    expect(loaded.branchesFolder).toBe('.');
-    expect(loaded.templatesFolder).toBe('.');
+    expect(loaded.branchesFolder).toBe('.bctx/branches');
+    expect(loaded.templatesFolder).toBe('.bctx/templates');
   });
 
   it('loads missing commit description as backward compatible default', () => {

@@ -1,5 +1,7 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { gitConfig } from '../src/git';
 import {
   getHookPath,
   HOOK_MARKER,
@@ -24,6 +26,15 @@ describe('post-checkout hook', () => {
     expect(content).toContain('on-checkout');
   });
 
+  it('installs hook with custom command name', async () => {
+    const repo = createGitRepo();
+    expect(
+      await installHook(repo, HOOK_POST_CHECKOUT, undefined, { commandName: 'custom-bctxd-test' }),
+    ).toBe(HookInstallResult.Installed);
+    const content = readFileSync(getHookPath(repo, HOOK_POST_CHECKOUT), 'utf8');
+    expect(content).toContain('"custom-bctxd-test" on-checkout');
+  });
+
   it('detects already installed hook', async () => {
     const repo = createGitRepo();
     await installHook(repo, HOOK_POST_CHECKOUT);
@@ -41,6 +52,27 @@ describe('post-checkout hook', () => {
     const content = readFileSync(hookPath, 'utf8');
     expect(content).not.toContain('/missing/bctx');
     expect(content).toContain('on-checkout');
+  });
+
+  it('updates managed husky hook before installing inactive git hook', async () => {
+    const repo = createGitRepo();
+    expect(gitConfig(repo, 'core.hooksPath', '.husky/_').status).toBe(0);
+    mkdirSync(join(repo, '.husky', '_'), { recursive: true });
+    writeFileSync(join(repo, '.husky', '_', 'h'), '');
+    mkdirSync(join(repo, '.husky'), { recursive: true });
+    const hookPath = join(repo, '.husky', HOOK_POST_CHECKOUT);
+    writeFileSync(
+      hookPath,
+      '#!/bin/bash\n# branch-ctx-managed\n\n"/missing/bctx" on-checkout "$@"\n',
+    );
+
+    expect(
+      await installHook(repo, HOOK_POST_CHECKOUT, undefined, { commandName: 'custom-bctxd-test' }),
+    ).toBe(HookInstallResult.Updated);
+
+    const content = readFileSync(hookPath, 'utf8');
+    expect(content).toContain('"custom-bctxd-test" on-checkout');
+    expect(existsSync(join(repo, '.git', 'hooks', HOOK_POST_CHECKOUT))).toBe(false);
   });
 
   it('does not append unmanaged hook when declined', async () => {
@@ -96,6 +128,19 @@ describe('post-checkout hook', () => {
     expect(uninstallHook(createGitRepo(), HOOK_POST_CHECKOUT)).toBe(
       HookUninstallResult.NotInstalled,
     );
+  });
+
+  it('ignores husky shim hook when user hook is missing', () => {
+    const repo = createGitRepo();
+    expect(gitConfig(repo, 'core.hooksPath', '.husky/_').status).toBe(0);
+    mkdirSync(join(repo, '.husky', '_'), { recursive: true });
+    writeFileSync(join(repo, '.husky', '_', 'h'), '');
+    writeFileSync(
+      join(repo, '.husky', '_', HOOK_POST_CHECKOUT),
+      '#!/usr/bin/env sh\n. "$(dirname "$0")/h"',
+    );
+
+    expect(uninstallHook(repo, HOOK_POST_CHECKOUT)).toBe(HookUninstallResult.NotInstalled);
   });
 
   it('returns not_managed for unmanaged hook', () => {

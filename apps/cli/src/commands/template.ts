@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { isAbsolute, resolve } from 'node:path';
 import { stdin as input } from 'node:process';
 import readline from 'node:readline/promises';
 import {
@@ -29,14 +29,14 @@ const templateErrorMessages = {
 
 export function registerTemplateCommand(program: Program) {
   program
-    .command('template source', 'Show or set the templates folder')
-    .argument('[path]', 'Templates folder path. Use "." for .bctx/templates')
-    .action(({ args }) => cmdTemplateSource(stringArg(args.path)));
-
-  program
-    .command('template', 'Apply template to current branch')
+    .command('template apply', 'Apply template to current branch')
     .argument('[name]', 'Template name')
     .action(({ args }) => cmdTemplate(stringArgs(args.name)));
+
+  program
+    .command('template source', 'Show or set the templates folder')
+    .argument('[path]', 'Templates folder path')
+    .action(({ args }) => cmdTemplateSource(stringArg(args.path)));
 }
 
 async function selectTemplate(templates: string[]) {
@@ -75,8 +75,11 @@ function stringArg(value: unknown) {
 }
 
 function normalizeFolderArg(path: string) {
-  const trimmed = path.trim();
-  return trimmed === '.' ? '.' : resolve(trimmed);
+  return path.trim();
+}
+
+function resolveFolderArg(gitRoot: string, path: string) {
+  return isAbsolute(path) ? path : resolve(gitRoot, path);
 }
 
 async function cmdTemplateSource(path: string | null) {
@@ -98,8 +101,9 @@ async function cmdTemplateSource(path: string | null) {
   }
 
   const templatesFolder = normalizeFolderArg(path);
-  if (templatesFolder !== '.' && !existsSync(templatesFolder)) {
-    console.log(`error: templates folder does not exist: ${templatesFolder}`);
+  const resolvedTemplatesFolder = resolveFolderArg(gitRoot, templatesFolder);
+  if (!existsSync(resolvedTemplatesFolder)) {
+    console.log(`error: templates folder does not exist: ${resolvedTemplatesFolder}`);
     return 1;
   }
 
@@ -137,7 +141,7 @@ async function cmdTemplate(args: string[]) {
   let template = args[0];
   if (!template) {
     if (!input.isTTY) {
-      console.log(`usage: ${CLI_NAME} template <name>`);
+      console.log(`usage: ${CLI_NAME} template apply <name>`);
       console.log(`available: ${templates.join(', ')}`);
       return 1;
     }

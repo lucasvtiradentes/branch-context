@@ -23,11 +23,11 @@
       "type": "boolean"
     },
     "branches_folder": {
-      "description": "Branches folder path. \".\" means .bctx/branches. Absolute paths are used as-is.",
+      "description": "Branches folder path. Relative paths are resolved from the repository root.",
       "type": "string"
     },
     "templates_folder": {
-      "description": "Templates folder path. \".\" means .bctx/templates. Absolute paths are used as-is.",
+      "description": "Templates folder path. Relative paths are resolved from the repository root.",
       "type": "string"
     }
   },
