@@ -1,6 +1,9 @@
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-export const ROOT_DIR = resolve(__dirname, '..', '..');
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+
+export const ROOT_DIR = resolve(SCRIPT_DIR, '..', '..');
 
 export const READMES = {
   main: resolve(ROOT_DIR, 'README.md'),
