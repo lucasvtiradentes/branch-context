@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- a6c2f40: Simplify context storage configuration with direct `branches_folder` and `templates_folder` paths, infer templates from branch prefixes, keep local config and branch contexts gitignored by default, and add a CLI command for changing the templates folder.
+- 34dd8ff: Persist collapsed and expanded group state across Branch AI Sessions, Branch Git Changes, and Other Branches views.
+- 0a9dce3: Add Branch AI Sessions rename support, with a simplified session metadata format that uses one description field for custom labels and pin state separately.
+- 56905fc: Show Branch AI Sessions in workspaces without Branch Context initialized, keep active session detection scoped to the current workspace, and avoid duplicate refreshes after the extension writes agent session metadata.
+
 ## 0.2.1
 
 ### Patch Changes

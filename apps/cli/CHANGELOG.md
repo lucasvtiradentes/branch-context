@@ -1,5 +1,16 @@
 # branch-context
 
+## 0.1.0
+
+### Minor Changes
+
+- a6c2f40: Simplify context storage configuration with direct `branches_folder` and `templates_folder` paths, infer templates from branch prefixes, keep local config and branch contexts gitignored by default, and add a CLI command for changing the templates folder.
+
+### Patch Changes
+
+- ca68f22: Run CLI init through the shared core init service so it matches VS Code behavior and updates current-branch context metadata consistently.
+- c8d47bf: Improve init, template, and hook handling across the CLI and VS Code extension.
+
 ## 0.0.6
 
 ### Patch Changes
