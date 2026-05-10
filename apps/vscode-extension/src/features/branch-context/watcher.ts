@@ -1,5 +1,5 @@
-import { sep as pathSeparator, relative } from 'node:path';
-import { CONFIG_DIR, DEFAULT_SYMLINK } from '@branch-context/core';
+import { join, sep as pathSeparator, relative } from 'node:path';
+import { CONFIG_DIR, CONFIG_FILE, DEFAULT_SYMLINK, syncCurrentBranch } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { logger } from '../../shared/logger';
 import { branchContextState } from '../../vscode/state';
@@ -10,6 +10,7 @@ let watcherDisposables: vscode.Disposable[] = [];
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 let pendingRefreshEventCount = 0;
 let pendingRefreshLastEvent = 'none';
+let pendingConfigChange = false;
 let watcherKey: string | null = null;
 
 export function initializeBranchContextWatcher(context: vscode.ExtensionContext): void {
@@ -33,6 +34,7 @@ export function initializeBranchContextWatcher(context: vscode.ExtensionContext)
         }
         pendingRefreshEventCount = 0;
         pendingRefreshLastEvent = 'none';
+        pendingConfigChange = false;
       },
     },
   );
@@ -114,6 +116,7 @@ function scheduleRefresh(event: string, uri: vscode.Uri): void {
 
   pendingRefreshEventCount += 1;
   pendingRefreshLastEvent = `type=${event} path=${uri.fsPath}`;
+  pendingConfigChange ||= isConfigPath(uri.fsPath);
   if (refreshTimer) {
     clearTimeout(refreshTimer);
   }
@@ -122,9 +125,43 @@ function scheduleRefresh(event: string, uri: vscode.Uri): void {
     refreshTimer = undefined;
     const eventCount = pendingRefreshEventCount;
     const lastEvent = pendingRefreshLastEvent;
+    const configChanged = pendingConfigChange;
     pendingRefreshEventCount = 0;
     pendingRefreshLastEvent = 'none';
+    pendingConfigChange = false;
     logger.debug(`watcher refresh fired events=${eventCount} last=${lastEvent}`);
-    branchContextState.refresh();
+    const state = branchContextState.refresh();
+    if (configChanged) {
+      syncAfterConfigChange(state.workspaceRoot);
+    }
   }, 100);
+}
+
+function isConfigPath(path: string): boolean {
+  const workspace = getWorkspaceInfo();
+  return workspace.workspaceRoot
+    ? path === join(workspace.workspaceRoot, CONFIG_DIR, CONFIG_FILE)
+    : false;
+}
+
+function syncAfterConfigChange(workspaceRoot: string | null): void {
+  if (!workspaceRoot) {
+    return;
+  }
+
+  const result = syncCurrentBranch(workspaceRoot, { sound: false });
+  if (!result.ok) {
+    logger.debug(`config change sync skipped: reason=${result.reason} message=${result.message}`);
+    return;
+  }
+
+  logger.info(
+    [
+      'config change sync result:',
+      `branch=${result.branch}`,
+      `contextDir=${result.contextDir}`,
+      `symlink=${result.symlinkResult}`,
+    ].join(' '),
+  );
+  branchContextState.refresh();
 }

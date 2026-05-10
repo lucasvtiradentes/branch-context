@@ -37,6 +37,22 @@ export async function promptYesNo(question: string) {
   }
 }
 
+export async function promptText(question: string, defaultValue: string) {
+  if (!input.isTTY) {
+    return defaultValue;
+  }
+  const rl = readline.createInterface({ input, output });
+  try {
+    const answer = await rl.question(`${question} [${defaultValue}]: `);
+    return answer.trim() || defaultValue;
+  } catch {
+    output.write('\n');
+    return defaultValue;
+  } finally {
+    rl.close();
+  }
+}
+
 function normalizePromptAnswer(answer: string) {
   return answer.trim().toLowerCase();
 }

@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { BRANCHES_DIR, CONFIG_DIR, CONFIG_FILE, DEFAULT_SYMLINK, HookType } from '../constants';
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { isAbsolute, join, sep as pathSeparator, relative, resolve } from 'node:path';
+import { CONFIG_DIR, CONFIG_FILE, DEFAULT_SYMLINK, HookType } from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
 import { getCurrentBranch, installHook, type PromptYesNo } from '../core/hooks';
@@ -130,7 +130,7 @@ export type InitProjectResult =
   | BranchContextActionError;
 
 export type InitProjectOptions = {
-  branchesFolder?: string | null;
+  branchesParentFolder?: string | null;
   templatesFolder?: string | null;
 };
 
@@ -160,8 +160,7 @@ export async function initProject(
   const checkoutHook = await installHook(gitRoot, HookType.PostCheckout, ask);
   const commitHook = await installHook(gitRoot, HookType.PostCommit, ask);
 
-  addToGitignore(gitRoot, DEFAULT_SYMLINK);
-  addToGitignore(gitRoot, `${CONFIG_DIR}/${BRANCHES_DIR}/`);
+  addInitGitignoreEntries(gitRoot, branchesDir, templatesDir);
 
   return {
     ok: true,
@@ -183,10 +182,13 @@ function configureInitFolders(
   const config = Config.load(gitRoot);
   let changed = false;
 
-  if (options.branchesFolder !== undefined && options.branchesFolder !== null) {
-    const branchesFolder = normalizeConfiguredFolder(options.branchesFolder);
-    if (branchesFolder !== '.' && !existsSync(branchesFolder)) {
-      return invalidPath(`branches folder does not exist: ${branchesFolder}`);
+  if (options.branchesParentFolder !== undefined && options.branchesParentFolder !== null) {
+    const branchesFolder = normalizeBranchesFolder(options.branchesParentFolder);
+    if (branchesFolder !== '.') {
+      const parentFolder = resolve(branchesFolder, '..');
+      if (!existsSync(parentFolder)) {
+        return invalidPath(`branches parent folder does not exist: ${parentFolder}`);
+      }
     }
     config.branchesFolder = branchesFolder;
     changed = true;
@@ -228,6 +230,11 @@ function normalizeConfiguredFolder(path: string) {
   return resolve(trimmed);
 }
 
+function normalizeBranchesFolder(path: string) {
+  const parentFolder = normalizeConfiguredFolder(path);
+  return parentFolder === '.' ? '.' : join(parentFolder, 'branches');
+}
+
 export function addToGitignore(gitRoot: string, value: string) {
   const gitignoreFile = join(gitRoot, '.gitignore');
   const existing = existsSync(gitignoreFile) ? readFileSync(gitignoreFile, 'utf8') : '';
@@ -236,6 +243,46 @@ export function addToGitignore(gitRoot: string, value: string) {
     const prefix = existing && !existing.endsWith('\n') ? '\n' : '';
     writeFileSync(gitignoreFile, `${existing}${prefix}${value}\n`);
   }
+}
+
+function addInitGitignoreEntries(gitRoot: string, branchesDir: string, templatesDir: string) {
+  addToGitignore(gitRoot, DEFAULT_SYMLINK);
+  addToGitignore(gitRoot, `${CONFIG_DIR}/*`);
+  addRepoFolderExceptionToGitignore(gitRoot, getLocalTemplatesDir(gitRoot));
+  addRepoFolderExceptionToGitignore(gitRoot, templatesDir);
+
+  const branchesRelPath = getRepoRelativePath(gitRoot, branchesDir);
+  if (branchesRelPath && !branchesRelPath.startsWith(`${CONFIG_DIR}/`)) {
+    addToGitignore(gitRoot, `${branchesRelPath}/`);
+  }
+}
+
+function addRepoFolderExceptionToGitignore(gitRoot: string, folder: string) {
+  const relPath = getRepoRelativePath(gitRoot, folder);
+  if (!relPath?.startsWith(`${CONFIG_DIR}/`)) {
+    return;
+  }
+
+  addToGitignore(gitRoot, `!${relPath}/`);
+  addToGitignore(gitRoot, `!${relPath}/**`);
+}
+
+function getRepoRelativePath(gitRoot: string, path: string) {
+  const relPath = relative(getComparablePath(gitRoot), getComparablePath(path));
+  if (
+    !relPath ||
+    relPath === '..' ||
+    relPath.startsWith(`..${pathSeparator}`) ||
+    isAbsolute(relPath)
+  ) {
+    return null;
+  }
+
+  return relPath.replaceAll(pathSeparator, '/');
+}
+
+function getComparablePath(path: string) {
+  return existsSync(path) ? realpathSync(path) : resolve(path);
 }
 
 export function syncCurrentBranch(

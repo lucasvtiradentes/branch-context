@@ -146,11 +146,11 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
 }
 
 async function promptInitOptions(): Promise<InitProjectOptions | null> {
-  const branchesFolder = await promptPathInput(
-    'Branches folder',
-    'Use "." for .bctx/branches, or paste an existing folder path',
+  const branchesParentFolder = await promptPathInput(
+    'Branches parent folder',
+    'Use "." for .bctx/branches, or paste an existing parent folder where branches/ will be created',
   );
-  if (branchesFolder === null) {
+  if (branchesParentFolder === null) {
     return null;
   }
 
@@ -163,7 +163,7 @@ async function promptInitOptions(): Promise<InitProjectOptions | null> {
   }
 
   return {
-    branchesFolder,
+    branchesParentFolder,
     templatesFolder,
   };
 }

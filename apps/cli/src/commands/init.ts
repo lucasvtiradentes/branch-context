@@ -12,7 +12,7 @@ import {
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
 import { requireGitRoot } from '../helpers/git-root';
-import { promptYesNo } from '../ui/prompt';
+import { promptText, promptYesNo } from '../ui/prompt';
 
 const hookInstallMessages = {
   [HookInstallResult.Installed]: (hookName: string) => `Hook installed: ${hookName}`,
@@ -26,7 +26,7 @@ const hookInstallMessages = {
 export function registerInitCommand(program: Program) {
   program
     .command('init', 'Initialize and install hook')
-    .option('--branches-folder <path>', 'Branches folder path. Use "." for .bctx/branches')
+    .option('--branches-parent-folder <path>', 'Parent folder where branches/ will be created')
     .option('--templates-folder <path>', 'Templates folder path. Use "." for .bctx/templates')
     .action(() => cmdInit([]));
 }
@@ -41,7 +41,7 @@ async function cmdInit(args: string[]) {
     return 1;
   }
 
-  const initOptions = parseInitOptions(args);
+  const initOptions = await parseInitOptions(args);
   if (!initOptions.ok) {
     console.log(`error: ${initOptions.message}`);
     return 1;
@@ -74,22 +74,34 @@ async function cmdInit(args: string[]) {
   return 0;
 }
 
-function parseInitOptions(
+async function parseInitOptions(
   args: string[],
-): { ok: true; options: Parameters<typeof initProject>[2] } | { ok: false; message: string } {
-  const branchesFolder = argValue(args, '--branches-folder');
+): Promise<
+  { ok: true; options: Parameters<typeof initProject>[2] } | { ok: false; message: string }
+> {
+  const branchesParentFolder = argValue(args, '--branches-parent-folder');
   const templatesFolder = argValue(args, '--templates-folder');
   const initOptions: Parameters<typeof initProject>[2] = {};
 
-  if (branchesFolder) {
-    initOptions.branchesFolder = normalizeFolderArg(branchesFolder);
+  if (branchesParentFolder) {
+    initOptions.branchesParentFolder = normalizeFolderArg(branchesParentFolder);
+  } else if (shouldPromptInitFolders(args)) {
+    initOptions.branchesParentFolder = normalizeFolderArg(
+      await promptText('Branches parent folder', '.'),
+    );
   }
 
   if (templatesFolder) {
     initOptions.templatesFolder = normalizeFolderArg(templatesFolder);
+  } else if (shouldPromptInitFolders(args)) {
+    initOptions.templatesFolder = normalizeFolderArg(await promptText('Templates folder', '.'));
   }
 
   return { ok: true, options: initOptions };
+}
+
+function shouldPromptInitFolders(args: string[]) {
+  return args.length === 1 && process.stdin.isTTY;
 }
 
 function normalizeFolderArg(path: string) {

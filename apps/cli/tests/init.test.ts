@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   addToGitignore,
@@ -48,15 +48,74 @@ describe('init command', () => {
     expect(existsSync(join(repo, DEFAULT_SYMLINK))).toBe(true);
   });
 
-  it('init adds symlink to gitignore', async () => {
+  it('init gitignores local machine state but leaves templates trackable', async () => {
     const repo = createGitRepo();
     process.chdir(repo);
     await runCli(['init']);
-    expect(readFileSync(join(repo, '.gitignore'), 'utf8')).toContain(DEFAULT_SYMLINK);
+    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
+    expect(gitignore).toContain(`${DEFAULT_SYMLINK}\n`);
+    expect(gitignore).toContain('.bctx/*\n');
+    expect(gitignore).toContain('!.bctx/templates/\n');
+    expect(gitignore).toContain('!.bctx/templates/**\n');
+    expect(gitignore).not.toContain('.bctx/config.json');
+    expect(gitignore).not.toContain('.bctx/branches/');
+  });
+
+  it('init gitignores custom branch folders inside the repo', async () => {
+    const repo = createGitRepo();
+    const branchesParentFolder = join(repo, 'repo-contexts');
+    mkdirSync(branchesParentFolder);
+    process.chdir(repo);
+
+    await runCli(['init', '--branches-parent-folder', branchesParentFolder]);
+
+    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
+    expect(gitignore).toContain('repo-contexts/branches/\n');
+    expect(gitignore).not.toContain('.bctx/branches/');
+  });
+
+  it('init does not gitignore custom branch folders outside the repo', async () => {
+    const repo = createGitRepo();
+    const branchesParentFolder = createTempDir();
+    process.chdir(repo);
+
+    await runCli(['init', '--branches-parent-folder', branchesParentFolder]);
+
+    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
+    expect(gitignore).not.toContain(`${branchesParentFolder}/`);
+    expect(gitignore).not.toContain('.bctx/branches/');
+  });
+
+  it('init keeps custom templates folders inside .bctx trackable', async () => {
+    const repo = createGitRepo();
+    const templatesFolder = join(repo, '.bctx', 'team-templates');
+    mkdirSync(templatesFolder, { recursive: true });
+    process.chdir(repo);
+
+    await runCli(['init', '--templates-folder', templatesFolder]);
+
+    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
+    expect(gitignore).toContain('.bctx/*\n');
+    expect(gitignore).toContain('!.bctx/team-templates/\n');
+    expect(gitignore).toContain('!.bctx/team-templates/**\n');
+  });
+
+  it('init keeps local templates trackable when configured templates are external', async () => {
+    const repo = createGitRepo();
+    const templatesFolder = createTempDir();
+    process.chdir(repo);
+
+    await runCli(['init', '--templates-folder', templatesFolder]);
+
+    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
+    expect(gitignore).toContain('.bctx/*\n');
+    expect(gitignore).toContain('!.bctx/templates/\n');
+    expect(gitignore).toContain('!.bctx/templates/**\n');
   });
 
   it('init syncs current branch through core service', async () => {
     const repo = createGitRepo();
+    expectOk(git(['branch', 'origin/main', 'main'], repo));
     expectOk(gitCheckout(repo, 'feature/init-sync', true));
     writeFileSync(join(repo, 'feature.txt'), 'changed');
     expectOk(gitAdd(repo));
@@ -72,6 +131,7 @@ describe('init command', () => {
 
   it('init fails when symlink path is blocked', async () => {
     const repo = createGitRepo();
+    expectOk(git(['branch', 'origin/main', 'main'], repo));
     writeFileSync(join(repo, DEFAULT_SYMLINK), 'blocked');
     process.chdir(repo);
     const capture = captureConsole();
@@ -91,15 +151,16 @@ describe('init command', () => {
     const result = await runCli(['init']);
 
     expect(result).toBe(0);
-    expect(capture.output).toContain('warning: base branch not found: main');
+    expect(capture.output).toContain('warning: base branch not found: origin/main');
   });
 
   it('init can store branch contexts in a custom folder', async () => {
     const repo = createGitRepo();
-    const branchesFolder = createTempDir();
+    const branchesParentFolder = createTempDir();
+    const branchesFolder = join(branchesParentFolder, 'branches');
     process.chdir(repo);
 
-    const result = await runCli(['init', '--branches-folder', branchesFolder]);
+    const result = await runCli(['init', '--branches-parent-folder', branchesParentFolder]);
 
     expect(result).toBe(0);
     const config = Config.load(repo);
@@ -113,10 +174,10 @@ describe('init command', () => {
     process.chdir(repo);
     const capture = captureConsole();
 
-    const result = await runCli(['init', '--branches-folder', join(repo, 'contexts')]);
+    const result = await runCli(['init', '--branches-parent-folder', join(repo, 'contexts')]);
 
     expect(result).toBe(1);
-    expect(capture.output).toContain('error: branches folder does not exist');
+    expect(capture.output).toContain('error: branches parent folder does not exist');
   });
 
   it('init can use a custom templates folder', async () => {

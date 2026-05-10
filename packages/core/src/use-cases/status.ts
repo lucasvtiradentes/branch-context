@@ -1,5 +1,5 @@
 import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join, sep as pathSeparator, relative } from 'node:path';
 import {
   CONTEXT_FILE_NAME,
   DEFAULT_SYMLINK,
@@ -8,7 +8,7 @@ import {
   HOOK_POST_COMMIT,
 } from '../constants';
 import { getCurrentBranch, isHookInstalled } from '../core/hooks';
-import { getArchivedDir, getBranchDir, getBranchRelPath, listArchivedBranches } from '../core/sync';
+import { getArchivedDir, getBranchDir, listArchivedBranches } from '../core/sync';
 import { getBaseBranch } from '../data/branch-base';
 import {
   Config,
@@ -99,7 +99,9 @@ export function getStatus(gitRoot: string): BranchContextStatus {
   const initialized = configExists(gitRoot);
   const currentBranch = getCurrentBranch(gitRoot);
   const currentContextDir = currentBranch ? getBranchDir(gitRoot, currentBranch) : null;
-  const currentContextRelPath = currentBranch ? getBranchRelPath(currentBranch) : null;
+  const currentContextRelPath = currentContextDir
+    ? getWorkspaceRelativePath(gitRoot, currentContextDir)
+    : null;
   const templates = initialized ? listTemplates(gitRoot) : [];
   const templatesDirExists = initialized ? existsSync(getTemplatesDir(gitRoot)) : false;
   const defaultTemplateExists = templates.includes(DEFAULT_TEMPLATE);
@@ -479,4 +481,18 @@ function isSymlink(path: string) {
   } catch {
     return false;
   }
+}
+
+function getWorkspaceRelativePath(gitRoot: string, path: string) {
+  const relPath = relative(gitRoot, path);
+  if (
+    !relPath ||
+    relPath === '..' ||
+    relPath.startsWith(`..${pathSeparator}`) ||
+    isAbsolute(relPath)
+  ) {
+    return path;
+  }
+
+  return relPath.replaceAll(pathSeparator, '/');
 }
