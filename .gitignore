@@ -8,4 +8,6 @@ build
 *.vsix
 dist-dev
 _branch
-.bctx/branches/
+.bctx/*
+!.bctx/templates/
+!.bctx/templates/**
