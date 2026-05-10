@@ -1,16 +1,21 @@
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+  BRANCHES_DIR,
   BranchContextStatusIssueLevel,
   BranchContextSymlinkState,
+  CONFIG_DIR,
+  CONTEXT_FILE_NAME,
   Config,
   createBranchContext,
+  DEFAULT_TEMPLATE,
   getBranchDir,
   getStatus,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
   installHook,
   syncBranch,
+  TEMPLATES_DIR,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
 import { runCli } from '../src/index';
@@ -50,9 +55,9 @@ describe('status command', () => {
     const status = getStatus(repo);
     expect(status.initialized).toBe(true);
     expect(status.currentBranch).toBe('main');
-    expect(status.currentContextDir).toContain('.bctx/branches/main');
-    expect(status.currentContextRelPath).toBe('.bctx/branches/main');
-    expect(status.templates).toContain('_default');
+    expect(status.currentContextDir).toContain(join(CONFIG_DIR, BRANCHES_DIR, 'main'));
+    expect(status.currentContextRelPath).toBe(`${CONFIG_DIR}/${BRANCHES_DIR}/main`);
+    expect(status.templates).toContain(DEFAULT_TEMPLATE);
     expect(status.symlink.state).toBe(BranchContextSymlinkState.Valid);
   });
 
@@ -61,10 +66,10 @@ describe('status command', () => {
     initBctxWorkspace(repo);
     new Config({ sound: false }).save(repo);
 
-    const batchTemplateDir = join(repo, '.bctx', 'templates', 'batch');
+    const batchTemplateDir = join(repo, CONFIG_DIR, TEMPLATES_DIR, 'batch');
     mkdirSync(batchTemplateDir);
     writeFileSync(
-      join(batchTemplateDir, 'context.md'),
+      join(batchTemplateDir, CONTEXT_FILE_NAME),
       `---
 branch: {{branch}}
 created: {{date}}

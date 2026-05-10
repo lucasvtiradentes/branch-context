@@ -3,7 +3,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, expect, vi } from 'vitest';
 import { gitAdd, gitCommit, gitConfig, gitInit } from '../src/git';
-import { Config, copyInitTemplates, getBranchesDir, getTemplateDir } from '../src/index';
+import {
+  BRANCHES_DIR,
+  CONFIG_DIR,
+  Config,
+  copyInitTemplates,
+  getBranchesDir,
+  getTemplateDir,
+  TEMPLATES_DIR,
+} from '../src/index';
 
 const repos: string[] = [];
 let originalCwd = process.cwd();
@@ -30,8 +38,8 @@ export function createGitRepo() {
 }
 
 export function initBctxWorkspace(repo: string, sound = false) {
-  mkdirSync(join(repo, '.bctx', 'branches'), { recursive: true });
-  copyInitTemplates(join(repo, '.bctx', 'templates'));
+  mkdirSync(join(repo, CONFIG_DIR, BRANCHES_DIR), { recursive: true });
+  copyInitTemplates(join(repo, CONFIG_DIR, TEMPLATES_DIR));
   new Config({ sound }).save(repo);
   return {
     branchesDir: getBranchesDir(repo),
@@ -49,7 +57,7 @@ export function createWorkspace() {
 export function createWorkspaceNoTemplate() {
   const workspace = createTempDir();
   mkdirSync(join(workspace, '.git'), { recursive: true });
-  mkdirSync(join(workspace, '.bctx', 'branches'), { recursive: true });
+  mkdirSync(join(workspace, CONFIG_DIR, BRANCHES_DIR), { recursive: true });
   new Config({ sound: false }).save(workspace);
   return workspace;
 }

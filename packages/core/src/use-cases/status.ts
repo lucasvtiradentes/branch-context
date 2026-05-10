@@ -6,6 +6,7 @@ import {
   DEFAULT_TEMPLATE,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
+  TEMPLATES_DIR,
 } from '../constants';
 import { getCurrentBranch, isHookInstalled } from '../core/hooks';
 import { getArchivedDir, getBranchDir, listArchivedBranches } from '../core/sync';
@@ -135,7 +136,10 @@ export function getStatus(gitRoot: string): BranchContextStatus {
     }
 
     if (!templatesDirExists) {
-      issues.push({ level: BranchContextStatusIssueLevel.Error, message: 'templates/ missing' });
+      issues.push({
+        level: BranchContextStatusIssueLevel.Error,
+        message: `${TEMPLATES_DIR}/ missing`,
+      });
     }
 
     if (!defaultTemplateExists) {

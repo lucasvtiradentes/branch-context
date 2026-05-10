@@ -1,9 +1,12 @@
 import { existsSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 import {
+  BRANCHES_DIR,
   BranchContextStatusIssueLevel,
+  CONFIG_DIR,
   type InitProjectOptions,
   initProject,
+  TEMPLATES_DIR,
 } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds, STATUS_BAR_PRIORITY } from '../constants';
@@ -199,8 +202,8 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
 async function promptInitOptions(workspaceRoot: string): Promise<InitProjectOptions | null> {
   const branchesParentFolder = await promptPathInput(
     'Branches parent folder',
-    'Paste an existing parent folder where branches/ will be created',
-    '.bctx',
+    `Paste an existing parent folder where ${BRANCHES_DIR}/ will be created`,
+    CONFIG_DIR,
     workspaceRoot,
     true,
   );
@@ -211,7 +214,7 @@ async function promptInitOptions(workspaceRoot: string): Promise<InitProjectOpti
   const templatesFolder = await promptPathInput(
     'Templates folder',
     'Paste an existing templates folder path',
-    '.bctx/templates',
+    `${CONFIG_DIR}/${TEMPLATES_DIR}`,
     workspaceRoot,
     true,
   );

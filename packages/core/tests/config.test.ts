@@ -5,6 +5,7 @@ import {
   BRANCHES_DIR,
   BranchContextConfigSchema,
   CONFIG_DIR,
+  CONFIG_FILE,
   Config,
   copyInitConfig,
   createBranchContextConfigJsonSchema,
@@ -33,7 +34,7 @@ describe('config', () => {
 
   it('gets external branches dir from config', () => {
     const workspace = createTempDir();
-    const externalPath = join(createTempDir(), 'branches');
+    const externalPath = join(createTempDir(), BRANCHES_DIR);
     new Config({
       branchesFolder: externalPath,
     }).save(workspace);
@@ -56,7 +57,7 @@ describe('config', () => {
 
   it('gets external template dir from config', () => {
     const workspace = createTempDir();
-    const templatesPath = join(createTempDir(), 'templates');
+    const templatesPath = join(createTempDir(), TEMPLATES_DIR);
     new Config({
       templatesFolder: templatesPath,
     }).save(workspace);
@@ -93,14 +94,14 @@ describe('config', () => {
     copyInitConfig(workspace);
     const loaded = Config.load(workspace);
     expect(loaded.defaultBaseBranch).toBe('origin/main');
-    expect(loaded.branchesFolder).toBe('.bctx/branches');
-    expect(loaded.templatesFolder).toBe('.bctx/templates');
+    expect(loaded.branchesFolder).toBe(`${CONFIG_DIR}/${BRANCHES_DIR}`);
+    expect(loaded.templatesFolder).toBe(`${CONFIG_DIR}/${TEMPLATES_DIR}`);
   });
 
   it('finds resources when cwd is outside the package', () => {
     const workspace = createTempDir();
     process.chdir(workspace);
-    expect(existsSync(join(getResourcesDir(), 'config.json'))).toBe(true);
+    expect(existsSync(join(getResourcesDir(), CONFIG_FILE))).toBe(true);
   });
 
   it('loads defaults when config file is missing', () => {
@@ -112,8 +113,8 @@ describe('config', () => {
   it('persists branch and template folders', () => {
     const workspace = createTempDir();
     mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
-    const branchesFolder = join(createTempDir(), 'branches');
-    const templatesFolder = join(createTempDir(), 'templates');
+    const branchesFolder = join(createTempDir(), BRANCHES_DIR);
+    const templatesFolder = join(createTempDir(), TEMPLATES_DIR);
     new Config({
       branchesFolder,
       templatesFolder,
@@ -147,10 +148,10 @@ describe('config', () => {
   it('loads old storage and templates settings as folder paths', () => {
     const workspace = createTempDir();
     const externalPath = join(createTempDir(), 'project');
-    const templatesPath = join(createTempDir(), 'templates');
+    const templatesPath = join(createTempDir(), TEMPLATES_DIR);
     mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
     writeFileSync(
-      join(workspace, CONFIG_DIR, 'config.json'),
+      join(workspace, CONFIG_DIR, CONFIG_FILE),
       JSON.stringify({
         storage: { mode: 'external', external_path: externalPath },
         templates: { mode: 'external', path: templatesPath },
@@ -166,7 +167,7 @@ describe('config', () => {
     const workspace = createTempDir();
     mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
     writeFileSync(
-      join(workspace, CONFIG_DIR, 'config.json'),
+      join(workspace, CONFIG_DIR, CONFIG_FILE),
       JSON.stringify({
         branches_folder: '',
         templates_folder: '',
@@ -174,18 +175,18 @@ describe('config', () => {
     );
 
     const loaded = Config.load(workspace);
-    expect(loaded.branchesFolder).toBe('.bctx/branches');
-    expect(loaded.templatesFolder).toBe('.bctx/templates');
+    expect(loaded.branchesFolder).toBe(`${CONFIG_DIR}/${BRANCHES_DIR}`);
+    expect(loaded.templatesFolder).toBe(`${CONFIG_DIR}/${TEMPLATES_DIR}`);
   });
 
   it('loads missing commit description as backward compatible default', () => {
     const workspace = createTempDir();
     mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
     writeFileSync(
-      join(workspace, CONFIG_DIR, 'config.json'),
+      join(workspace, CONFIG_DIR, CONFIG_FILE),
       JSON.stringify({ sound: true, template_rules: [] }),
     );
-    expect(existsSync(join(workspace, CONFIG_DIR, 'config.json'))).toBe(true);
+    expect(existsSync(join(workspace, CONFIG_DIR, CONFIG_FILE))).toBe(true);
     expect(Config.load(workspace).commitDescription).toBe(false);
   });
 

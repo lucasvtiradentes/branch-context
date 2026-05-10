@@ -1,11 +1,12 @@
 import { join } from 'node:path';
 import { DynMarkdown, getJson } from 'markdown-helper';
+import { CONFIG_FILE } from '../../packages/core/src/constants';
 import { READMES, ROOT_DIR } from './shared';
 
 type TFields = 'CONFIG_JSON';
 
 export function updateConfig() {
-  const config = getJson(join(ROOT_DIR, 'packages/core/resources/config.json')) as {
+  const config = getJson(join(ROOT_DIR, 'packages/core/resources', CONFIG_FILE)) as {
     template_rules?: unknown[];
   };
   if (Array.isArray(config.template_rules)) {

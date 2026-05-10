@@ -7,6 +7,7 @@ import {
   getStatus,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
+  TEMPLATES_DIR,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
 import { printTable } from '../helpers/branches';
@@ -58,9 +59,9 @@ function cmdStatus(_args: string[]) {
   }
 
   if (status.templatesDirExists) {
-    console.log(`  ${STATUS_OK} templates/ exists`);
+    console.log(`  ${STATUS_OK} ${TEMPLATES_DIR}/ exists`);
   } else {
-    console.log(`  ${STATUS_ERROR} templates/ missing`);
+    console.log(`  ${STATUS_ERROR} ${TEMPLATES_DIR}/ missing`);
   }
 
   if (status.defaultTemplateExists) {

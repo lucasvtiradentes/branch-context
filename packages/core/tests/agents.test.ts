@@ -2,9 +2,13 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  AGENTS_FILE_NAME,
   AgentSessionProvider,
+  BRANCHES_DIR,
+  CONFIG_DIR,
   createAgentSession,
   createEmptyAgentsFile,
+  DEFAULT_SYMLINK,
   getBranchAgentsFilePath,
   getBranchAgentsFilePathByKey,
   getCurrentAgentsFilePath,
@@ -44,14 +48,14 @@ describe('agents file', () => {
 
   it('reads empty data for invalid json', () => {
     const workspace = createWorkspace();
-    const path = join(workspace, 'agents.json');
+    const path = join(workspace, AGENTS_FILE_NAME);
     writeFileSync(path, '{invalid');
     expect(readAgentsFile(path)).toEqual(createEmptyAgentsFile());
   });
 
   it('writes agents file', () => {
     const workspace = createWorkspace();
-    const path = join(workspace, 'nested', 'agents.json');
+    const path = join(workspace, 'nested', AGENTS_FILE_NAME);
     writeAgentsFile(path, { version: 1, sessions: [createSession()] });
     expect(existsSync(path)).toBe(true);
     const sessions = JSON.parse(readFileSync(path, 'utf8')).sessions;
@@ -62,7 +66,7 @@ describe('agents file', () => {
 
   it('upserts sessions by provider and id', () => {
     const workspace = createWorkspace();
-    const path = join(workspace, 'agents.json');
+    const path = join(workspace, AGENTS_FILE_NAME);
 
     upsertAgentSession(path, createSession({ title: 'Old' }));
     const updated = upsertAgentSession(path, createSession({ title: 'New', model: 'gpt-5.6' }));
@@ -74,7 +78,7 @@ describe('agents file', () => {
 
   it('sorts newest sessions first', () => {
     const workspace = createWorkspace();
-    const path = join(workspace, 'agents.json');
+    const path = join(workspace, AGENTS_FILE_NAME);
 
     upsertAgentSession(
       path,
@@ -98,7 +102,7 @@ describe('agents file', () => {
 
   it('updates session metadata', () => {
     const workspace = createWorkspace();
-    const path = join(workspace, 'agents.json');
+    const path = join(workspace, AGENTS_FILE_NAME);
 
     upsertAgentSession(path, createSession());
     const updated = updateAgentSessionMetadata(path, AgentSessionProvider.Codex, 'codex-1', {
@@ -114,15 +118,17 @@ describe('agents file', () => {
 
   it('resolves current and branch-local paths', () => {
     const workspace = createWorkspace();
-    mkdirSync(join(workspace, '.bctx', 'branches'), { recursive: true });
+    mkdirSync(join(workspace, CONFIG_DIR, BRANCHES_DIR), { recursive: true });
     syncBranch(workspace, 'feature/test');
 
-    expect(getCurrentAgentsFilePath(workspace)).toBe(join(workspace, '_branch', 'agents.json'));
+    expect(getCurrentAgentsFilePath(workspace)).toBe(
+      join(workspace, DEFAULT_SYMLINK, AGENTS_FILE_NAME),
+    );
     expect(getBranchAgentsFilePath(workspace, 'feature/test')).toBe(
-      join(workspace, '.bctx', 'branches', 'feature-test', 'agents.json'),
+      join(workspace, CONFIG_DIR, BRANCHES_DIR, 'feature-test', AGENTS_FILE_NAME),
     );
     expect(getBranchAgentsFilePathByKey(workspace, 'feature-test')).toBe(
-      join(workspace, '.bctx', 'branches', 'feature-test', 'agents.json'),
+      join(workspace, CONFIG_DIR, BRANCHES_DIR, 'feature-test', AGENTS_FILE_NAME),
     );
   });
 

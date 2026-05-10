@@ -1,6 +1,13 @@
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, sep as pathSeparator, relative, resolve } from 'node:path';
-import { CONFIG_DIR, CONFIG_FILE, DEFAULT_SYMLINK, HookType, TEMPLATES_DIR } from '../constants';
+import {
+  BRANCHES_DIR,
+  CONFIG_DIR,
+  CONFIG_FILE,
+  DEFAULT_SYMLINK,
+  HookType,
+  TEMPLATES_DIR,
+} from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
 import { getCurrentBranch, installHook, type PromptYesNo } from '../core/hooks';
@@ -234,7 +241,7 @@ function normalizeConfiguredFolder(path: string) {
 
 function normalizeBranchesFolder(path: string) {
   const parentFolder = normalizeConfiguredFolder(path);
-  return appendConfiguredPathSegment(parentFolder, 'branches');
+  return appendConfiguredPathSegment(parentFolder, BRANCHES_DIR);
 }
 
 function resolveConfiguredFolder(gitRoot: string, path: string) {

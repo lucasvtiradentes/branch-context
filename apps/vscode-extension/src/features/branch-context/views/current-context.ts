@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { DEFAULT_SYMLINK } from '@branch-context/core';
+import { CONFIG_DIR, DEFAULT_SYMLINK } from '@branch-context/core';
 import {
   createMessageNode,
   readDirectoryNodes,
@@ -12,7 +12,7 @@ export function createCurrentContextProvider(): StateTreeProvider {
   return new StateTreeProvider(() => {
     const state = branchContextState.get();
     if (!state.initialized) {
-      return [createMessageNode('No .bctx config')];
+      return [createMessageNode(`No ${CONFIG_DIR} config`)];
     }
 
     const contextRoot = getCurrentContextRoot(state);

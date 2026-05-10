@@ -2,12 +2,17 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   addToGitignore,
+  BRANCHES_DIR,
+  CONFIG_DIR,
+  CONFIG_FILE,
+  CONTEXT_FILE_NAME,
   Config,
   DEFAULT_SYMLINK,
   DEFAULT_TEMPLATE,
   gitAdd,
   gitCheckout,
   gitCommit,
+  TEMPLATES_DIR,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
 import { runCli } from '../src/index';
@@ -77,11 +82,11 @@ describe('init command', () => {
     await runCli(['init']);
     const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
     expect(gitignore).toContain(`${DEFAULT_SYMLINK}\n`);
-    expect(gitignore).toContain('.bctx/*\n');
-    expect(gitignore).toContain('!.bctx/templates/\n');
-    expect(gitignore).toContain('!.bctx/templates/**\n');
-    expect(gitignore).not.toContain('.bctx/config.json');
-    expect(gitignore).not.toContain('.bctx/branches/');
+    expect(gitignore).toContain(`${CONFIG_DIR}/*\n`);
+    expect(gitignore).toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/\n`);
+    expect(gitignore).toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/**\n`);
+    expect(gitignore).not.toContain(`${CONFIG_DIR}/${CONFIG_FILE}`);
+    expect(gitignore).not.toContain(`${CONFIG_DIR}/${BRANCHES_DIR}/`);
   });
 
   it('init gitignores custom branch folders inside the repo', async () => {
@@ -93,8 +98,8 @@ describe('init command', () => {
     await runCli(['init', '--branches-parent-folder', branchesParentFolder]);
 
     const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
-    expect(gitignore).toContain('repo-contexts/branches/\n');
-    expect(gitignore).not.toContain('.bctx/branches/');
+    expect(gitignore).toContain(`repo-contexts/${BRANCHES_DIR}/\n`);
+    expect(gitignore).not.toContain(`${CONFIG_DIR}/${BRANCHES_DIR}/`);
   });
 
   it('init does not gitignore custom branch folders outside the repo', async () => {
@@ -106,21 +111,21 @@ describe('init command', () => {
 
     const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
     expect(gitignore).not.toContain(`${branchesParentFolder}/`);
-    expect(gitignore).not.toContain('.bctx/branches/');
+    expect(gitignore).not.toContain(`${CONFIG_DIR}/${BRANCHES_DIR}/`);
   });
 
-  it('init keeps custom templates folders inside .bctx trackable', async () => {
+  it(`init keeps custom templates folders inside ${CONFIG_DIR} trackable`, async () => {
     const repo = createGitRepo();
-    const templatesFolder = join(repo, '.bctx', 'team-templates');
+    const templatesFolder = join(repo, CONFIG_DIR, 'team-templates');
     mkdirSync(templatesFolder, { recursive: true });
     process.chdir(repo);
 
     await runCli(['init', '--templates-folder', templatesFolder]);
 
     const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
-    expect(gitignore).toContain('.bctx/*\n');
-    expect(gitignore).toContain('!.bctx/team-templates/\n');
-    expect(gitignore).toContain('!.bctx/team-templates/**\n');
+    expect(gitignore).toContain(`${CONFIG_DIR}/*\n`);
+    expect(gitignore).toContain(`!${CONFIG_DIR}/team-templates/\n`);
+    expect(gitignore).toContain(`!${CONFIG_DIR}/team-templates/**\n`);
   });
 
   it('init keeps local templates trackable when configured templates are external', async () => {
@@ -131,9 +136,9 @@ describe('init command', () => {
     await runCli(['init', '--templates-folder', templatesFolder]);
 
     const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
-    expect(gitignore).toContain('.bctx/*\n');
-    expect(gitignore).toContain('!.bctx/templates/\n');
-    expect(gitignore).toContain('!.bctx/templates/**\n');
+    expect(gitignore).toContain(`${CONFIG_DIR}/*\n`);
+    expect(gitignore).toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/\n`);
+    expect(gitignore).toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/**\n`);
   });
 
   it('init syncs current branch through core service', async () => {
@@ -147,7 +152,7 @@ describe('init command', () => {
     process.chdir(repo);
     await runCli(['init']);
 
-    const content = readFileSync(join(repo, DEFAULT_SYMLINK, 'context.md'), 'utf8');
+    const content = readFileSync(join(repo, DEFAULT_SYMLINK, CONTEXT_FILE_NAME), 'utf8');
     expect(content).toContain('feat: init sync');
     expect(content).toContain('feature.txt');
   });
@@ -180,7 +185,7 @@ describe('init command', () => {
   it('init can store branch contexts in a custom folder', async () => {
     const repo = createGitRepo();
     const branchesParentFolder = createTempDir();
-    const branchesFolder = join(branchesParentFolder, 'branches');
+    const branchesFolder = join(branchesParentFolder, BRANCHES_DIR);
     process.chdir(repo);
 
     const result = await runCli(['init', '--branches-parent-folder', branchesParentFolder]);
@@ -188,8 +193,8 @@ describe('init command', () => {
     expect(result).toBe(0);
     const config = Config.load(repo);
     expect(config.branchesFolder).toBe(branchesFolder);
-    expect(existsSync(join(branchesFolder, 'main', 'context.md'))).toBe(true);
-    expect(existsSync(join(repo, DEFAULT_SYMLINK, 'context.md'))).toBe(true);
+    expect(existsSync(join(branchesFolder, 'main', CONTEXT_FILE_NAME))).toBe(true);
+    expect(existsSync(join(repo, DEFAULT_SYMLINK, CONTEXT_FILE_NAME))).toBe(true);
   });
 
   it('init rejects missing custom branch folders', async () => {
@@ -213,7 +218,7 @@ describe('init command', () => {
     expect(result).toBe(0);
     const config = Config.load(repo);
     expect(config.templatesFolder).toBe(templatesPath);
-    expect(existsSync(join(templatesPath, DEFAULT_TEMPLATE, 'context.md'))).toBe(true);
+    expect(existsSync(join(templatesPath, DEFAULT_TEMPLATE, CONTEXT_FILE_NAME))).toBe(true);
   });
 
   it('template source updates the templates folder', async () => {

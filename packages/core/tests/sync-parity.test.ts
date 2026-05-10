@@ -13,6 +13,7 @@ import {
   archiveBranch,
   BranchContextActionErrorReason,
   branchContextExists,
+  CONTEXT_FILE_NAME,
   Config,
   CreateBranchContextResult,
   createBranchContext,
@@ -51,7 +52,7 @@ describe('sync parity', () => {
       CreateBranchContextResult.CreatedFromTemplate,
     );
     expect(existsSync(getBranchDir(workspace, 'main'))).toBe(true);
-    expect(existsSync(join(getBranchDir(workspace, 'main'), 'context.md'))).toBe(true);
+    expect(existsSync(join(getBranchDir(workspace, 'main'), CONTEXT_FILE_NAME))).toBe(true);
   });
 
   it('returns exists for existing branch context', () => {
@@ -67,7 +68,7 @@ describe('sync parity', () => {
     expect(createBranchContext(workspace, 'main')).toBe(
       CreateBranchContextResult.RepairedFromTemplate,
     );
-    expect(existsSync(join(branchDir, 'context.md'))).toBe(true);
+    expect(existsSync(join(branchDir, CONTEXT_FILE_NAME))).toBe(true);
   });
 
   it('checks branch context existence', () => {
@@ -139,13 +140,13 @@ describe('sync parity', () => {
     const workspace = createWorkspace();
     const symlinkPath = join(workspace, DEFAULT_SYMLINK);
     syncBranch(workspace, 'main');
-    writeFileSync(join(symlinkPath, 'context.md'), 'MAIN CONTENT');
+    writeFileSync(join(symlinkPath, CONTEXT_FILE_NAME), 'MAIN CONTENT');
     syncBranch(workspace, 'feature');
-    writeFileSync(join(symlinkPath, 'context.md'), 'FEATURE CONTENT');
+    writeFileSync(join(symlinkPath, CONTEXT_FILE_NAME), 'FEATURE CONTENT');
     syncBranch(workspace, 'main');
-    expect(readFileSync(join(symlinkPath, 'context.md'), 'utf8')).toBe('MAIN CONTENT');
+    expect(readFileSync(join(symlinkPath, CONTEXT_FILE_NAME), 'utf8')).toBe('MAIN CONTENT');
     syncBranch(workspace, 'feature');
-    expect(readFileSync(join(symlinkPath, 'context.md'), 'utf8')).toBe('FEATURE CONTENT');
+    expect(readFileSync(join(symlinkPath, CONTEXT_FILE_NAME), 'utf8')).toBe('FEATURE CONTENT');
   });
 
   it('handles multiple branch switches', () => {
@@ -170,7 +171,7 @@ describe('sync parity', () => {
       CreateBranchContextResult.CreatedFromTemplate,
     );
     const content = readFileSync(
-      join(getBranchDir(workspace, 'feature/login'), 'context.md'),
+      join(getBranchDir(workspace, 'feature/login'), CONTEXT_FILE_NAME),
       'utf8',
     );
     expect(content).toContain('## Description');
@@ -181,9 +182,9 @@ describe('sync parity', () => {
     const workspace = createWorkspace();
     createBranchContext(workspace, 'main');
     const branchDir = getBranchDir(workspace, 'main');
-    writeFileSync(join(branchDir, 'context.md'), 'MODIFIED CONTENT');
+    writeFileSync(join(branchDir, CONTEXT_FILE_NAME), 'MODIFIED CONTENT');
     expect(resetBranchContext(workspace, 'main')).toBe(ResetBranchContextResult.Reset);
-    const content = readFileSync(join(branchDir, 'context.md'), 'utf8');
+    const content = readFileSync(join(branchDir, CONTEXT_FILE_NAME), 'utf8');
     expect(content).toContain('branch:');
     expect(content).not.toContain('MODIFIED CONTENT');
   });
@@ -204,47 +205,47 @@ describe('sync parity', () => {
     const workspace = createWorkspace();
     createBranchContext(workspace, 'main');
     expect(resetBranchContext(workspace, 'main', 'feature')).toBe(ResetBranchContextResult.Reset);
-    expect(readFileSync(join(getBranchDir(workspace, 'main'), 'context.md'), 'utf8')).toContain(
-      '## Decisions',
-    );
+    expect(
+      readFileSync(join(getBranchDir(workspace, 'main'), CONTEXT_FILE_NAME), 'utf8'),
+    ).toContain('## Decisions');
   });
 
   it('archives and unarchives branch', () => {
     const workspace = createWorkspace();
     createBranchContext(workspace, 'feature/test');
     const branchDir = getBranchDir(workspace, 'feature/test');
-    writeFileSync(join(branchDir, 'context.md'), 'MY CUSTOM CONTENT');
+    writeFileSync(join(branchDir, CONTEXT_FILE_NAME), 'MY CUSTOM CONTENT');
     expect(archiveBranch(workspace, 'feature-test')).toBe(true);
     expect(existsSync(branchDir)).toBe(false);
     expect(listArchivedBranches(workspace)).toContain('feature-test');
     expect(createBranchContext(workspace, 'feature/test')).toBe(
       CreateBranchContextResult.RestoredFromArchive,
     );
-    expect(readFileSync(join(branchDir, 'context.md'), 'utf8')).toBe('MY CUSTOM CONTENT');
+    expect(readFileSync(join(branchDir, CONTEXT_FILE_NAME), 'utf8')).toBe('MY CUSTOM CONTENT');
   });
 
   it('restores created branch context from archive', () => {
     const workspace = createWorkspace();
     createBranchContext(workspace, 'feature/old');
     const branchDir = getBranchDir(workspace, 'feature/old');
-    writeFileSync(join(branchDir, 'context.md'), 'ARCHIVED CONTENT');
+    writeFileSync(join(branchDir, CONTEXT_FILE_NAME), 'ARCHIVED CONTENT');
     archiveBranch(workspace, 'feature-old');
     expect(createBranchContext(workspace, 'feature/old')).toBe(
       CreateBranchContextResult.RestoredFromArchive,
     );
-    expect(readFileSync(join(branchDir, 'context.md'), 'utf8')).toBe('ARCHIVED CONTENT');
+    expect(readFileSync(join(branchDir, CONTEXT_FILE_NAME), 'utf8')).toBe('ARCHIVED CONTENT');
   });
 
   it('sync restores branch context from archive', () => {
     const workspace = createWorkspace();
     syncBranch(workspace, 'feature/archived');
     const branchDir = getBranchDir(workspace, 'feature/archived');
-    writeFileSync(join(branchDir, 'context.md'), 'RESTORE ME');
+    writeFileSync(join(branchDir, CONTEXT_FILE_NAME), 'RESTORE ME');
     archiveBranch(workspace, 'feature-archived');
     expect(syncBranch(workspace, 'feature/archived').create_result).toBe(
       CreateBranchContextResult.RestoredFromArchive,
     );
-    expect(readFileSync(join(branchDir, 'context.md'), 'utf8')).toBe('RESTORE ME');
+    expect(readFileSync(join(branchDir, CONTEXT_FILE_NAME), 'utf8')).toBe('RESTORE ME');
   });
 
   it('deletes active and archived branch contexts', () => {
@@ -292,7 +293,7 @@ describe('sync parity', () => {
       return;
     }
     expect(result.syncResult.createResult).toBe(CreateBranchContextResult.CreatedFromTemplate);
-    expect(existsSync(join(repo, DEFAULT_SYMLINK, 'context.md'))).toBe(true);
+    expect(existsSync(join(repo, DEFAULT_SYMLINK, CONTEXT_FILE_NAME))).toBe(true);
   });
 
   it('reports missing configured base through sync service', () => {
@@ -311,7 +312,7 @@ describe('sync parity', () => {
     expect(result.reason).toBe(BranchContextActionErrorReason.BaseBranchNotFound);
     expect(result.baseBranch).toBe('origin/main');
     expect(result.branch).toBe('feature/missing-base');
-    expect(existsSync(join(repo, DEFAULT_SYMLINK, 'context.md'))).toBe(true);
+    expect(existsSync(join(repo, DEFAULT_SYMLINK, CONTEXT_FILE_NAME))).toBe(true);
   });
 
   it('reports missing config through sync service', () => {

@@ -1,6 +1,8 @@
 import {
+  BRANCHES_DIR,
   BranchContextActionErrorReason,
   CLI_NAME,
+  CONFIG_DIR,
   Config,
   configExists,
   DEFAULT_SYMLINK,
@@ -9,6 +11,7 @@ import {
   HookInstallResult,
   type InitProjectResult,
   initProject,
+  TEMPLATES_DIR,
   UpdateSymlinkResult,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
@@ -27,7 +30,10 @@ const hookInstallMessages = {
 export function registerInitCommand(program: Program) {
   program
     .command('init', 'Initialize and install hook')
-    .option('--branches-parent-folder <path>', 'Parent folder where branches/ will be created')
+    .option(
+      '--branches-parent-folder <path>',
+      `Parent folder where ${BRANCHES_DIR}/ will be created`,
+    )
     .option('--templates-folder <path>', 'Templates folder path')
     .action(() => cmdInit([]));
 }
@@ -111,19 +117,20 @@ function shouldPromptInitFolders(args: string[], alreadyInitialized: boolean) {
 
 function getBranchesParentFolderDefault(gitRoot: string | null) {
   if (!gitRoot || !configExists(gitRoot)) {
-    return '.bctx';
+    return CONFIG_DIR;
   }
 
   const branchesFolder = Config.load(gitRoot).branchesFolder;
-  return branchesFolder.endsWith('/branches')
-    ? branchesFolder.slice(0, -'/branches'.length) || '.'
+  const suffix = `/${BRANCHES_DIR}`;
+  return branchesFolder.endsWith(suffix)
+    ? branchesFolder.slice(0, -suffix.length) || '.'
     : branchesFolder;
 }
 
 function getTemplatesFolderDefault(gitRoot: string | null) {
   return gitRoot && configExists(gitRoot)
     ? Config.load(gitRoot).templatesFolder
-    : '.bctx/templates';
+    : `${CONFIG_DIR}/${TEMPLATES_DIR}`;
 }
 
 function normalizeFolderArg(path: string) {

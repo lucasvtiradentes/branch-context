@@ -1,4 +1,4 @@
-import { BranchContextStatusIssueLevel } from '@branch-context/core';
+import { BranchContextStatusIssueLevel, CONFIG_DIR } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../../../constants';
 import { formatError } from '../../../shared/format/error';
@@ -14,7 +14,7 @@ export function registerShowDetailsCommand(): vscode.Disposable {
       }
 
       if (!state.initialized || !state.status) {
-        await vscode.window.showInformationMessage(`${APP_NAME}: no .bctx config found`);
+        await vscode.window.showInformationMessage(`${APP_NAME}: no ${CONFIG_DIR} config found`);
         return;
       }
 

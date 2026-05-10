@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  CONTEXT_FILE_NAME,
   findContextFiles,
   findTagsInFile,
   SYNC_MESSAGE_TEMPLATE,
@@ -18,7 +19,7 @@ describe('context tags', () => {
 
   it('finds markdown context files', () => {
     const dir = createTempDir();
-    const file = join(dir, 'context.md');
+    const file = join(dir, CONTEXT_FILE_NAME);
     writeFileSync(file, '# Test');
     expect(findContextFiles(dir)).toEqual([file]);
   });

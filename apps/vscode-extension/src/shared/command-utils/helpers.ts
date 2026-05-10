@@ -1,13 +1,15 @@
 import {
   type BranchContextActionError,
   BranchContextActionErrorReason,
+  CONFIG_DIR,
 } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME } from '../../constants';
 import { type BranchContextExtensionState, branchContextState } from '../../vscode/state';
 
 const actionErrorMessages = {
-  [BranchContextActionErrorReason.NotInitialized]: () => `${APP_NAME}: no .bctx config found`,
+  [BranchContextActionErrorReason.NotInitialized]: () =>
+    `${APP_NAME}: no ${CONFIG_DIR} config found`,
   [BranchContextActionErrorReason.NoCurrentBranch]: () =>
     `${APP_NAME}: could not determine current branch`,
   [BranchContextActionErrorReason.MissingContext]: (error: BranchContextActionError) =>
@@ -32,7 +34,7 @@ export async function getInitializedState(): Promise<BranchContextExtensionState
   }
 
   if (!state.initialized) {
-    await vscode.window.showErrorMessage(`${APP_NAME}: no .bctx config found`);
+    await vscode.window.showErrorMessage(`${APP_NAME}: no ${CONFIG_DIR} config found`);
     return null;
   }
 

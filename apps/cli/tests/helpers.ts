@@ -3,12 +3,15 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+  BRANCHES_DIR,
+  CONFIG_DIR,
   Config,
   copyInitTemplates,
   gitAdd,
   gitCommit,
   gitConfig,
   gitInit,
+  TEMPLATES_DIR,
 } from '@branch-context/core';
 import { afterEach, beforeEach, expect, vi } from 'vitest';
 import { setMultiSelectOverride } from '../src/ui/prompt';
@@ -38,8 +41,8 @@ export function createGitRepo() {
 }
 
 export function initBctxWorkspace(repo: string, sound = false) {
-  mkdirSync(join(repo, '.bctx', 'branches'), { recursive: true });
-  copyInitTemplates(join(repo, '.bctx', 'templates'));
+  mkdirSync(join(repo, CONFIG_DIR, BRANCHES_DIR), { recursive: true });
+  copyInitTemplates(join(repo, CONFIG_DIR, TEMPLATES_DIR));
   new Config({ sound }).save(repo);
 }
 

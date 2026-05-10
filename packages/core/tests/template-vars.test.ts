@@ -5,6 +5,7 @@ import { gitCheckout } from '../src/git';
 import {
   applyTemplateToCurrentBranch,
   BranchContextActionErrorReason,
+  CONTEXT_FILE_NAME,
   getBranchDir,
   getTemplateVariables,
   renderTemplateContent,
@@ -68,7 +69,7 @@ describe('template variables', () => {
     expect(gitCheckout(repo, 'main').status).toBe(0);
     initBctxWorkspace(repo);
     syncCurrentBranch(repo, { sound: false });
-    const contextPath = join(getBranchDir(repo, 'main'), 'context.md');
+    const contextPath = join(getBranchDir(repo, 'main'), CONTEXT_FILE_NAME);
     writeFileSync(contextPath, 'MODIFIED CONTENT');
     const result = applyTemplateToCurrentBranch(repo, 'feature');
     expect(result.ok).toBe(true);

@@ -1,7 +1,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+  AGENTS_FILE_NAME,
   archiveBranch,
+  CONFIG_FILE,
+  CONTEXT_FILE_NAME,
   CodexSessionEventType,
   DEFAULT_SYMLINK,
   getBranchMeta,
@@ -23,7 +26,7 @@ function initMetaRepo() {
   initBctxWorkspace(repo);
   mkdirSync(getConfigDir(repo), { recursive: true });
   writeFileSync(
-    join(getConfigDir(repo), 'config.json'),
+    join(getConfigDir(repo), CONFIG_FILE),
     JSON.stringify({ default_base_branch: 'main', sound: false, template_rules: [] }),
   );
   process.chdir(repo);
@@ -65,7 +68,7 @@ describe('meta e2e', () => {
     expectOk(gitAdd(repo));
     expectOk(gitCommit(repo, 'feat: test commit'));
     await runCli(['on-commit']);
-    const content = readFileSync(join(repo, DEFAULT_SYMLINK, 'context.md'), 'utf8');
+    const content = readFileSync(join(repo, DEFAULT_SYMLINK, CONTEXT_FILE_NAME), 'utf8');
     expect(content).toContain('feat: test commit');
     expect(content).toContain('test.py');
   });
@@ -91,7 +94,7 @@ describe('meta e2e', () => {
       }
     }
 
-    const sessions = readAgentsFile(join(repo, DEFAULT_SYMLINK, 'agents.json')).sessions;
+    const sessions = readAgentsFile(join(repo, DEFAULT_SYMLINK, AGENTS_FILE_NAME)).sessions;
     expect(sessions.map((session) => session.sessionId)).toEqual(['codex-1']);
   });
 
@@ -111,7 +114,7 @@ describe('meta e2e', () => {
     const metaAfter = getBranchMeta(repo, branchKey);
     expect(metaAfter?.commits).toBe(metaBefore?.commits);
     expect(metaAfter?.changed_files).toBe(metaBefore?.changed_files);
-    expect(readFileSync(join(repo, DEFAULT_SYMLINK, 'context.md'), 'utf8')).toContain(
+    expect(readFileSync(join(repo, DEFAULT_SYMLINK, CONTEXT_FILE_NAME), 'utf8')).toContain(
       'feat: add file',
     );
   });

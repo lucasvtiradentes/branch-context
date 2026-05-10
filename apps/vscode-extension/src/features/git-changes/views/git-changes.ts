@@ -3,7 +3,7 @@ import type {
   GitChangedFileSummary,
   GitCommitSummary,
 } from '@branch-context/core';
-import { BranchGitSummaryErrorReason, GitFileStatus } from '@branch-context/core';
+import { BranchGitSummaryErrorReason, CONFIG_DIR, GitFileStatus } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds, contextKeys } from '../../../constants';
 import { markdownTooltipLine } from '../../../shared/format/markdown';
@@ -154,7 +154,7 @@ export function createGitChangesProvider(): StateTreeProvider {
   return new StateTreeProvider(() => {
     const state = branchContextState.get();
     if (!state.initialized) {
-      return [createMessageNode('No .bctx config')];
+      return [createMessageNode(`No ${CONFIG_DIR} config`)];
     }
 
     return gitChangesMode === GitChangesMode.Files

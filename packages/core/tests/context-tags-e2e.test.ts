@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { gitAdd, gitCheckout, gitCommit } from '../src/git';
 import {
+  CONTEXT_FILE_NAME,
   createBranchMeta,
   DEFAULT_SYMLINK,
   sanitizeBranchName,
@@ -27,7 +28,7 @@ describe('context tags e2e', () => {
     updateBranchMeta(repo, branchKey, 'main');
     const updates = updateContextTags(repo, join(repo, DEFAULT_SYMLINK), branchKey, 'main');
     expect(updates).toHaveLength(2);
-    const content = readFileSync(join(repo, DEFAULT_SYMLINK, 'context.md'), 'utf8');
+    const content = readFileSync(join(repo, DEFAULT_SYMLINK, CONTEXT_FILE_NAME), 'utf8');
     expect(content).toContain('feat: add new file');
     expect(content).toContain('new_file.py');
   });
@@ -41,7 +42,7 @@ describe('context tags e2e', () => {
     updateBranchMeta(repo, branchKey, 'main');
     const updates = updateContextTags(repo, join(repo, DEFAULT_SYMLINK), branchKey, 'main');
     expect(updates).toHaveLength(2);
-    expect(readFileSync(join(repo, DEFAULT_SYMLINK, 'context.md'), 'utf8')).toContain(
+    expect(readFileSync(join(repo, DEFAULT_SYMLINK, CONTEXT_FILE_NAME), 'utf8')).toContain(
       'N/A - in sync with main',
     );
   });
@@ -61,7 +62,7 @@ describe('context tags e2e', () => {
     }
     updateBranchMeta(repo, branchKey, 'main');
     updateContextTags(repo, join(repo, DEFAULT_SYMLINK), branchKey, 'main');
-    const content = readFileSync(join(repo, DEFAULT_SYMLINK, 'context.md'), 'utf8');
+    const content = readFileSync(join(repo, DEFAULT_SYMLINK, CONTEXT_FILE_NAME), 'utf8');
     expect(content).toContain('feat: add file 0');
     expect(content).toContain('feat: add file 1');
     expect(content).toContain('feat: add file 2');
@@ -80,7 +81,7 @@ describe('context tags e2e', () => {
     expectOk(gitCommit(repo, 'feat: test'));
     updateBranchMeta(repo, branchKey, 'main');
     updateContextTags(repo, join(repo, DEFAULT_SYMLINK), branchKey, 'main');
-    const content = readFileSync(join(repo, DEFAULT_SYMLINK, 'context.md'), 'utf8');
+    const content = readFileSync(join(repo, DEFAULT_SYMLINK, CONTEXT_FILE_NAME), 'utf8');
     expect(content).toContain('test.py');
     expect(content).toContain('(+');
     expect(content).toContain('-');
@@ -92,7 +93,7 @@ describe('context tags e2e', () => {
     syncBranch(repo, 'main');
     const branchKey = sanitizeBranchName('main');
     createBranchMeta(repo, branchKey, 'main');
-    writeFileSync(join(repo, DEFAULT_SYMLINK, 'context.md'), '# No tags here');
+    writeFileSync(join(repo, DEFAULT_SYMLINK, CONTEXT_FILE_NAME), '# No tags here');
     expect(updateContextTags(repo, join(repo, DEFAULT_SYMLINK), branchKey, 'main')).toHaveLength(0);
   });
 });

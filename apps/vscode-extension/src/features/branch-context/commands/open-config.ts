@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { CONFIG_DIR } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../../../constants';
 import { getInitializedState, openPath } from '../../../shared/command-utils/helpers';
@@ -13,7 +14,7 @@ export function registerOpenConfigCommand(): vscode.Disposable {
       }
 
       if (!existsSync(state.configPath)) {
-        await vscode.window.showErrorMessage(`${APP_NAME}: no .bctx config found`);
+        await vscode.window.showErrorMessage(`${APP_NAME}: no ${CONFIG_DIR} config found`);
         return;
       }
 

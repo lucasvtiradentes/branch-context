@@ -7,6 +7,7 @@ import type {
 import {
   AGENTS_FILE_NAME,
   AgentSessionScope,
+  CONFIG_DIR,
   createAgentSession,
   readAgentsFile,
 } from '@branch-context/core';
@@ -173,7 +174,7 @@ export function createContextsProvider(): StateTreeProvider {
   return new StateTreeProvider(() => {
     const state = branchContextState.get();
     if (!state.initialized) {
-      return [createMessageNode('No .bctx config')];
+      return [createMessageNode(`No ${CONFIG_DIR} config`)];
     }
 
     const contexts = getOtherBranchContexts();

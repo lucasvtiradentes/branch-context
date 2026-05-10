@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { CONFIG_DIR } from '@branch-context/core';
 import {
   createMessageNode,
   createTemplateNode,
@@ -11,7 +12,7 @@ export function createTemplatesProvider(): StateTreeProvider {
   return new StateTreeProvider(() => {
     const state = branchContextState.get();
     if (!state.initialized || !state.workspaceRoot) {
-      return [createMessageNode('No .bctx config')];
+      return [createMessageNode(`No ${CONFIG_DIR} config`)];
     }
 
     if (state.templates.length === 0) {

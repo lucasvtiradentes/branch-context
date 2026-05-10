@@ -124,7 +124,7 @@ async function openContext(node: unknown): Promise<void> {
 
     const contextFile = join(contextNode.path, CONTEXT_FILE_NAME);
     if (!existsSync(contextFile)) {
-      await vscode.window.showErrorMessage(`${APP_NAME}: context.md not found`);
+      await vscode.window.showErrorMessage(`${APP_NAME}: ${CONTEXT_FILE_NAME} not found`);
       return;
     }
 

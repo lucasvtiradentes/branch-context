@@ -1,17 +1,18 @@
 import { DynMarkdown } from 'markdown-helper';
+import { CONFIG_DIR } from '../../packages/core/src/constants';
 import { READMES } from './shared';
 
 type TFields = 'COMMANDS';
 
 const COMMANDS: Array<[string, string]> = [
-  ['bctx init', 'set up .bctx/ and Git hooks'],
+  ['bctx init', `set up ${CONFIG_DIR}/ and Git hooks`],
   ['bctx sync', 'refresh commit/file summaries'],
   ['bctx status', 'check setup health and list branch contexts'],
   ['bctx base', 'get/set base branch'],
   ['bctx template [name]', 'apply a template (e.g. fix, feature)'],
   ['bctx prune', 'archive contexts of deleted branches'],
   ['bctx agents status', 'show indexed AI session pointers for the branch'],
-  ['bctx uninstall', 'remove .bctx/ and hooks'],
+  ['bctx uninstall', `remove ${CONFIG_DIR}/ and hooks`],
 ];
 
 export function updateCommands() {
