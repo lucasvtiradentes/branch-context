@@ -5,6 +5,7 @@ import {
   createAgentSessionsProvider,
   getAgentSessionsViewDescription,
   initializeAgentSessionsViewState,
+  saveAgentSessionGroupCollapseState,
 } from '../features/agent-sessions/views/agent-sessions';
 import {
   createCurrentContextProvider,
@@ -14,10 +15,12 @@ import {
   createGitChangesProvider,
   getGitChangesViewDescription,
   initializeGitChangesMode,
+  saveGitChangesGroupCollapseState,
 } from '../features/git-changes/views/git-changes';
 import {
   createContextsProvider,
   getOtherBranchesViewDescription,
+  saveContextsGroupCollapseState,
 } from '../features/other-branches/views/contexts';
 import { createTemplatesProvider } from '../features/templates/views/templates';
 import { initializeTreeItemDecorations } from '../shared/tree-items';
@@ -59,6 +62,12 @@ export function initializeTreeViews(context: vscode.ExtensionContext): void {
         provider.onDidChangeTreeData(() => {
           view.description = getAgentSessionsViewDescription();
         }),
+        view.onDidCollapseElement((event) => {
+          void saveAgentSessionGroupCollapseState(context, event.element, true);
+        }),
+        view.onDidExpandElement((event) => {
+          void saveAgentSessionGroupCollapseState(context, event.element, false);
+        }),
       );
     }
 
@@ -68,6 +77,12 @@ export function initializeTreeViews(context: vscode.ExtensionContext): void {
         provider.onDidChangeTreeData(() => {
           view.description = getGitChangesViewDescription();
         }),
+        view.onDidCollapseElement((event) => {
+          void saveGitChangesGroupCollapseState(context, event.element, true);
+        }),
+        view.onDidExpandElement((event) => {
+          void saveGitChangesGroupCollapseState(context, event.element, false);
+        }),
       );
     }
 
@@ -76,6 +91,12 @@ export function initializeTreeViews(context: vscode.ExtensionContext): void {
       context.subscriptions.push(
         provider.onDidChangeTreeData(() => {
           view.description = getOtherBranchesViewDescription();
+        }),
+        view.onDidCollapseElement((event) => {
+          void saveContextsGroupCollapseState(context, event.element, true);
+        }),
+        view.onDidExpandElement((event) => {
+          void saveContextsGroupCollapseState(context, event.element, false);
         }),
       );
     }

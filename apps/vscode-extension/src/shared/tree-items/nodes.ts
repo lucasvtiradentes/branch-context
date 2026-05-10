@@ -24,6 +24,7 @@ export function createGroupNode(
       : (descriptionOrOptions ?? {});
 
   return {
+    id: options.id,
     label,
     kind: BranchContextTreeNodeKind.Group,
     description: options.description,
@@ -35,6 +36,7 @@ export function createGroupNode(
 }
 
 type GroupNodeOptions = {
+  id?: string;
   description?: string;
   icon?: vscode.TreeItem['iconPath'];
   resourceUri?: vscode.Uri;

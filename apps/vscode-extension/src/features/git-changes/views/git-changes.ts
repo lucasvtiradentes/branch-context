@@ -58,10 +58,12 @@ const changedFileLetterColors = {
 const gitChangesModeWorkspaceKey = 'gitChanges.mode';
 const gitChangedFilesGroupByWorkspaceKey = 'gitChanges.filesGroupBy';
 const gitCommitsGroupByWorkspaceKey = 'gitChanges.commitsGroupBy';
+const gitChangesCollapsedGroupsWorkspaceKey = 'gitChanges.collapsedGroups';
 
 let gitChangesMode: GitChangesMode = GitChangesMode.Files;
 let gitChangedFilesGroupBy: GitChangedFilesGroupBy = GitChangedFilesGroupBy.Flat;
 let gitCommitsGroupBy: GitCommitsGroupBy = GitCommitsGroupBy.Flat;
+let gitChangesCollapsedGroups = new Set<string>();
 
 export function initializeGitChangesMode(context: vscode.ExtensionContext): void {
   const savedMode = context.workspaceState.get<unknown>(gitChangesModeWorkspaceKey);
@@ -80,6 +82,10 @@ export function initializeGitChangesMode(context: vscode.ExtensionContext): void
   if (isGitCommitsGroupBy(savedCommitsGroupBy)) {
     gitCommitsGroupBy = savedCommitsGroupBy;
   }
+
+  gitChangesCollapsedGroups = parseCollapsedGroupIds(
+    context.workspaceState.get<unknown>(gitChangesCollapsedGroupsWorkspaceKey),
+  );
 
   updateGitChangesModeContext();
 }
@@ -110,6 +116,27 @@ export async function saveGitCommitsGroupBy(
 ): Promise<void> {
   gitCommitsGroupBy = nextGroupBy;
   await context.workspaceState.update(gitCommitsGroupByWorkspaceKey, nextGroupBy);
+}
+
+export async function saveGitChangesGroupCollapseState(
+  context: vscode.ExtensionContext,
+  node: unknown,
+  collapsed: boolean,
+): Promise<void> {
+  if (!isGitChangesGroupNode(node)) {
+    return;
+  }
+
+  if (collapsed) {
+    gitChangesCollapsedGroups.add(node.id);
+  } else {
+    gitChangesCollapsedGroups.delete(node.id);
+  }
+
+  await context.workspaceState.update(
+    gitChangesCollapsedGroupsWorkspaceKey,
+    serializeCollapsedGroupIds(gitChangesCollapsedGroups),
+  );
 }
 
 export async function toggleGitChangesMode(
@@ -165,7 +192,7 @@ function createCommitNodes(gitSummary: BranchGitSummary | null) {
 function groupCommitNodes(commits: GitCommitSummary[]) {
   if (gitCommitsGroupBy === GitCommitsGroupBy.Date) {
     return groupByDate(commits, (commit) => commit.authoredAt).map((group) =>
-      createGroupNode(group.label, group.items.map(createCommitNode), String(group.items.length)),
+      createGitChangesGroupNode(group.label, group.items.map(createCommitNode), group.items.length),
     );
   }
 
@@ -237,6 +264,7 @@ function createChangedFileGroup(
   statuses: string[],
   icon: vscode.TreeItem['iconPath'],
 ) {
+  const id = getGitChangesGroupId(label);
   const groupedFiles = files.filter((file) =>
     statuses.length > 0
       ? statuses.includes(file.status)
@@ -252,11 +280,47 @@ function createChangedFileGroup(
       }),
     ),
     {
+      id,
       description: String(groupedFiles.length),
       icon,
-      collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+      collapsibleState: getGitChangesGroupCollapsibleState(id),
     },
   );
+}
+
+function getGitChangesGroupId(groupKey: string) {
+  const groupBy =
+    gitChangesMode === GitChangesMode.Files ? gitChangedFilesGroupBy : gitCommitsGroupBy;
+  return `gitChanges:${gitChangesMode}:${groupBy}:${groupKey}`;
+}
+
+function getGitChangesGroupCollapsibleState(id: string) {
+  return gitChangesCollapsedGroups.has(id)
+    ? vscode.TreeItemCollapsibleState.Collapsed
+    : vscode.TreeItemCollapsibleState.Expanded;
+}
+
+function isGitChangesGroupNode(node: unknown): node is BranchContextTreeNode & { id: string } {
+  return (
+    isRecord(node) &&
+    node.kind === BranchContextTreeNodeKind.Group &&
+    typeof node.id === 'string' &&
+    node.id.startsWith('gitChanges:')
+  );
+}
+
+function parseCollapsedGroupIds(value: unknown) {
+  return Array.isArray(value)
+    ? new Set(value.filter((item) => typeof item === 'string'))
+    : new Set<string>();
+}
+
+function serializeCollapsedGroupIds(value: Set<string>) {
+  return Array.from(value).sort();
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 function createSortedCommitGroups(
@@ -274,8 +338,21 @@ function createSortedCommitGroups(
   return Array.from(groups.entries())
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([label, groupedCommits]) =>
-      createGroupNode(label, groupedCommits.map(createCommitNode), String(groupedCommits.length)),
+      createGitChangesGroupNode(label, groupedCommits.map(createCommitNode), groupedCommits.length),
     );
+}
+
+function createGitChangesGroupNode(
+  label: string,
+  children: BranchContextTreeNode[],
+  count: number,
+) {
+  const id = getGitChangesGroupId(label);
+  return createGroupNode(label, children, {
+    id,
+    description: String(count),
+    collapsibleState: getGitChangesGroupCollapsibleState(id),
+  });
 }
 
 type ChangedFileNodeOptions = {

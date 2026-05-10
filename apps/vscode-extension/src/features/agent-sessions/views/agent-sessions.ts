@@ -47,6 +47,7 @@ const agentSessionsGroupByValues = Object.values(AgentSessionsGroupBy);
 const agentSessionTextModeValues = Object.values(AgentSessionTextMode);
 const agentSessionsGroupByWorkspaceKey = 'agentSessions.groupBy';
 const agentSessionTextModeWorkspaceKey = 'agentSessions.textMode';
+const agentSessionsCollapsedGroupsWorkspaceKey = 'agentSessions.collapsedGroups';
 const MAX_SESSION_FILE_BYTES = 2 * 1024 * 1024;
 
 type SavedAgentSessionsGroupBy = AgentSessionsGroupBy | LegacyAgentSessionsGroupBy;
@@ -103,6 +104,7 @@ type UserMessageExtraction = {
 
 let agentSessionsGroupBy: AgentSessionsGroupBy = AgentSessionsGroupBy.Flat;
 let agentSessionTextMode: AgentSessionTextMode = AgentSessionTextMode.Last;
+let agentSessionsCollapsedGroups: Partial<Record<AgentSessionsGroupBy, Set<string>>> = {};
 let lastAgentSessionsRenderLogKey: string | null = null;
 
 export function initializeAgentSessionsViewState(context: vscode.ExtensionContext): void {
@@ -115,6 +117,10 @@ export function initializeAgentSessionsViewState(context: vscode.ExtensionContex
   if (isAgentSessionTextMode(savedTextMode)) {
     agentSessionTextMode = savedTextMode;
   }
+
+  agentSessionsCollapsedGroups = parseCollapsedGroups(
+    context.workspaceState.get<unknown>(agentSessionsCollapsedGroupsWorkspaceKey),
+  );
 }
 
 export function getAgentSessionsGroupBy(): AgentSessionsGroupBy {
@@ -135,6 +141,28 @@ export async function saveAgentSessionsGroupBy(
 ): Promise<void> {
   agentSessionsGroupBy = nextGroupBy;
   await context.workspaceState.update(agentSessionsGroupByWorkspaceKey, nextGroupBy);
+}
+
+export async function saveAgentSessionGroupCollapseState(
+  context: vscode.ExtensionContext,
+  node: unknown,
+  collapsed: boolean,
+): Promise<void> {
+  if (!isAgentSessionGroupNode(node)) {
+    return;
+  }
+
+  const collapsedGroups = getCollapsedGroupSet(agentSessionsGroupBy);
+  if (collapsed) {
+    collapsedGroups.add(node.id);
+  } else {
+    collapsedGroups.delete(node.id);
+  }
+
+  await context.workspaceState.update(
+    agentSessionsCollapsedGroupsWorkspaceKey,
+    serializeCollapsedGroups(),
+  );
 }
 
 export async function toggleAgentSessionTextMode(
@@ -201,6 +229,7 @@ function logAgentSessionsRender(details: {
 }
 
 function createGroupNode(
+  id: string,
   label: string,
   sessions: AgentSessionViewItem[],
   icon: vscode.TreeItem['iconPath'],
@@ -208,6 +237,7 @@ function createGroupNode(
   showSessionIcons = true,
 ) {
   return {
+    id,
     label,
     kind: BranchContextTreeNodeKind.Group,
     description: String(sessions.length),
@@ -287,10 +317,11 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
   return [
     {
       label: 'Pinned',
+      id: getAgentSessionGroupId('pinned'),
       kind: BranchContextTreeNodeKind.Group,
       description: String(pinnedItems.length),
       icon: new vscode.ThemeIcon('pinned'),
-      collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+      collapsibleState: getAgentSessionGroupCollapsibleState(getAgentSessionGroupId('pinned')),
       children: () =>
         pinnedItems.map((item) =>
           createAgentSessionNode(item, {
@@ -315,8 +346,9 @@ function groupUnpinnedAgentSessions(items: AgentSessionViewItem[]) {
             label: group.label,
             sessions: group.items,
             icon: new vscode.ThemeIcon('calendar'),
+            id: getAgentSessionGroupId(group.label),
           },
-          vscode.TreeItemCollapsibleState.Expanded,
+          getAgentSessionGroupCollapsibleState(getAgentSessionGroupId(group.label)),
         ),
     );
   }
@@ -328,8 +360,9 @@ function groupUnpinnedAgentSessions(items: AgentSessionViewItem[]) {
           label: group.label,
           sessions: group.items,
           icon: new vscode.ThemeIcon('database'),
+          id: getAgentSessionGroupId(group.label),
         },
-        vscode.TreeItemCollapsibleState.Expanded,
+        getAgentSessionGroupCollapsibleState(getAgentSessionGroupId(group.label)),
       ),
     );
   }
@@ -350,8 +383,11 @@ function groupUnpinnedAgentSessions(items: AgentSessionViewItem[]) {
       sessions,
       icon: getProviderIcon(provider, false),
       showSessionIcons: false,
+      id: getAgentSessionGroupId(provider),
     }))
-    .map((group) => createAgentSessionGroupNode(group, vscode.TreeItemCollapsibleState.Expanded));
+    .map((group) =>
+      createAgentSessionGroupNode(group, getAgentSessionGroupCollapsibleState(group.id)),
+    );
 }
 
 function getPinnedItems(items: AgentSessionViewItem[]) {
@@ -392,6 +428,7 @@ function createAgentSessionContextValue(options: {
 
 function createAgentSessionGroupNode(
   group: {
+    id: string;
     label: string;
     sessions: AgentSessionViewItem[];
     icon: vscode.TreeItem['iconPath'];
@@ -400,12 +437,72 @@ function createAgentSessionGroupNode(
   collapsibleState?: vscode.TreeItemCollapsibleState,
 ) {
   return createGroupNode(
+    group.id,
     group.label,
     group.sessions,
     group.icon,
     collapsibleState,
     group.showSessionIcons,
   );
+}
+
+function getAgentSessionGroupId(groupKey: string) {
+  return `agentSessions:${agentSessionsGroupBy}:${groupKey}`;
+}
+
+function getAgentSessionGroupCollapsibleState(groupId: string) {
+  return getCollapsedGroupSet(agentSessionsGroupBy).has(groupId)
+    ? vscode.TreeItemCollapsibleState.Collapsed
+    : vscode.TreeItemCollapsibleState.Expanded;
+}
+
+function getCollapsedGroupSet(groupBy: AgentSessionsGroupBy) {
+  const collapsedGroups = agentSessionsCollapsedGroups[groupBy] ?? new Set<string>();
+  agentSessionsCollapsedGroups[groupBy] = collapsedGroups;
+  return collapsedGroups;
+}
+
+function serializeCollapsedGroups() {
+  return Object.fromEntries(
+    Object.entries(agentSessionsCollapsedGroups).map(([groupBy, collapsedGroups]) => [
+      groupBy,
+      Array.from(collapsedGroups).sort(),
+    ]),
+  );
+}
+
+function parseCollapsedGroups(value: unknown): Partial<Record<AgentSessionsGroupBy, Set<string>>> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  const result: Partial<Record<AgentSessionsGroupBy, Set<string>>> = {};
+  for (const [groupBy, collapsedGroups] of Object.entries(value)) {
+    if (!isAgentSessionsGroupBy(groupBy) || !Array.isArray(collapsedGroups)) {
+      continue;
+    }
+
+    result[normalizeAgentSessionsGroupBy(groupBy)] = new Set(
+      collapsedGroups.filter((groupId): groupId is string => typeof groupId === 'string'),
+    );
+  }
+
+  return result;
+}
+
+function isAgentSessionGroupNode(
+  node: unknown,
+): node is { id: string; kind: BranchContextTreeNodeKind.Group } {
+  return (
+    isRecord(node) &&
+    node.kind === BranchContextTreeNodeKind.Group &&
+    typeof node.id === 'string' &&
+    node.id.startsWith('agentSessions:')
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 function getSizeGroup(item: AgentSessionViewItem) {

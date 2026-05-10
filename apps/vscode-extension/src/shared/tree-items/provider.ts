@@ -21,6 +21,7 @@ export class StateTreeProvider
     );
 
     item.description = node.description;
+    item.id = node.id;
     item.tooltip = node.tooltip ?? node.path;
     item.contextValue = node.contextValue ?? node.kind;
     item.iconPath = node.icon;

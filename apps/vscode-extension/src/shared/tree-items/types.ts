@@ -16,6 +16,7 @@ export enum BranchContextTreeNodeKind {
 }
 
 export type BranchContextTreeNode = {
+  id?: string;
   label: string;
   kind: BranchContextTreeNodeKind;
   path?: string;

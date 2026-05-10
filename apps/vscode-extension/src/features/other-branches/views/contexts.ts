@@ -18,6 +18,8 @@ import { formatRelativeTime } from '../../../shared/format/relative-time';
 import { createOrderedGroups, groupByDate } from '../../../shared/groups';
 import { isStringValue } from '../../../shared/is-string-value';
 import {
+  type BranchContextTreeNode,
+  BranchContextTreeNodeKind,
   createArchivedContextResourceUri,
   createContextNode,
   createGroupNode,
@@ -75,6 +77,8 @@ let contextsGroupBy: ContextsGroupBy = ContextsGroupBy.Flat;
 let otherBranchesViewMode: OtherBranchesViewMode = OtherBranchesViewMode.ContextFiles;
 const contextsGroupByWorkspaceKey = 'contexts.groupBy';
 const otherBranchesViewModeWorkspaceKey = 'contexts.mode';
+const contextsCollapsedGroupsWorkspaceKey = 'contexts.collapsedGroups';
+let contextsCollapsedGroups = new Set<string>();
 
 export function initializeContextsViewState(context: vscode.ExtensionContext): void {
   const savedGroupBy = context.workspaceState.get<unknown>(contextsGroupByWorkspaceKey);
@@ -86,6 +90,11 @@ export function initializeContextsViewState(context: vscode.ExtensionContext): v
   if (isOtherBranchesViewMode(savedMode)) {
     otherBranchesViewMode = savedMode;
   }
+
+  contextsCollapsedGroups = parseCollapsedGroupIds(
+    context.workspaceState.get<unknown>(contextsCollapsedGroupsWorkspaceKey),
+  );
+
   setOtherBranchesModeContext();
 }
 
@@ -105,6 +114,27 @@ export async function saveContextsGroupBy(
 ): Promise<void> {
   contextsGroupBy = nextGroupBy;
   await context.workspaceState.update(contextsGroupByWorkspaceKey, nextGroupBy);
+}
+
+export async function saveContextsGroupCollapseState(
+  context: vscode.ExtensionContext,
+  node: unknown,
+  collapsed: boolean,
+): Promise<void> {
+  if (!isContextsGroupNode(node)) {
+    return;
+  }
+
+  if (collapsed) {
+    contextsCollapsedGroups.add(node.id);
+  } else {
+    contextsCollapsedGroups.delete(node.id);
+  }
+
+  await context.workspaceState.update(
+    contextsCollapsedGroupsWorkspaceKey,
+    serializeCollapsedGroupIds(contextsCollapsedGroups),
+  );
 }
 
 export async function toggleOtherBranchesViewMode(
@@ -236,13 +266,14 @@ function branchAgentSessionGroupFromItems(group: {
 }
 
 function createBranchAgentSessionGroupNodes(groups: BranchAgentSessionGroupContainer[]) {
-  return groups.map((group) =>
-    createGroupNode(
-      group.label,
-      group.groups.map(createBranchAgentSessionGroupNode),
-      `${group.groups.length}`,
-    ),
-  );
+  return groups.map((group) => {
+    const id = getContextsGroupId('group', group.label);
+    return createGroupNode(group.label, group.groups.map(createBranchAgentSessionGroupNode), {
+      id,
+      description: `${group.groups.length}`,
+      collapsibleState: getContextsGroupCollapsibleState(id),
+    });
+  });
 }
 
 function createSortedBranchAgentSessionGroups(
@@ -270,6 +301,7 @@ function createSortedBranchAgentSessionGroups(
 
 function createBranchAgentSessionGroupNode({ context, sessions }: BranchAgentSessionGroup) {
   const agentsFilePath = getContextAgentsFilePath(context);
+  const id = getContextsGroupId('branch', context.branchKey);
   return createGroupNode(
     context.branch,
     sessions.map((session) =>
@@ -279,11 +311,13 @@ function createBranchAgentSessionGroupNode({ context, sessions }: BranchAgentSes
       }),
     ),
     {
+      id,
       description: String(sessions.length),
       icon: context.archived ? new vscode.ThemeIcon('archive') : new vscode.ThemeIcon('git-branch'),
       resourceUri: context.archived
         ? createArchivedContextResourceUri(context.branchKey)
         : undefined,
+      collapsibleState: getContextsGroupCollapsibleState(id),
     },
   );
 }
@@ -362,13 +396,14 @@ function contextGroupFromItems(group: { label: string; items: ContextViewItem[] 
 }
 
 function createContextGroupNodes(groups: ContextViewGroup[]) {
-  return groups.map((group) =>
-    createGroupNode(
-      group.label,
-      group.contexts.map(createContextTreeNode),
-      `${group.contexts.length}`,
-    ),
-  );
+  return groups.map((group) => {
+    const id = getContextsGroupId('group', group.label);
+    return createGroupNode(group.label, group.contexts.map(createContextTreeNode), {
+      id,
+      description: `${group.contexts.length}`,
+      collapsibleState: getContextsGroupCollapsibleState(id),
+    });
+  });
 }
 
 function createSortedGroups(
@@ -469,6 +504,39 @@ function getSizeGroup(context: ContextViewItem) {
   }
 
   return 'Large';
+}
+
+function getContextsGroupId(scope: 'branch' | 'group', groupKey: string) {
+  return `contexts:${otherBranchesViewMode}:${contextsGroupBy}:${scope}:${groupKey}`;
+}
+
+function getContextsGroupCollapsibleState(id: string) {
+  return contextsCollapsedGroups.has(id)
+    ? vscode.TreeItemCollapsibleState.Collapsed
+    : vscode.TreeItemCollapsibleState.Expanded;
+}
+
+function isContextsGroupNode(node: unknown): node is BranchContextTreeNode & { id: string } {
+  return (
+    isRecord(node) &&
+    node.kind === BranchContextTreeNodeKind.Group &&
+    typeof node.id === 'string' &&
+    node.id.startsWith('contexts:')
+  );
+}
+
+function parseCollapsedGroupIds(value: unknown) {
+  return Array.isArray(value)
+    ? new Set(value.filter((item) => typeof item === 'string'))
+    : new Set<string>();
+}
+
+function serializeCollapsedGroupIds(value: Set<string>) {
+  return Array.from(value).sort();
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 function compareByUpdatedAt(left: ContextViewItem, right: ContextViewItem) {
