@@ -51,19 +51,11 @@ Default `.bctx/config.json`:
 <!-- <DYNFIELD:CONFIG_JSON> -->
 ```json
 {
-  "default_base_branch": "main",
+  "default_base_branch": "origin/main",
   "sound": true,
   "commit_description": false,
-  "template_rules": [
-    {
-      "prefix": "feature/",
-      "template": "feature"
-    },
-    {
-      "prefix": "fix/",
-      "template": "fix"
-    }
-  ]
+  "branches_folder": ".bctx/branches",
+  "templates_folder": ".bctx/templates"
 }
 ```
 <!-- </DYNFIELD:CONFIG_JSON> -->
