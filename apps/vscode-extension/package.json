@@ -264,6 +264,11 @@
         "icon": "$(output)"
       },
       {
+        "command": "branch-context.syncAllAgentSessions",
+        "title": "Branch Context: Sync All Branch AI Sessions",
+        "icon": "$(sync)"
+      },
+      {
         "command": "branch-context.internal.syncAgents",
         "title": "Branch Context: Sync Agents",
         "icon": "$(sync)"

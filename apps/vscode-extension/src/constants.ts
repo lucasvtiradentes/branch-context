@@ -46,6 +46,7 @@ export const commandIds = {
   updateCli: `${APP_ID}.updateCli`,
   updateExtension: `${APP_ID}.updateExtension`,
   showLogs: `${APP_ID}.showLogs`,
+  syncAllAgentSessions: `${APP_ID}.syncAllAgentSessions`,
   syncAgents: `${APP_ID}.internal.syncAgents`,
   showStatusBarActions: `${APP_ID}.internal.showStatusBarActions`,
   showDetails: `${APP_ID}.internal.showDetails`,

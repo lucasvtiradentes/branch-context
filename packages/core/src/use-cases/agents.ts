@@ -11,14 +11,15 @@ import {
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { DEFAULT_SYMLINK } from '../constants';
-import { sanitizeBranchName } from '../core/sync';
+import { DEFAULT_SYMLINK, SESSIONS_FILE_NAME } from '../constants';
+import { getArchivedDir, listArchivedBranches, sanitizeBranchName } from '../core/sync';
 import {
   type AgentSession,
   AgentSessionProvider,
   AgentSessionScope,
   createAgentSession,
   getBranchAgentsFilePath,
+  getBranchAgentsFilePathByKey,
   getCurrentAgentsFilePath,
   normalizeAgentsFile,
   readAgentsFile,
@@ -26,9 +27,11 @@ import {
   writeAgentsFile,
 } from '../data/agents';
 import { configExists } from '../data/config';
+import { loadArchivedMeta } from '../data/meta';
 import { gitCurrentBranch } from '../git';
 import { asRecord, asString, parseJsonRecord } from '../utils/unknown';
 import { syncCurrentBranch } from './actions';
+import { collectBranchInfo } from './branch-info';
 
 export type { AgentSession };
 
@@ -126,6 +129,30 @@ export type SyncAgentSessionsResult =
       written: boolean;
     })
   | Extract<AgentSessionsResult, { ok: false }>;
+
+export type SyncAllAgentSessionsBranchResult = {
+  branch: string;
+  branchKey: string;
+  agentsFilePath: string;
+  sessions: AgentSession[];
+  written: boolean;
+  archived: boolean;
+};
+
+export type SyncAllAgentSessionsResult =
+  | {
+      ok: true;
+      repoRoot: string;
+      branches: SyncAllAgentSessionsBranchResult[];
+      writtenCount: number;
+      sessionCount: number;
+    }
+  | {
+      ok: false;
+      reason: 'not_initialized';
+      message: string;
+      repoRoot: string;
+    };
 
 export type MoveAgentSessionToBranchResult =
   | {
@@ -250,6 +277,33 @@ export function syncAgentSessions(
     agentsFilePath,
     sessions: exactSessions,
     written,
+  };
+}
+
+export function syncAllAgentSessions(
+  repoRoot: string,
+  options: Omit<AgentSessionScanOptions, 'repoRoot' | 'branch'> = {},
+): SyncAllAgentSessionsResult {
+  if (!configExists(repoRoot)) {
+    return {
+      ok: false,
+      reason: 'not_initialized',
+      message: 'branch context is not initialized',
+      repoRoot,
+    };
+  }
+
+  const scannedSessions = scanAgentSessions({ ...options, repoRoot });
+  const branches = getSyncAllAgentSessionTargets(repoRoot).map((target) =>
+    syncAgentSessionsForBranch(target, scannedSessions),
+  );
+
+  return {
+    ok: true,
+    repoRoot,
+    branches,
+    writtenCount: branches.filter((branch) => branch.written).length,
+    sessionCount: branches.reduce((total, branch) => total + branch.sessions.length, 0),
   };
 }
 
@@ -532,6 +586,68 @@ function getExistingAgentsFilePath(repoRoot: string) {
   }
 
   return getCurrentAgentsFilePath(repoRoot);
+}
+
+type SyncAllAgentSessionsTarget = {
+  branch: string;
+  branchKey: string;
+  agentsFilePath: string;
+  archived: boolean;
+};
+
+function getSyncAllAgentSessionTargets(repoRoot: string): SyncAllAgentSessionsTarget[] {
+  const activeTargets = Array.from(collectBranchInfo(repoRoot).entries())
+    .filter(([, info]) => info.context)
+    .map(([branch, info]) => ({
+      branch,
+      branchKey: info.sanitized,
+      agentsFilePath: getBranchAgentsFilePathByKey(repoRoot, info.sanitized),
+      archived: false,
+    }));
+  const archivedMeta = loadArchivedMeta(repoRoot);
+  const archivedDir = getArchivedDir(repoRoot);
+  const archivedTargets = listArchivedBranches(repoRoot).map((branchKey) => ({
+    branch: archivedMeta[branchKey]?.branch ?? branchKey,
+    branchKey,
+    agentsFilePath: join(archivedDir, branchKey, SESSIONS_FILE_NAME),
+    archived: true,
+  }));
+
+  return [...activeTargets, ...archivedTargets].sort((left, right) =>
+    left.branch.localeCompare(right.branch),
+  );
+}
+
+function syncAgentSessionsForBranch(
+  target: SyncAllAgentSessionsTarget,
+  scannedSessions: AgentSession[],
+): SyncAllAgentSessionsBranchResult {
+  const { branch, branchKey, agentsFilePath, archived } = target;
+  const currentAgentsFile = readAgentsFile(agentsFilePath);
+  const cachedSessions = currentAgentsFile.sessions.map((session) =>
+    storedSessionToAgentSession(session, branch),
+  );
+  const sessions = mergeSessions(cachedSessions, scannedSessions)
+    .filter((session) => session.scope === AgentSessionScope.Branch && session.branch === branch)
+    .sort(compareSessions);
+  const nextAgentsFile = normalizeAgentsFile({
+    ...currentAgentsFile,
+    sessions,
+  });
+  const written = !agentsFilesEqual(currentAgentsFile, nextAgentsFile);
+
+  if (written) {
+    writeAgentsFile(agentsFilePath, nextAgentsFile);
+  }
+
+  return {
+    branch,
+    branchKey,
+    agentsFilePath,
+    sessions,
+    written,
+    archived,
+  };
 }
 
 function mergeSessions(...groups: AgentSession[][]) {

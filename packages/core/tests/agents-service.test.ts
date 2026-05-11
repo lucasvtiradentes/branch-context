@@ -5,6 +5,7 @@ import { gitCheckout } from '../src/git';
 import {
   AgentSessionProvider,
   AgentSessionScope,
+  archiveBranch,
   createAgentSession,
   getAgentSessions,
   getBranchAgentsFilePath,
@@ -14,6 +15,8 @@ import {
   moveAgentSessionToBranch,
   readAgentsFile,
   syncAgentSessions,
+  syncAllAgentSessions,
+  syncCurrentBranch,
   writeAgentsFile,
 } from '../src/index';
 import { createGitRepo, createTempDir, expectOk, initBctxWorkspace } from './helpers';
@@ -229,6 +232,83 @@ describe('agent session service', () => {
     }
     expect(firstResult.written).toBe(true);
     expect(secondResult.written).toBe(false);
+  });
+
+  it('syncs exact branch sessions into all branch contexts', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    expectOk(gitCheckout(repo, 'feature/one', true));
+    syncCurrentBranch(repo, { sound: false });
+    expectOk(gitCheckout(repo, 'feature/two', true));
+    syncCurrentBranch(repo, { sound: false });
+    expectOk(gitCheckout(repo, 'feature/old', true));
+    syncCurrentBranch(repo, { sound: false });
+    expect(archiveBranch(repo, 'feature-old')).toBe(true);
+
+    const codexRoot = createTempDir();
+    const dir = join(codexRoot, '2026', '05', '01');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      join(dir, 'one.jsonl'),
+      JSON.stringify({
+        type: 'session_meta',
+        payload: {
+          id: 'codex-one',
+          timestamp: '2026-05-01T10:00:00.000Z',
+          cwd: repo,
+          source: 'cli',
+          git: { branch: 'feature/one' },
+        },
+      }),
+    );
+    writeFileSync(
+      join(dir, 'two.jsonl'),
+      JSON.stringify({
+        type: 'session_meta',
+        payload: {
+          id: 'codex-two',
+          timestamp: '2026-05-01T11:00:00.000Z',
+          cwd: repo,
+          source: 'cli',
+          git: { branch: 'feature/two' },
+        },
+      }),
+    );
+    writeFileSync(
+      join(dir, 'old.jsonl'),
+      JSON.stringify({
+        type: 'session_meta',
+        payload: {
+          id: 'codex-old',
+          timestamp: '2026-05-01T12:00:00.000Z',
+          cwd: repo,
+          source: 'cli',
+          git: { branch: 'feature/old' },
+        },
+      }),
+    );
+
+    const result = syncAllAgentSessions(repo, {
+      codexSessionsRoot: codexRoot,
+      now: new Date('2026-05-01T15:00:00.000Z'),
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.sessionCount).toBe(3);
+    expect(
+      readAgentsFile(getBranchAgentsFilePath(repo, 'feature/one')).sessions[0]?.sessionId,
+    ).toBe('codex-one');
+    expect(
+      readAgentsFile(getBranchAgentsFilePath(repo, 'feature/two')).sessions[0]?.sessionId,
+    ).toBe('codex-two');
+    expect(
+      result.branches.find((branch) => branch.branch === 'feature/old')?.sessions[0],
+    ).toMatchObject({
+      sessionId: 'codex-old',
+    });
   });
 
   it('syncs native Codex sessions into initialized current context', () => {

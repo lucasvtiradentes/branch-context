@@ -1,6 +1,6 @@
 import { type Dirent, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { AGENTS_FILE_NAME } from '@branch-context/core';
+import { SESSIONS_FILE_NAME } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { createFileNode, createMessageNode } from './nodes';
 import { type BranchContextTreeNode, BranchContextTreeNodeKind } from './types';
@@ -52,7 +52,7 @@ export function readDirectoryNodes(dir: string): BranchContextTreeNode[] {
 
 function isSensitiveFile(name: string): boolean {
   return (
-    name === AGENTS_FILE_NAME ||
+    name === SESSIONS_FILE_NAME ||
     name === '.env' ||
     name.startsWith('.env.') ||
     name.endsWith('.pem') ||

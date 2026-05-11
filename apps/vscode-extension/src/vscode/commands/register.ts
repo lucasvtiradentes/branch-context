@@ -2,7 +2,10 @@ import type * as vscode from 'vscode';
 import { registerAgentSessionActionCommands } from '../../features/agent-sessions/commands/agent-session-actions';
 import { registerGroupAgentSessionsCommand } from '../../features/agent-sessions/commands/group-agent-sessions';
 import { registerResumeAgentSessionCommand } from '../../features/agent-sessions/commands/resume-agent-session';
-import { registerSyncAgentsCommand } from '../../features/agent-sessions/commands/sync-agents';
+import {
+  registerSyncAgentsCommand,
+  registerSyncAllAgentSessionsCommand,
+} from '../../features/agent-sessions/commands/sync-agents';
 import { registerToggleAgentSessionTextCommand } from '../../features/agent-sessions/commands/toggle-agent-session-text';
 import { registerApplyTemplateCommand } from '../../features/branch-context/commands/apply-template';
 import { registerContextActionCommands } from '../../features/branch-context/commands/context-actions';
@@ -50,6 +53,7 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerUpdateExtensionCommand(),
     registerShowLogsCommand(),
     registerShowDetailsCommand(),
+    registerSyncAllAgentSessionsCommand(),
     registerSyncAgentsCommand(),
     ...registerAgentSessionActionCommands(),
     ...registerCommitActionCommands(),

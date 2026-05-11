@@ -1,7 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  AGENTS_FILE_NAME,
   archiveBranch,
   CONFIG_FILE,
   CONTEXT_FILE_NAME,
@@ -14,6 +13,7 @@ import {
   gitCommit,
   loadArchivedMeta,
   readAgentsFile,
+  SESSIONS_FILE_NAME,
   sanitizeBranchName,
   syncBranch,
 } from '@branch-context/core';
@@ -94,7 +94,7 @@ describe('meta e2e', () => {
       }
     }
 
-    const sessions = readAgentsFile(join(repo, DEFAULT_SYMLINK, AGENTS_FILE_NAME)).sessions;
+    const sessions = readAgentsFile(join(repo, DEFAULT_SYMLINK, SESSIONS_FILE_NAME)).sessions;
     expect(sessions.map((session) => session.sessionId)).toEqual(['codex-1']);
   });
 

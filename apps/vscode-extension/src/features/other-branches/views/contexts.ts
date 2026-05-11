@@ -5,11 +5,11 @@ import type {
   BranchContextContextSummary,
 } from '@branch-context/core';
 import {
-  AGENTS_FILE_NAME,
   AgentSessionScope,
   CONFIG_DIR,
   createAgentSession,
   readAgentsFile,
+  SESSIONS_FILE_NAME,
 } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { contextKeys } from '../../../constants';
@@ -336,7 +336,7 @@ function readBranchAgentSessions(context: ContextViewItem): AgentSession[] {
 }
 
 function getContextAgentsFilePath(context: ContextViewItem) {
-  return join(context.contextDir, AGENTS_FILE_NAME);
+  return join(context.contextDir, SESSIONS_FILE_NAME);
 }
 
 function toActiveContext(context: BranchContextContextSummary): ContextViewItem {
