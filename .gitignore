@@ -9,5 +9,3 @@ build
 dist-dev
 _branch
 .bctx/*
-!.bctx/templates/
-!.bctx/templates/**

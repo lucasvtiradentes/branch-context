@@ -271,16 +271,41 @@ export function addToGitignore(gitRoot: string, value: string) {
   }
 }
 
+function removeFromGitignore(gitRoot: string, shouldRemove: (value: string) => boolean) {
+  const gitignoreFile = join(gitRoot, '.gitignore');
+  if (!existsSync(gitignoreFile)) {
+    return;
+  }
+
+  const existing = readFileSync(gitignoreFile, 'utf8');
+  const nextLines = existing.split(/\r?\n/).filter((line) => !shouldRemove(line));
+  const next = nextLines.join('\n');
+  writeFileSync(gitignoreFile, next.endsWith('\n') ? next : `${next}\n`);
+}
+
 function addInitGitignoreEntries(gitRoot: string, branchesDir: string, templatesDir: string) {
   addToGitignore(gitRoot, DEFAULT_SYMLINK);
-  addToGitignore(gitRoot, `${CONFIG_DIR}/*`);
-  addRepoFolderExceptionToGitignore(gitRoot, getLocalTemplatesDir(gitRoot));
-  addRepoFolderExceptionToGitignore(gitRoot, templatesDir);
+  removeFromGitignore(gitRoot, isBctxGitignoreModeEntry);
+
+  if (isRepoLocalTemplatesFolder(gitRoot, templatesDir)) {
+    addToGitignore(gitRoot, `${CONFIG_DIR}/*`);
+    addRepoFolderExceptionToGitignore(gitRoot, templatesDir);
+  } else {
+    addToGitignore(gitRoot, CONFIG_DIR);
+  }
 
   const branchesRelPath = getRepoRelativePath(gitRoot, branchesDir);
   if (branchesRelPath && !branchesRelPath.startsWith(`${CONFIG_DIR}/`)) {
     addToGitignore(gitRoot, `${branchesRelPath}/`);
   }
+}
+
+function isBctxGitignoreModeEntry(value: string) {
+  return value === CONFIG_DIR || value === `${CONFIG_DIR}/*` || value.startsWith(`!${CONFIG_DIR}/`);
+}
+
+function isRepoLocalTemplatesFolder(gitRoot: string, templatesDir: string) {
+  return getRepoRelativePath(gitRoot, templatesDir)?.startsWith(`${CONFIG_DIR}/`) ?? false;
 }
 
 function addRepoFolderExceptionToGitignore(gitRoot: string, folder: string) {

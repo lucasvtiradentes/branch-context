@@ -128,7 +128,7 @@ describe('init command', () => {
     expect(gitignore).toContain(`!${CONFIG_DIR}/team-templates/**\n`);
   });
 
-  it('init keeps local templates trackable when configured templates are external', async () => {
+  it('init ignores config dir when configured templates are external', async () => {
     const repo = createGitRepo();
     const templatesFolder = createTempDir();
     process.chdir(repo);
@@ -136,9 +136,42 @@ describe('init command', () => {
     await runCli(['init', '--templates-folder', templatesFolder]);
 
     const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
+    expect(gitignore).toContain(`${CONFIG_DIR}\n`);
+    expect(gitignore).not.toContain(`${CONFIG_DIR}/*\n`);
+    expect(gitignore).not.toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/\n`);
+    expect(gitignore).not.toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/**\n`);
+  });
+
+  it('init replaces local template gitignore mode when templates move external', async () => {
+    const repo = createGitRepo();
+    const templatesFolder = createTempDir();
+    process.chdir(repo);
+
+    await runCli(['init']);
+    await runCli(['init', '--templates-folder', templatesFolder]);
+
+    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
+    expect(gitignore).toContain(`${CONFIG_DIR}\n`);
+    expect(gitignore).not.toContain(`${CONFIG_DIR}/*\n`);
+    expect(gitignore).not.toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/\n`);
+    expect(gitignore).not.toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/**\n`);
+  });
+
+  it('init replaces external template gitignore mode when templates move local', async () => {
+    const repo = createGitRepo();
+    const externalTemplatesFolder = createTempDir();
+    const localTemplatesFolder = join(repo, CONFIG_DIR, 'team-templates');
+    mkdirSync(localTemplatesFolder, { recursive: true });
+    process.chdir(repo);
+
+    await runCli(['init', '--templates-folder', externalTemplatesFolder]);
+    await runCli(['init', '--templates-folder', localTemplatesFolder]);
+
+    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
+    expect(gitignore).not.toContain(`${CONFIG_DIR}\n`);
     expect(gitignore).toContain(`${CONFIG_DIR}/*\n`);
-    expect(gitignore).toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/\n`);
-    expect(gitignore).toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/**\n`);
+    expect(gitignore).toContain(`!${CONFIG_DIR}/team-templates/\n`);
+    expect(gitignore).toContain(`!${CONFIG_DIR}/team-templates/**\n`);
   });
 
   it('init syncs current branch through core service', async () => {

@@ -75,6 +75,23 @@ describe('post-checkout hook', () => {
     expect(existsSync(join(repo, '.git', 'hooks', HOOK_POST_CHECKOUT))).toBe(false);
   });
 
+  it('excludes custom hook files from local git tracking when confirmed', async () => {
+    const repo = createGitRepo();
+    resetConfirmationState();
+    expect(gitConfig(repo, 'core.hooksPath', '.husky/_').status).toBe(0);
+    mkdirSync(join(repo, '.husky', '_'), { recursive: true });
+    writeFileSync(join(repo, '.husky', '_', 'h'), '');
+    const answers = [true, true];
+    const ask = async () => answers.shift() ?? false;
+
+    expect(await installHook(repo, HOOK_POST_CHECKOUT, ask)).toBe(HookInstallResult.Installed);
+    expect(await installHook(repo, HOOK_POST_COMMIT, ask)).toBe(HookInstallResult.Installed);
+
+    const exclude = readFileSync(join(repo, '.git', 'info', 'exclude'), 'utf8');
+    expect(exclude).toContain(`.husky/${HOOK_POST_CHECKOUT}`);
+    expect(exclude).toContain(`.husky/${HOOK_POST_COMMIT}`);
+  });
+
   it('does not append unmanaged hook when declined', async () => {
     const repo = createGitRepo();
     writeFileSync(getHookPath(repo, HOOK_POST_CHECKOUT), "#!/bin/bash\necho 'existing hook'");

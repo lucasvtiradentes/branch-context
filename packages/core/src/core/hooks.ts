@@ -17,7 +17,7 @@ import {
   relative,
 } from 'node:path';
 import { CLI_NAME, GIT_DIR, HOOK_MARKER, HookType } from '../constants';
-import { gitConfigUnset, gitCurrentBranch, gitHooksPath, gitRoot } from '../git';
+import { gitConfigUnset, gitCurrentBranch, gitHooksPath, gitInfoExcludeAdd, gitRoot } from '../git';
 import { loadHookTemplateResource } from '../resources';
 
 export type PromptYesNo = (question: string) => Promise<boolean>;
@@ -40,6 +40,7 @@ export enum HookUninstallResult {
 }
 
 const customHooksConfirmed = new Map<string, boolean>();
+const customHooksExcludeConfirmed = new Map<string, boolean>();
 const appendConfirmed = new Map<string, boolean>();
 const hookCallbacks = {
   [HookType.PostCheckout]: 'on-checkout',
@@ -49,6 +50,7 @@ const noPrompt: PromptYesNo = async () => false;
 
 export function resetConfirmationState() {
   customHooksConfirmed.clear();
+  customHooksExcludeConfirmed.clear();
   appendConfirmed.clear();
 }
 
@@ -191,8 +193,10 @@ export async function installHook(
     if (updated !== existing) {
       writeFileSync(managedHookPath, updated);
       chmodSync(managedHookPath, statSync(managedHookPath).mode | 0o111);
+      await maybeExcludeHookFromGitTracking(gitRootPath, managedHookPath, prompt);
       return HookInstallResult.Updated;
     }
+    await maybeExcludeHookFromGitTracking(gitRootPath, managedHookPath, prompt);
     return HookInstallResult.AlreadyInstalled;
   }
 
@@ -231,13 +235,50 @@ export async function installHook(
     }
 
     writeFileSync(hookPath, `${existing}${getAppendSnippet(hookType, options)}`);
+    await maybeExcludeHookFromGitTracking(gitRootPath, hookPath, prompt);
     return HookInstallResult.Appended;
   }
 
   writeFileSync(hookPath, getStandaloneHookContent(hookType, options));
   chmodSync(hookPath, statSync(hookPath).mode | 0o111);
+  await maybeExcludeHookFromGitTracking(gitRootPath, hookPath, prompt);
 
   return HookInstallResult.Installed;
+}
+
+async function maybeExcludeHookFromGitTracking(
+  gitRootPath: string,
+  hookPath: string,
+  prompt: PromptYesNo,
+) {
+  const pattern = getLocalHookExcludePattern(gitRootPath, hookPath);
+  if (!pattern) {
+    return;
+  }
+
+  if (!customHooksExcludeConfirmed.has(gitRootPath)) {
+    customHooksExcludeConfirmed.set(
+      gitRootPath,
+      await prompt('Exclude bctx hook files from local git tracking?'),
+    );
+  }
+
+  if (customHooksExcludeConfirmed.get(gitRootPath)) {
+    gitInfoExcludeAdd(gitRootPath, pattern);
+  }
+}
+
+function getLocalHookExcludePattern(gitRootPath: string, hookPath: string) {
+  const relPath = relative(gitRootPath, hookPath).replaceAll(pathSeparator, '/');
+  if (
+    !relPath ||
+    relPath === '..' ||
+    relPath.startsWith('../') ||
+    relPath.startsWith(`${GIT_DIR}/`)
+  ) {
+    return null;
+  }
+  return relPath;
 }
 
 function getExistingManagedHookPath(gitRootPath: string, hookType: HookType) {
