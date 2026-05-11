@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { gitCheckout } from '../src/git';
 import { gitCurrentBranch, gitInit, normalizeGitRemoteUrl } from '../src/index';
-import { createTempDir, expectOk } from './helpers';
+import { createGitRepo, createTempDir, expectOk } from './helpers';
 
 describe('git helpers', () => {
   it('gets current branch in empty main repo', () => {
@@ -17,6 +18,12 @@ describe('git helpers', () => {
 
   it('returns null outside git repo', () => {
     expect(gitCurrentBranch(createTempDir())).toBeNull();
+  });
+
+  it('returns null in detached head state', () => {
+    const repo = createGitRepo();
+    expectOk(gitCheckout(repo, 'HEAD~0'));
+    expect(gitCurrentBranch(repo)).toBeNull();
   });
 
   it('normalizes common remote urls', () => {

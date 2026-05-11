@@ -325,6 +325,21 @@ describe('sync parity', () => {
     expect(result.reason).toBe(BranchContextActionErrorReason.NotInitialized);
   });
 
+  it('does not sync detached head as a branch context', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    expectOk(gitCheckout(repo, 'HEAD~0'));
+
+    const result = syncCurrentBranch(repo, { sound: false });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+    expect(result.reason).toBe(BranchContextActionErrorReason.NoCurrentBranch);
+    expect(existsSync(getBranchDir(repo, 'HEAD'))).toBe(false);
+  });
+
   it('gets and sets current base through service', () => {
     const repo = createGitRepo();
     expectOk(gitCheckout(repo, 'origin/main', true));

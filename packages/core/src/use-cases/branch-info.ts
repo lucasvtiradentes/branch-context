@@ -1,6 +1,7 @@
 import { listBranches, sanitizeBranchName } from '../core/sync';
 import { gitListBranches, gitListRemoteBranches } from '../git';
 
+const DETACHED_HEAD_BRANCH_NAME = 'HEAD';
 const PROTECTED_BRANCH_NAMES = new Set(['main', 'master']);
 
 export type BranchInfo = {
@@ -15,7 +16,9 @@ export function isProtectedBranchName(branchName: string) {
 }
 
 export function collectBranchInfo(gitRoot: string) {
-  const contextDirs = new Set(listBranches(gitRoot));
+  const contextDirs = new Set(
+    listBranches(gitRoot).filter((branch) => branch !== DETACHED_HEAD_BRANCH_NAME),
+  );
   const localBranches = gitListBranches(gitRoot);
   const remoteBranches = new Set(gitListRemoteBranches(gitRoot));
 

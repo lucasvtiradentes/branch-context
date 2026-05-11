@@ -31,7 +31,8 @@ export function gitCurrentBranch(path: string): string | null {
   });
 
   if (result.status === 0) {
-    return result.stdout.trim();
+    const branch = result.stdout.trim();
+    return branch === 'HEAD' ? null : branch;
   }
 
   const headFile = join(path, '.git', 'HEAD');
