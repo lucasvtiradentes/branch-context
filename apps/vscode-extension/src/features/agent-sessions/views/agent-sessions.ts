@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { closeSync, existsSync, openSync, readSync, statSync } from 'node:fs';
 import {
   AgentMessageRole,
   type AgentSession,
@@ -9,6 +9,7 @@ import {
   CodexSessionEventType,
   extractAgentContentTitle,
   isInternalAgentUserMessage,
+  PiSessionEventType,
   parseJsonRecord,
 } from '@branch-context/core';
 import * as vscode from 'vscode';
@@ -48,7 +49,7 @@ const agentSessionTextModeValues = Object.values(AgentSessionTextMode);
 const agentSessionsGroupByWorkspaceKey = 'agentSessions.groupBy';
 const agentSessionTextModeWorkspaceKey = 'agentSessions.textMode';
 const agentSessionsCollapsedGroupsWorkspaceKey = 'agentSessions.collapsedGroups';
-const MAX_SESSION_FILE_BYTES = 2 * 1024 * 1024;
+const SESSION_SCAN_CHUNK_BYTES = 64 * 1024;
 
 type SavedAgentSessionsGroupBy = AgentSessionsGroupBy | LegacyAgentSessionsGroupBy;
 
@@ -308,7 +309,7 @@ export function createSessionViewItem(session: AgentSession): AgentSessionViewIt
   const path = session.path ?? null;
   return {
     session,
-    details: readSessionDetails(path),
+    details: readSessionDetails(path, session.provider),
     sizeBytes: getSessionSize(path),
   };
 }
@@ -563,7 +564,10 @@ function firstText(...values: Array<string | null | undefined>) {
   return values.find((value) => value?.trim())?.trim() ?? 'Untitled session';
 }
 
-function readSessionDetails(path: string | null): AgentSessionDetails {
+function readSessionDetails(
+  path: string | null,
+  provider: AgentSession['provider'],
+): AgentSessionDetails {
   const details: AgentSessionDetails = {
     initialMessage: null,
     lastMessage: null,
@@ -571,34 +575,36 @@ function readSessionDetails(path: string | null): AgentSessionDetails {
   let fallbackInitialMessage: string | null = null;
   let fallbackLastMessage: string | null = null;
 
-  if (!path || !existsSync(path) || getSessionSize(path) > MAX_SESSION_FILE_BYTES) {
+  if (!path || !existsSync(path)) {
     return details;
   }
 
   try {
-    for (const line of readFileSync(path, 'utf8').split(/\r?\n/)) {
+    scanSessionLines(path, (line) => {
       const data = parseJsonRecord(line);
       if (!data) {
-        continue;
+        return;
       }
 
-      const userMessage = extractUserMessage(data);
-      if (userMessage) {
-        if (userMessage.lastOnly) {
-          if (userMessage.fallback) {
-            fallbackLastMessage = userMessage.text;
-          } else {
-            details.lastMessage = userMessage.text;
-          }
-        } else if (userMessage.fallback) {
-          fallbackInitialMessage ??= userMessage.text;
+      const userMessage = extractUserMessage(data, provider);
+      if (!userMessage) {
+        return;
+      }
+
+      if (userMessage.lastOnly) {
+        if (userMessage.fallback) {
           fallbackLastMessage = userMessage.text;
         } else {
-          details.initialMessage ??= userMessage.text;
           details.lastMessage = userMessage.text;
         }
+      } else if (userMessage.fallback) {
+        fallbackInitialMessage ??= userMessage.text;
+        fallbackLastMessage = userMessage.text;
+      } else {
+        details.initialMessage ??= userMessage.text;
+        details.lastMessage = userMessage.text;
       }
-    }
+    });
   } catch {}
 
   details.initialMessage ??= fallbackInitialMessage;
@@ -607,7 +613,48 @@ function readSessionDetails(path: string | null): AgentSessionDetails {
   return details;
 }
 
-function extractUserMessage(data: Record<string, unknown>): UserMessageExtraction | null {
+function scanSessionLines(path: string, onLine: (line: string) => void) {
+  const fd = openSync(path, 'r');
+  const buffer = Buffer.alloc(SESSION_SCAN_CHUNK_BYTES);
+  let pending = '';
+
+  try {
+    while (true) {
+      const bytesRead = readSync(fd, buffer, 0, buffer.length, null);
+      if (bytesRead === 0) {
+        break;
+      }
+
+      pending += buffer.subarray(0, bytesRead).toString('utf8');
+      const lines = pending.split(/\r?\n/);
+      pending = lines.pop() ?? '';
+
+      for (const line of lines) {
+        onLine(line);
+      }
+    }
+
+    if (pending) {
+      onLine(pending);
+    }
+  } finally {
+    closeSync(fd);
+  }
+}
+
+function extractUserMessage(
+  data: Record<string, unknown>,
+  provider: AgentSession['provider'],
+): UserMessageExtraction | null {
+  if (provider === AgentSessionProvider.Pi) {
+    const message = asRecord(data.message);
+    if (data.type !== PiSessionEventType.Message || message?.role !== AgentMessageRole.User) {
+      return null;
+    }
+
+    return toUserMessage(extractAgentContentTitle(message.content, 160));
+  }
+
   if (data.type === AgentSessionViewEventType.LastPrompt) {
     return toUserMessage(asString(data.lastPrompt), { lastOnly: true });
   }
