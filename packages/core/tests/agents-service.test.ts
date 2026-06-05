@@ -41,6 +41,15 @@ function copyClaudeFixture(root: string, repoRoot: string) {
   );
 }
 
+function copyPiFixture(root: string, repoRoot: string, fixture = 'pi-branch.jsonl') {
+  const dir = join(root, '--repo-project--');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(
+    join(dir, fixture),
+    readFileSync(join(fixturesDir, fixture), 'utf8').replaceAll('/repo/project', repoRoot),
+  );
+}
+
 describe('agent session service', () => {
   it('gets sessions without writing when repo is not initialized', () => {
     const repo = createGitRepo();
@@ -68,13 +77,16 @@ describe('agent session service', () => {
 
     const codexRoot = createTempDir();
     const claudeRoot = createTempDir();
+    const piRoot = createTempDir();
     copyCodexFixture(codexRoot, repo);
     copyClaudeFixture(claudeRoot, repo);
+    copyPiFixture(piRoot, repo);
 
     const result = syncAgentSessions(repo, {
       branch: 'feature/test',
       codexSessionsRoot: codexRoot,
       claudeProjectsRoot: claudeRoot,
+      piSessionsRoot: piRoot,
       now: new Date('2026-05-01T15:00:00.000Z'),
     });
 
@@ -89,7 +101,7 @@ describe('agent session service', () => {
       readAgentsFile(result.agentsFilePath ?? '')
         .sessions.map((session) => session.provider)
         .sort(),
-    ).toEqual([AgentSessionProvider.Claude, AgentSessionProvider.Codex]);
+    ).toEqual([AgentSessionProvider.Claude, AgentSessionProvider.Codex, AgentSessionProvider.Pi]);
   });
 
   it('does not write repo-scoped fallback sessions', () => {
@@ -97,11 +109,14 @@ describe('agent session service', () => {
     initBctxWorkspace(repo);
     expectOk(gitCheckout(repo, 'feature/test', true));
     const codexRoot = createTempDir();
+    const piRoot = createTempDir();
     copyCodexFixture(codexRoot, repo, 'codex-repo.jsonl');
+    copyPiFixture(piRoot, repo, 'pi-repo.jsonl');
 
     const result = syncAgentSessions(repo, {
       branch: 'feature/test',
       codexSessionsRoot: codexRoot,
+      piSessionsRoot: piRoot,
       now: new Date('2026-05-01T15:00:00.000Z'),
     });
 
@@ -311,6 +326,57 @@ describe('agent session service', () => {
     });
   });
 
+  it('syncs Pi branch-context sessions into all branch contexts', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    expectOk(gitCheckout(repo, 'feature/one', true));
+    syncCurrentBranch(repo, { sound: false });
+    expectOk(gitCheckout(repo, 'feature/two', true));
+    syncCurrentBranch(repo, { sound: false });
+
+    const piRoot = createTempDir();
+    const dir = join(piRoot, '--repo-project--');
+    mkdirSync(dir, { recursive: true });
+    for (const [sessionId, branch] of [
+      ['pi-one', 'feature/one'],
+      ['pi-two', 'feature/two'],
+    ]) {
+      writeFileSync(
+        join(dir, `${sessionId}.jsonl`),
+        [
+          JSON.stringify({
+            type: 'session',
+            version: 3,
+            id: sessionId,
+            timestamp: '2026-05-01T10:00:00.000Z',
+            cwd: repo,
+          }),
+          JSON.stringify({
+            type: 'custom',
+            customType: 'branch-context',
+            data: { cwd: repo, repoRoot: repo, gitBranch: branch },
+          }),
+        ].join('\n'),
+      );
+    }
+
+    const result = syncAllAgentSessions(repo, { piSessionsRoot: piRoot });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.sessionCount).toBe(2);
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/one')).sessions[0]).toMatchObject({
+      provider: AgentSessionProvider.Pi,
+      sessionId: 'pi-one',
+    });
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/two')).sessions[0]).toMatchObject({
+      provider: AgentSessionProvider.Pi,
+      sessionId: 'pi-two',
+    });
+  });
+
   it('syncs native Codex sessions into initialized current context', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
@@ -383,6 +449,105 @@ describe('agent session service', () => {
       readAgentsFile(getBranchAgentsFilePath(repo, 'feature/new')).sessions[0]?.sessionId,
     ).toBe('codex-1');
     expect(readFileSync(sessionFile, 'utf8')).toContain('"branch":"feature/new"');
+  });
+
+  it('moves a Pi session to another branch and patches branch-context metadata', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    const sessionFile = join(createTempDir(), 'pi.jsonl');
+    writeFileSync(
+      sessionFile,
+      [
+        JSON.stringify({
+          type: 'session',
+          version: 3,
+          id: 'pi-1',
+          timestamp: '2026-05-01T10:00:00.000Z',
+          cwd: repo,
+        }),
+        JSON.stringify({
+          type: 'custom',
+          id: 'bctx1',
+          parentId: null,
+          timestamp: '2026-05-01T10:00:00.100Z',
+          customType: 'branch-context',
+          data: { cwd: repo, repoRoot: repo, gitBranch: 'feature/old' },
+        }),
+      ].join('\n'),
+    );
+    writeAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'), {
+      version: 1,
+      sessions: [
+        {
+          provider: AgentSessionProvider.Pi,
+          sessionId: 'pi-1',
+          path: sessionFile,
+          model: null,
+          title: null,
+          startedAt: '2026-05-01T10:00:00.000Z',
+          updatedAt: '2026-05-01T10:00:00.000Z',
+          description: null,
+          pinnedAt: null,
+        },
+      ],
+    });
+
+    const result = moveAgentSessionToBranch({
+      repoRoot: repo,
+      provider: AgentSessionProvider.Pi,
+      sessionId: 'pi-1',
+      fromBranch: 'feature/old',
+      toBranch: 'feature/new',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/old')).sessions).toEqual([]);
+    expect(
+      readAgentsFile(getBranchAgentsFilePath(repo, 'feature/new')).sessions[0]?.sessionId,
+    ).toBe('pi-1');
+    expect(readFileSync(sessionFile, 'utf8')).toContain('"gitBranch":"feature/new"');
+  });
+
+  it('does not move a Pi session without branch-context metadata', () => {
+    const repo = createGitRepo();
+    initBctxWorkspace(repo);
+    const sessionFile = join(createTempDir(), 'pi.jsonl');
+    writeFileSync(
+      sessionFile,
+      JSON.stringify({
+        type: 'session',
+        version: 3,
+        id: 'pi-1',
+        timestamp: '2026-05-01T10:00:00.000Z',
+        cwd: repo,
+      }),
+    );
+    writeAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'), {
+      version: 1,
+      sessions: [
+        {
+          provider: AgentSessionProvider.Pi,
+          sessionId: 'pi-1',
+          path: sessionFile,
+          model: null,
+          title: null,
+          startedAt: '2026-05-01T10:00:00.000Z',
+          updatedAt: '2026-05-01T10:00:00.000Z',
+          description: null,
+          pinnedAt: null,
+        },
+      ],
+    });
+
+    const result = moveAgentSessionToBranch({
+      repoRoot: repo,
+      provider: AgentSessionProvider.Pi,
+      sessionId: 'pi-1',
+      fromBranch: 'feature/old',
+      toBranch: 'feature/new',
+    });
+
+    expect(result).toMatchObject({ ok: false, reason: 'session_file_unpatchable' });
   });
 
   it('moves a Claude session to another branch and patches jsonl metadata', () => {

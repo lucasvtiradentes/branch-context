@@ -12,9 +12,11 @@ import {
   getClaudeProjectKey,
   parseClaudeSessionFile,
   parseCodexSessionFile,
+  parsePiSessionFile,
   scanAgentSessions,
   scanClaudeSessions,
   scanCodexSessions,
+  scanPiSessions,
 } from '../src/use-cases/agents';
 import { createTempDir } from './helpers';
 
@@ -80,6 +82,88 @@ describe('agent provider parsers', () => {
     expect(session.title).toBeNull();
   });
 
+  it('parses Pi branch-context sessions', () => {
+    const session = parsePiSessionFile(join(fixturesDir, 'pi-branch.jsonl'));
+
+    expect(session.sessionId).toBe('pi-1');
+    expect(session.cwd).toBe('/repo/project');
+    expect(session.branch).toBe('feature/test');
+    expect(session.repoRoot).toBe('/repo/project');
+    expect(session.model).toBe('gpt-5.5');
+    expect(session.title).toBe('testando pi');
+  });
+
+  it('ignores Pi custom_message entries when reading branch metadata', () => {
+    const root = createTempDir();
+    const sessionPath = join(root, 'pi.jsonl');
+    writeFileSync(
+      sessionPath,
+      [
+        JSON.stringify({
+          type: 'session',
+          version: 3,
+          id: 'pi-custom-message',
+          timestamp: '2026-05-01T10:00:00.000Z',
+          cwd: '/repo/project',
+        }),
+        JSON.stringify({
+          type: 'custom_message',
+          customType: 'branch-context',
+          content: JSON.stringify({ gitBranch: 'feature/wrong' }),
+        }),
+      ].join('\n'),
+    );
+
+    expect(parsePiSessionFile(sessionPath).branch).toBeNull();
+  });
+
+  it('uses Pi repoRoot metadata to match sessions started in subdirectories', () => {
+    const root = createTempDir();
+    const projectDir = join(root, '--repo-project-subdir--');
+    mkdirSync(projectDir, { recursive: true });
+    const sessionPath = join(projectDir, 'pi-subdir.jsonl');
+    writeFileSync(
+      sessionPath,
+      [
+        JSON.stringify({
+          type: 'session',
+          version: 3,
+          id: 'pi-subdir',
+          timestamp: '2026-05-01T10:00:00.000Z',
+          cwd: '/repo/project/subdir',
+        }),
+        JSON.stringify({
+          type: 'custom',
+          customType: 'branch-context',
+          data: { repoRoot: '/repo/project', gitBranch: 'feature/test' },
+        }),
+      ].join('\n'),
+    );
+
+    const sessions = scanPiSessions({
+      repoRoot: '/repo/project',
+      branch: 'feature/test',
+      piSessionsRoot: root,
+    });
+
+    expect(sessions.map((session) => session.sessionId)).toEqual(['pi-subdir']);
+  });
+
+  it('filters Pi branch-scoped sessions by current branch', () => {
+    const root = createTempDir();
+    const projectDir = join(root, '--repo-project--');
+    mkdirSync(projectDir, { recursive: true });
+    cpSync(join(fixturesDir, 'pi-branch.jsonl'), join(projectDir, 'pi-branch.jsonl'));
+
+    const sessions = scanPiSessions({
+      repoRoot: '/repo/project',
+      branch: 'feature/other',
+      piSessionsRoot: root,
+    });
+
+    expect(sessions).toEqual([]);
+  });
+
   it('scans Claude sessions from the repo-specific directory', () => {
     const root = createTempDir();
     const repoRoot = '/repo/project';
@@ -139,27 +223,52 @@ describe('agent provider parsers', () => {
     ]);
   });
 
+  it('scans Pi sessions from project directories', () => {
+    const root = createTempDir();
+    const repoRoot = '/repo/project';
+    const projectDir = join(root, '--repo-project--');
+    mkdirSync(projectDir, { recursive: true });
+    cpSync(join(fixturesDir, 'pi-branch.jsonl'), join(projectDir, 'pi-branch.jsonl'));
+    cpSync(join(fixturesDir, 'pi-repo.jsonl'), join(projectDir, 'pi-repo.jsonl'));
+
+    const sessions = scanPiSessions({
+      repoRoot,
+      branch: 'feature/test',
+      piSessionsRoot: root,
+    });
+
+    expect(sessions.map((session) => [session.sessionId, session.scope]).sort()).toEqual([
+      ['pi-1', AgentSessionScope.Branch],
+      ['pi-2', AgentSessionScope.Repo],
+    ]);
+  });
+
   it('scans all providers', () => {
     const root = createTempDir();
     const repoRoot = '/repo/project';
     const claudeDir = join(root, 'claude', getClaudeProjectKey(repoRoot));
     const codexDir = join(root, 'codex', '2026', '05', '01');
+    const piDir = join(root, 'pi', '--repo-project--');
     mkdirSync(claudeDir, { recursive: true });
     mkdirSync(codexDir, { recursive: true });
+    mkdirSync(piDir, { recursive: true });
     cpSync(join(fixturesDir, 'claude.jsonl'), join(claudeDir, 'claude.jsonl'));
     cpSync(join(fixturesDir, 'codex-native.jsonl'), join(codexDir, 'codex-native.jsonl'));
+    cpSync(join(fixturesDir, 'pi-branch.jsonl'), join(piDir, 'pi-branch.jsonl'));
 
     const sessions = scanAgentSessions({
       repoRoot,
       branch: 'feature/test',
       claudeProjectsRoot: dirname(claudeDir),
       codexSessionsRoot: join(root, 'codex'),
+      piSessionsRoot: join(root, 'pi'),
       now: new Date('2026-05-01T15:00:00.000Z'),
     });
 
     expect(sessions.map((session) => session.provider).sort()).toEqual([
       AgentSessionProvider.Claude,
       AgentSessionProvider.Codex,
+      AgentSessionProvider.Pi,
     ]);
   });
 });

@@ -3,6 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "packageManager": "pnpm@10.33.0",
+  "keywords": [
+    "pi-package"
+  ],
+  "pi": {
+    "extensions": [
+      "packages/pi/extensions"
+    ]
+  },
   "engines": {
     "node": ">=22",
     "pnpm": ">=10"

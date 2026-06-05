@@ -60,19 +60,23 @@ enum AgentSessionViewEventType {
 enum ProviderIconLabel {
   Claude = 'CC',
   Codex = 'CX',
+  Pi = 'PI',
 }
 
 const providerSortOrder = {
   [AgentSessionProvider.Codex]: 0,
   [AgentSessionProvider.Claude]: 1,
+  [AgentSessionProvider.Pi]: 2,
 } as const;
 const providerNames = {
   [AgentSessionProvider.Codex]: 'Codex',
   [AgentSessionProvider.Claude]: 'Claude Code',
+  [AgentSessionProvider.Pi]: 'Pi',
 } as const;
 const providerIconLabels = {
   [AgentSessionProvider.Codex]: ProviderIconLabel.Codex,
   [AgentSessionProvider.Claude]: ProviderIconLabel.Claude,
+  [AgentSessionProvider.Pi]: ProviderIconLabel.Pi,
 } as const;
 const providerIconColors = {
   [ProviderIconLabel.Claude]: {
@@ -82,6 +86,10 @@ const providerIconColors = {
   [ProviderIconLabel.Codex]: {
     active: '#58a6ff',
     inactive: '#6e8fb8',
+  },
+  [ProviderIconLabel.Pi]: {
+    active: '#a371f7',
+    inactive: '#8b6bb8',
   },
 } as const;
 
@@ -623,6 +631,11 @@ function extractUserMessage(data: Record<string, unknown>): UserMessageExtractio
     payload.role === AgentMessageRole.User
   ) {
     return toUserMessage(extractAgentContentTitle(payload.content, 160), { fallback: true });
+  }
+
+  const message = asRecord(data.message);
+  if (data.type === 'message' && message?.role === AgentMessageRole.User) {
+    return toUserMessage(extractAgentContentTitle(message.content, 160));
   }
 
   return null;

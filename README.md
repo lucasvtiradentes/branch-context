@@ -25,7 +25,7 @@ AI agents are stateless, but work is organized in branches. Branch Context pins 
 
 ## ❓ Motivation
 
-I was tired of re-briefing Codex and Claude Code about the same branch on every new session. I wanted one place to drop everything tied to a branch (e.g. scratch scripts, test files, decisions) that my agents could read on startup and that wouldn't follow me when I switched branches. So I built it.
+I was tired of re-briefing Codex, Claude Code, and Pi about the same branch on every new session. I wanted one place to drop everything tied to a branch (e.g. scratch scripts, test files, decisions) that my agents could read on startup and that wouldn't follow me when I switched branches. So I built it.
 
 ## ⭐ Features
 
@@ -77,6 +77,14 @@ I was tired of re-briefing Codex and Claude Code about the same branch on every 
    This sets up `.bctx/` and Git hooks. `_branch/context.md` now points at the active branch's context and stays in sync on checkout and commit.
 
 3. (Optional) Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=lucasvtiradentes.branch-context-vscode) for a richer view: branch context, branch changes, templates, and resumable agent sessions in the sidebar.
+
+4. (Optional) For branch-scoped Pi sessions, install the Pi package:
+
+   ```sh
+   pi install git:github.com/lucasvtiradentes/branch-context
+   ```
+
+   New Pi sessions now record `branch-context` metadata via `pi.appendEntry()`. Existing Pi sessions without that entry are treated as repo-scoped fallback sessions.
 
 ## 🧰 Commands
 

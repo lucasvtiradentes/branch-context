@@ -45,6 +45,7 @@ export type AgentSessionScanOptions = {
   homeDir?: string;
   claudeProjectsRoot?: string;
   codexSessionsRoot?: string;
+  piSessionsRoot?: string;
   now?: Date;
   maxFiles?: number;
   maxFileBytes?: number;
@@ -71,6 +72,17 @@ type ParsedCodexSession = {
   updatedAt: string | null;
 };
 
+type ParsedPiSession = {
+  sessionId: string | null;
+  cwd: string | null;
+  branch: string | null;
+  repoRoot: string | null;
+  model: string | null;
+  title: string | null;
+  startedAt: string | null;
+  updatedAt: string | null;
+};
+
 type SessionFileCandidate = {
   path: string;
   mtimeMs: number;
@@ -85,6 +97,7 @@ type ParsedSessionCacheEntry<T> = {
 
 const parsedClaudeSessionCache = new Map<string, ParsedSessionCacheEntry<ParsedClaudeSession>>();
 const parsedCodexSessionCache = new Map<string, ParsedSessionCacheEntry<ParsedCodexSession>>();
+const parsedPiSessionCache = new Map<string, ParsedSessionCacheEntry<ParsedPiSession>>();
 const normalizedPathCache = new Map<string, string>();
 
 export enum ClaudeSessionEventType {
@@ -103,6 +116,15 @@ export enum CodexSessionEventType {
 export enum CodexPayloadType {
   UserMessage = 'user_message',
 }
+
+export enum PiSessionEventType {
+  Session = 'session',
+  ModelChange = 'model_change',
+  Message = 'message',
+  Custom = 'custom',
+}
+
+export const PiBranchContextCustomType = 'branch-context';
 
 export enum AgentMessageRole {
   User = 'user',
@@ -379,7 +401,11 @@ export function moveAgentSessionToBranch(options: {
 }
 
 export function scanAgentSessions(options: AgentSessionScanOptions): AgentSession[] {
-  return [...scanClaudeSessions(options), ...scanCodexSessions(options)].sort(compareSessions);
+  return [
+    ...scanClaudeSessions(options),
+    ...scanCodexSessions(options),
+    ...scanPiSessions(options),
+  ].sort(compareSessions);
 }
 
 export function scanClaudeSessions(options: AgentSessionScanOptions): AgentSession[] {
@@ -423,6 +449,24 @@ export function scanCodexSessions(options: AgentSessionScanOptions): AgentSessio
     .filter(({ session }) => Boolean(session.sessionId && session.cwd))
     .filter(({ session }) => matchesRepo(session.cwd, options.repoRoot))
     .map(({ file, session }) => codexSessionToAgent(file, session, options))
+    .filter((session): session is AgentSession => Boolean(session))
+    .filter(
+      (session) =>
+        !options.branch ||
+        session.scope === AgentSessionScope.Repo ||
+        session.branch === options.branch,
+    )
+    .sort(compareSessions);
+}
+
+export function scanPiSessions(options: AgentSessionScanOptions): AgentSession[] {
+  const files = listPiSessionFiles(options);
+
+  return files
+    .map((file) => ({ file, session: parsePiSessionFile(file, options.maxFileBytes) }))
+    .filter(({ session }) => Boolean(session.sessionId && session.cwd))
+    .filter(({ session }) => matchesRepo(session.repoRoot ?? session.cwd, options.repoRoot))
+    .map(({ file, session }) => piSessionToAgent(file, session, options))
     .filter((session): session is AgentSession => Boolean(session))
     .filter(
       (session) =>
@@ -532,6 +576,57 @@ function parseCodexSessionFileUncached(path: string, maxBytes: number): ParsedCo
   return parsed;
 }
 
+export function parsePiSessionFile(
+  path: string,
+  maxBytes = DEFAULT_MAX_FILE_BYTES,
+): ParsedPiSession {
+  return readParsedSessionCache(path, maxBytes, parsedPiSessionCache, () =>
+    parsePiSessionFileUncached(path, maxBytes),
+  );
+}
+
+function parsePiSessionFileUncached(path: string, maxBytes: number): ParsedPiSession {
+  const parsed: ParsedPiSession = {
+    sessionId: null,
+    cwd: null,
+    branch: null,
+    repoRoot: null,
+    model: null,
+    title: null,
+    startedAt: null,
+    updatedAt: getFileUpdatedAt(path),
+  };
+
+  for (const line of readJsonLines(path, maxBytes)) {
+    const data = parseJsonRecord(line);
+    if (!data) {
+      continue;
+    }
+
+    if (data.type === PiSessionEventType.Session) {
+      parsed.sessionId ??= asString(data.id);
+      parsed.cwd ??= asString(data.cwd);
+      parsed.startedAt ??= asString(data.timestamp);
+    } else if (data.type === PiSessionEventType.ModelChange) {
+      parsed.model ??= asString(data.modelId);
+    } else if (data.type === PiSessionEventType.Message) {
+      const message = asRecord(data.message);
+      if (message?.role === AgentMessageRole.User) {
+        parsed.title ??= extractMessageTitle(message);
+      }
+    } else if (
+      data.type === PiSessionEventType.Custom &&
+      data.customType === PiBranchContextCustomType
+    ) {
+      const branchContext = asRecord(data.data);
+      parsed.branch ??= asString(branchContext?.gitBranch);
+      parsed.repoRoot ??= asString(branchContext?.repoRoot);
+    }
+  }
+
+  return parsed;
+}
+
 export function getClaudeProjectKey(repoRoot: string) {
   return repoRoot.replace(/[^a-zA-Z0-9]/g, '-');
 }
@@ -550,6 +645,33 @@ function codexSessionToAgent(
 
   return createAgentSession({
     provider: AgentSessionProvider.Codex,
+    sessionId: session.sessionId,
+    branch,
+    scope: exactBranch ? AgentSessionScope.Branch : AgentSessionScope.Repo,
+    path: file,
+    model: session.model,
+    title: session.title,
+    startedAt: session.startedAt,
+    updatedAt: session.updatedAt,
+    description: null,
+    pinnedAt: null,
+  });
+}
+
+function piSessionToAgent(
+  file: string,
+  session: ParsedPiSession,
+  options: AgentSessionScanOptions,
+): AgentSession | null {
+  if (!session.sessionId) {
+    return null;
+  }
+
+  const exactBranch = session.branch;
+  const branch = exactBranch ?? options.branch ?? '';
+
+  return createAgentSession({
+    provider: AgentSessionProvider.Pi,
     sessionId: session.sessionId,
     branch,
     scope: exactBranch ? AgentSessionScope.Branch : AgentSessionScope.Repo,
@@ -684,7 +806,11 @@ function patchAgentSessionFileBranch(
   provider: AgentSessionProvider,
   branch: string,
 ): { ok: true; patchedLines: number } | Extract<MoveAgentSessionToBranchResult, { ok: false }> {
-  if (provider !== AgentSessionProvider.Claude && provider !== AgentSessionProvider.Codex) {
+  if (
+    provider !== AgentSessionProvider.Claude &&
+    provider !== AgentSessionProvider.Codex &&
+    provider !== AgentSessionProvider.Pi
+  ) {
     return {
       ok: false,
       reason: 'unsupported_provider',
@@ -746,6 +872,19 @@ function patchAgentSessionLineBranch(
     }
   }
 
+  if (provider === AgentSessionProvider.Pi) {
+    const branchContext = asRecord(data.data);
+    if (
+      data.type === PiSessionEventType.Custom &&
+      data.customType === PiBranchContextCustomType &&
+      branchContext &&
+      typeof branchContext.gitBranch === 'string'
+    ) {
+      branchContext.gitBranch = branch;
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -755,6 +894,14 @@ function getClaudeProjectsRoot(options: AgentSessionScanOptions) {
 
 function getCodexSessionsRoot(options: AgentSessionScanOptions) {
   return options.codexSessionsRoot ?? join(options.homeDir ?? homedir(), '.codex', 'sessions');
+}
+
+function getPiSessionsRoot(options: AgentSessionScanOptions) {
+  return (
+    options.piSessionsRoot ??
+    process.env.PI_CODING_AGENT_SESSION_DIR ??
+    join(options.homeDir ?? homedir(), '.pi', 'agent', 'sessions')
+  );
 }
 
 function listCodexSessionFiles(options: AgentSessionScanOptions) {
@@ -780,6 +927,32 @@ function listCodexSessionFiles(options: AgentSessionScanOptions) {
           } catch {}
         }
       }
+    }
+  }
+
+  return files
+    .sort((left, right) => right.mtimeMs - left.mtimeMs)
+    .slice(0, maxFiles)
+    .map((entry) => entry.path);
+}
+
+function listPiSessionFiles(options: AgentSessionScanOptions) {
+  const root = getPiSessionsRoot(options);
+  if (!existsSync(root)) {
+    return [];
+  }
+
+  const maxFiles = options.maxFiles ?? DEFAULT_MAX_FILES;
+  const files: SessionFileCandidate[] = [];
+
+  for (const projectDir of listDirectoryNames(root)) {
+    for (const file of listJsonlFiles(join(root, projectDir), { ...options, maxFiles })) {
+      try {
+        const stat = statSync(file);
+        if (stat.isFile()) {
+          files.push({ path: file, mtimeMs: stat.mtimeMs });
+        }
+      } catch {}
     }
   }
 

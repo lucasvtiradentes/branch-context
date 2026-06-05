@@ -9,6 +9,7 @@ const resumeCommandBuilders: Record<AgentSessionProvider, (sessionId: string) =>
     `"${process.env.HOME ?? '~'}/.local/bin/claude" --dangerously-skip-permissions --resume ${shellQuote(sessionId)}`,
   [AgentSessionProvider.Codex]: (sessionId) =>
     `codex --dangerously-bypass-approvals-and-sandbox resume ${shellQuote(sessionId)}`,
+  [AgentSessionProvider.Pi]: (sessionId) => `pi --session ${shellQuote(sessionId)}`,
 };
 
 export function registerResumeAgentSessionCommand(): vscode.Disposable {

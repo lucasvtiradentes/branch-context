@@ -64,6 +64,18 @@ describe('agents file', () => {
     expect(sessions[0]).not.toHaveProperty('scope');
   });
 
+  it('keeps Pi sessions when normalizing agents files', () => {
+    const workspace = createWorkspace();
+    const path = join(workspace, SESSIONS_FILE_NAME);
+
+    writeAgentsFile(path, {
+      version: 1,
+      sessions: [createSession({ provider: AgentSessionProvider.Pi, sessionId: 'pi-1' })],
+    });
+
+    expect(readAgentsFile(path).sessions[0]?.provider).toBe(AgentSessionProvider.Pi);
+  });
+
   it('upserts sessions by provider and id', () => {
     const workspace = createWorkspace();
     const path = join(workspace, SESSIONS_FILE_NAME);

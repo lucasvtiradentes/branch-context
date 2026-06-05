@@ -1,0 +1,14 @@
+{
+  "name": "branch-context-pi",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pi extension for Branch Context session branch metadata.",
+  "keywords": [
+    "pi-package"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions"
+    ]
+  }
+}

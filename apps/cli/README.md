@@ -50,7 +50,15 @@ bctx uninstall        # remove .bctx/ and hooks
 ```
 <!-- </DYNFIELD:COMMANDS> -->
 
-`bctx agents status` indexes local Codex and Claude Code sessions for the current branch.
+`bctx agents status` indexes local Codex, Claude Code, and Pi sessions for the current branch.
+
+For branch-scoped Pi sessions, install the Pi package from GitHub:
+
+```sh
+pi install git:github.com/lucasvtiradentes/branch-context
+```
+
+It records the current Git branch into new Pi session files via `pi.appendEntry()`.
 
 ## ⚙️ Configuration
 

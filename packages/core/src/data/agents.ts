@@ -7,7 +7,10 @@ import { getBranchesDir } from './config';
 export enum AgentSessionProvider {
   Claude = 'claude',
   Codex = 'codex',
+  Pi = 'pi',
 }
+
+const agentSessionProviderValues = new Set<string>(Object.values(AgentSessionProvider));
 
 export enum AgentSessionScope {
   Branch = 'branch',
@@ -229,8 +232,7 @@ function parseStoredAgentSession(value: unknown): StoredAgentSession[] {
   const session = value as Partial<StoredAgentSession>;
   if (
     !(
-      (session.provider === AgentSessionProvider.Claude ||
-        session.provider === AgentSessionProvider.Codex) &&
+      isAgentSessionProvider(session.provider) &&
       typeof session.sessionId === 'string' &&
       isNullableString(session.path) &&
       isNullableString(session.model) &&
@@ -266,8 +268,7 @@ function isStoredAgentSession(value: unknown): value is StoredAgentSession {
 
   const session = value as Partial<StoredAgentSession>;
   return (
-    (session.provider === AgentSessionProvider.Claude ||
-      session.provider === AgentSessionProvider.Codex) &&
+    isAgentSessionProvider(session.provider) &&
     typeof session.sessionId === 'string' &&
     isNullableString(session.path) &&
     isNullableString(session.model) &&
@@ -277,6 +278,10 @@ function isStoredAgentSession(value: unknown): value is StoredAgentSession {
     isNullableString(session.description) &&
     isNullableString(session.pinnedAt)
   );
+}
+
+function isAgentSessionProvider(value: unknown): value is AgentSessionProvider {
+  return typeof value === 'string' && agentSessionProviderValues.has(value);
 }
 
 function isNullableString(value: unknown): value is string | null {

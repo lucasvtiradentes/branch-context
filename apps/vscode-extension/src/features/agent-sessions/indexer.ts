@@ -87,6 +87,8 @@ function registerProviderWatchers(workspaceRoot: string): void {
   for (const pattern of getCodexWatchPatterns()) {
     registerProviderWatcher(codexRoot, pattern);
   }
+
+  registerProviderWatcher(join(homeDir, '.pi', 'agent', 'sessions'), '*/*.jsonl');
 }
 
 function registerProviderWatcher(root: string, pattern: string): void {
