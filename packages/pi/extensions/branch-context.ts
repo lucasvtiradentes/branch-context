@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 
-const customType = 'branch-context';
+const customType = 'branch';
 
 type ExtensionAPI = {
   on(event: 'session_start', handler: (event: SessionStartEvent, ctx: PiContext) => unknown): void;

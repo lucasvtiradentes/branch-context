@@ -124,21 +124,10 @@ export enum PiSessionEventType {
   Custom = 'custom',
 }
 
-export const PiBranchContextCustomType = getPiBranchContextCustomType();
+export const PiBranchContextCustomType = 'branch';
 
 export enum AgentMessageRole {
   User = 'user',
-}
-
-function getPiBranchContextCustomType() {
-  return String.fromCharCode(98, 114, 97, 110, 99, 104, 45, 99, 111, 110, 116, 101, 120, 116);
-}
-
-function isPiBranchContextCustomType(value: unknown) {
-  return (
-    value === PiBranchContextCustomType ||
-    (typeof value === 'string' && value === PiBranchContextCustomType.replace(/-dev$/, ''))
-  );
 }
 
 export type AgentSessionsResult =
@@ -627,7 +616,7 @@ function parsePiSessionFileUncached(path: string, maxBytes: number): ParsedPiSes
       }
     } else if (
       data.type === PiSessionEventType.Custom &&
-      isPiBranchContextCustomType(data.customType)
+      data.customType === PiBranchContextCustomType
     ) {
       const branchContext = asRecord(data.data);
       parsed.branch ??= asString(branchContext?.gitBranch);
@@ -887,7 +876,7 @@ function patchAgentSessionLineBranch(
     const branchContext = asRecord(data.data);
     if (
       data.type === PiSessionEventType.Custom &&
-      isPiBranchContextCustomType(data.customType) &&
+      data.customType === PiBranchContextCustomType &&
       branchContext &&
       typeof branchContext.gitBranch === 'string'
     ) {

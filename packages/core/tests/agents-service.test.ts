@@ -326,7 +326,7 @@ describe('agent session service', () => {
     });
   });
 
-  it('syncs Pi branch-context sessions into all branch contexts', () => {
+  it('syncs Pi branch sessions into all branch contexts', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     expectOk(gitCheckout(repo, 'feature/one', true));
@@ -353,7 +353,7 @@ describe('agent session service', () => {
           }),
           JSON.stringify({
             type: 'custom',
-            customType: 'branch-context',
+            customType: 'branch',
             data: { cwd: repo, repoRoot: repo, gitBranch: branch },
           }),
         ].join('\n'),
@@ -451,7 +451,7 @@ describe('agent session service', () => {
     expect(readFileSync(sessionFile, 'utf8')).toContain('"branch":"feature/new"');
   });
 
-  it('moves a Pi session to another branch and patches branch-context metadata', () => {
+  it('moves a Pi session to another branch and patches branch metadata', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     const sessionFile = join(createTempDir(), 'pi.jsonl');
@@ -470,7 +470,7 @@ describe('agent session service', () => {
           id: 'bctx1',
           parentId: null,
           timestamp: '2026-05-01T10:00:00.100Z',
-          customType: 'branch-context',
+          customType: 'branch',
           data: { cwd: repo, repoRoot: repo, gitBranch: 'feature/old' },
         }),
       ].join('\n'),
@@ -508,7 +508,7 @@ describe('agent session service', () => {
     expect(readFileSync(sessionFile, 'utf8')).toContain('"gitBranch":"feature/new"');
   });
 
-  it('does not move a Pi session without branch-context metadata', () => {
+  it('does not move a Pi session without branch metadata', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     const sessionFile = join(createTempDir(), 'pi.jsonl');

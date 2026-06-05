@@ -82,7 +82,7 @@ describe('agent provider parsers', () => {
     expect(session.title).toBeNull();
   });
 
-  it('parses Pi branch-context sessions', () => {
+  it('parses Pi branch sessions', () => {
     const session = parsePiSessionFile(join(fixturesDir, 'pi-branch.jsonl'));
 
     expect(session.sessionId).toBe('pi-1');
@@ -108,7 +108,7 @@ describe('agent provider parsers', () => {
         }),
         JSON.stringify({
           type: 'custom_message',
-          customType: 'branch-context',
+          customType: 'branch',
           content: JSON.stringify({ gitBranch: 'feature/wrong' }),
         }),
       ].join('\n'),
@@ -134,7 +134,7 @@ describe('agent provider parsers', () => {
         }),
         JSON.stringify({
           type: 'custom',
-          customType: 'branch-context',
+          customType: 'branch',
           data: { repoRoot: '/repo/project', gitBranch: 'feature/test' },
         }),
       ].join('\n'),

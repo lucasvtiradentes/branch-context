@@ -84,7 +84,7 @@ I was tired of re-briefing Codex, Claude Code, and Pi about the same branch on e
    pi install git:github.com/lucasvtiradentes/branch-context
    ```
 
-   New Pi sessions now record `branch-context` metadata via `pi.appendEntry()`. Existing Pi sessions without that entry are treated as repo-scoped fallback sessions.
+   New Pi sessions now record `branch` metadata via `pi.appendEntry()`. Existing Pi sessions without that entry are treated as repo-scoped fallback sessions.
 
 ## 🧰 Commands
 

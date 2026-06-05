@@ -1,4 +1,4 @@
 {"type":"session","version":3,"id":"pi-1","timestamp":"2026-05-01T10:00:00.000Z","cwd":"/repo/project"}
 {"type":"model_change","id":"model1","parentId":null,"timestamp":"2026-05-01T10:00:00.100Z","provider":"openai-codex","modelId":"gpt-5.5"}
-{"type":"custom","id":"bctx1","parentId":"model1","timestamp":"2026-05-01T10:00:00.200Z","customType":"branch-context","data":{"cwd":"/repo/project","repoRoot":"/repo/project","gitBranch":"feature/test","recordedAt":"2026-05-01T10:00:00.200Z"}}
+{"type":"custom","id":"bctx1","parentId":"model1","timestamp":"2026-05-01T10:00:00.200Z","customType":"branch","data":{"cwd":"/repo/project","repoRoot":"/repo/project","gitBranch":"feature/test","recordedAt":"2026-05-01T10:00:00.200Z"}}
 {"type":"message","id":"msg1","parentId":"bctx1","timestamp":"2026-05-01T10:00:01.000Z","message":{"role":"user","content":[{"type":"text","text":"testando pi"}],"timestamp":1777629601000}}

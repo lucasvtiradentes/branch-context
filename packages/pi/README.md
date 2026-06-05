@@ -27,7 +27,7 @@ The extension writes a hidden Pi custom entry:
 ```json
 {
   "type": "custom",
-  "customType": "branch-context",
+  "customType": "branch",
   "data": {
     "cwd": "/repo",
     "repoRoot": "/repo",
