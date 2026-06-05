@@ -93,6 +93,35 @@ describe('agent provider parsers', () => {
     expect(session.title).toBe('testando pi');
   });
 
+  it('uses the latest Pi branch metadata entry', () => {
+    const root = createTempDir();
+    const sessionPath = join(root, 'pi.jsonl');
+    writeFileSync(
+      sessionPath,
+      [
+        JSON.stringify({
+          type: 'session',
+          version: 3,
+          id: 'pi-latest-branch',
+          timestamp: '2026-05-01T10:00:00.000Z',
+          cwd: '/repo/project',
+        }),
+        JSON.stringify({
+          type: 'custom',
+          customType: 'branch',
+          data: { repoRoot: '/repo/project', gitBranch: 'feature/old' },
+        }),
+        JSON.stringify({
+          type: 'custom',
+          customType: 'branch',
+          data: { repoRoot: '/repo/project', gitBranch: 'feature/new' },
+        }),
+      ].join('\n'),
+    );
+
+    expect(parsePiSessionFile(sessionPath).branch).toBe('feature/new');
+  });
+
   it('ignores Pi custom_message entries when reading branch metadata', () => {
     const root = createTempDir();
     const sessionPath = join(root, 'pi.jsonl');

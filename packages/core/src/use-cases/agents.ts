@@ -619,8 +619,8 @@ function parsePiSessionFileUncached(path: string, maxBytes: number): ParsedPiSes
       data.customType === PiBranchContextCustomType
     ) {
       const branchContext = asRecord(data.data);
-      parsed.branch ??= asString(branchContext?.gitBranch);
-      parsed.repoRoot ??= asString(branchContext?.repoRoot);
+      parsed.branch = asString(branchContext?.gitBranch) ?? parsed.branch;
+      parsed.repoRoot = asString(branchContext?.repoRoot) ?? parsed.repoRoot;
     }
   }
 
