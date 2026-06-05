@@ -26,7 +26,7 @@ export function initializeAgentIndexer(context: vscode.ExtensionContext): void {
   );
   branchKey = getStateBranchKey(state);
   resetAgentWatchers(state);
-  scheduleAgentSync('initialize');
+  syncCurrentAgentSessions('initialize');
 
   context.subscriptions.push(
     branchContextState.onDidChange((nextState) => {
