@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- d9b1c3b: Rename branch AI session cache files from agents.json to sessions.json.
+
 ## 0.3.0
 
 ### Minor Changes
