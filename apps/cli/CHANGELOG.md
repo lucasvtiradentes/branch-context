@@ -1,5 +1,17 @@
 # branch-context
 
+## 0.2.0
+
+### Minor Changes
+
+- a16d6b8: Add Pi session indexing with branch metadata recorded by the Branch Context Pi package.
+
+### Patch Changes
+
+- aae403b: Update init to choose gitignore mode based on the configured templates folder and locally exclude custom hook files when requested.
+- a2c7505: Prevent detached HEAD from creating or displaying a branch context named HEAD.
+- b65b20b: Rename branch AI session cache files to sessions.json and add a VS Code command to sync sessions across active and archived branch contexts.
+
 ## 0.1.0
 
 ### Minor Changes
