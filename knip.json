@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignoreFiles": [".changeset/commit.js"],
+  "ignoreFiles": [".changeset/commit.js", "packages/pi/extensions/*.ts"],
   "workspaces": {
     "apps/cli": {
       "project": ["src/**/*.ts"]
