@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+### Patch Changes
+
+- 7d2d585: Move branch-owned `sessions.json` and `base_branch` state into `_branch/.config/` and migrate legacy files on access.
+
 ## 0.3.1
 
 ### Patch Changes
