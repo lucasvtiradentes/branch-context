@@ -167,15 +167,15 @@ describe('sync parity', () => {
 
   it('creates branch context from a matching branch prefix template', () => {
     const workspace = createWorkspace();
-    expect(createBranchContext(workspace, 'feature/login')).toBe(
+    expect(createBranchContext(workspace, 'fix/login')).toBe(
       CreateBranchContextResult.CreatedFromTemplate,
     );
     const content = readFileSync(
-      join(getBranchDir(workspace, 'feature/login'), CONTEXT_FILE_NAME),
+      join(getBranchDir(workspace, 'fix/login'), CONTEXT_FILE_NAME),
       'utf8',
     );
-    expect(content).toContain('## Description');
-    expect(content).toContain('## Decisions');
+    expect(content).toContain('## Problem');
+    expect(content).toContain('## Fix');
   });
 
   it('resets branch context', () => {
@@ -204,10 +204,10 @@ describe('sync parity', () => {
   it('resets branch context with specific template', () => {
     const workspace = createWorkspace();
     createBranchContext(workspace, 'main');
-    expect(resetBranchContext(workspace, 'main', 'feature')).toBe(ResetBranchContextResult.Reset);
+    expect(resetBranchContext(workspace, 'main', 'fix')).toBe(ResetBranchContextResult.Reset);
     expect(
       readFileSync(join(getBranchDir(workspace, 'main'), CONTEXT_FILE_NAME), 'utf8'),
-    ).toContain('## Decisions');
+    ).toContain('## Fix');
   });
 
   it('archives and unarchives branch', () => {

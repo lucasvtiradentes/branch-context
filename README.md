@@ -32,7 +32,7 @@ I was tired of re-briefing Codex, Claude Code, and Pi about the same branch on e
 - One folder per branch, active one always at `_branch/` (stable path for agent hooks)
 - `context.md` auto-syncs commits and changed files, so months later the history is still there
 - Deleted branches auto-restore their context when checked out again
-- Per-branch-type templates (feature, fix, chore, …) matched by prefix
+- Minimal templates (`_default`, `fix`) that projects can replace or extend
 - CLI (`bctx`) and VS Code extension
 
 ## 📦 Packages
@@ -94,7 +94,7 @@ bctx init             # set up .bctx/ and Git hooks
 bctx sync             # refresh commit/file summaries
 bctx status           # check setup health and list branch contexts
 bctx base             # get/set base branch
-bctx template [name]  # apply a template (e.g. fix, feature)
+bctx template [name]  # apply a template (e.g. fix)
 bctx prune            # archive contexts of deleted branches
 bctx agents status    # show indexed AI session pointers for the branch
 bctx uninstall        # remove .bctx/ and hooks

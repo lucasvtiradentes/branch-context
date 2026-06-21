@@ -1,66 +1,28 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { gitCheckout } from '../src/git';
 import {
   applyTemplateToCurrentBranch,
   BranchContextActionErrorReason,
   CONTEXT_FILE_NAME,
   getBranchDir,
-  getTemplateVariables,
-  renderTemplateContent,
+  gitCheckout,
   syncCurrentBranch,
 } from '../src/index';
 import { createGitRepo, initBctxWorkspace } from './helpers';
 
 describe('template variables', () => {
-  it('includes branch', () => {
-    expect(getTemplateVariables('feature/login').branch).toBe('feature/login');
-  });
-
-  it('includes date', () => {
-    const date = getTemplateVariables('main').date;
-    expect(date).toHaveLength(10);
-    expect(date).toContain('-');
-  });
-
-  it('includes author from git config', () => {
+  it('renders branch variables into templates', () => {
     const repo = createGitRepo();
-    process.chdir(repo);
-    expect(getTemplateVariables('main').author).toBe('Test User');
-  });
+    initBctxWorkspace(repo);
+    gitCheckout(repo, 'feature/test', true);
+    syncCurrentBranch(repo, { sound: false });
 
-  it('renders branch variable', () => {
-    expect(
-      renderTemplateContent('# Branch: {{branch}}', {
-        branch: 'feature/test',
-        date: '2026-01-01',
-        author: 'Me',
-      }),
-    ).toBe('# Branch: feature/test');
-  });
+    const contextPath = join(getBranchDir(repo, 'feature/test'), CONTEXT_FILE_NAME);
+    const content = readFileSync(contextPath, 'utf8');
 
-  it('renders all variables', () => {
-    const result = renderTemplateContent('Branch: {{branch}}\nDate: {{date}}\nAuthor: {{author}}', {
-      branch: 'main',
-      date: '2026-02-24',
-      author: 'Test',
-    });
-    expect(result).toContain('Branch: main');
-    expect(result).toContain('Date: 2026-02-24');
-    expect(result).toContain('Author: Test');
-  });
-
-  it('preserves unknown variables', () => {
-    expect(renderTemplateContent('{{branch}} - {{unknown}}', { branch: 'main' })).toBe(
-      'main - {{unknown}}',
-    );
-  });
-
-  it('preserves content without variables', () => {
-    expect(renderTemplateContent('No variables here', { branch: 'main' })).toBe(
-      'No variables here',
-    );
+    expect(content).toContain('branch: feature/test');
+    expect(content).toContain('author: ');
   });
 
   it('applies template to current branch through service', () => {
@@ -71,21 +33,21 @@ describe('template variables', () => {
     syncCurrentBranch(repo, { sound: false });
     const contextPath = join(getBranchDir(repo, 'main'), CONTEXT_FILE_NAME);
     writeFileSync(contextPath, 'MODIFIED CONTENT');
-    const result = applyTemplateToCurrentBranch(repo, 'feature');
+    const result = applyTemplateToCurrentBranch(repo, 'fix');
     expect(result.ok).toBe(true);
     if (!result.ok) {
       return;
     }
     expect(result.branch).toBe('main');
-    expect(result.template).toBe('feature');
+    expect(result.template).toBe('fix');
     const content = readFileSync(contextPath, 'utf8');
-    expect(content).toContain('## Decisions');
+    expect(content).toContain('## Fix');
     expect(content).not.toContain('MODIFIED CONTENT');
   });
 
   it('reports missing config through template service', () => {
     const repo = createGitRepo();
-    const result = applyTemplateToCurrentBranch(repo, 'feature');
+    const result = applyTemplateToCurrentBranch(repo, 'fix');
     expect(result.ok).toBe(false);
     if (result.ok) {
       return;

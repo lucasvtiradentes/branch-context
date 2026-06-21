@@ -43,7 +43,7 @@ bctx init             # set up .bctx/ and Git hooks
 bctx sync             # refresh commit/file summaries
 bctx status           # check setup health and list branch contexts
 bctx base             # get/set base branch
-bctx template [name]  # apply a template (e.g. fix, feature)
+bctx template [name]  # apply a template (e.g. fix)
 bctx prune            # archive contexts of deleted branches
 bctx agents status    # show indexed AI session pointers for the branch
 bctx uninstall        # remove .bctx/ and hooks

@@ -98,7 +98,7 @@ function createProgram(binName: string): CaporalProgram {
       `  ${binName} agents status`,
       `  ${binName} prune`,
       `  ${binName} template apply`,
-      `  ${binName} template apply feature`,
+      `  ${binName} template apply fix`,
       `  ${binName} --install-completion`,
     ].join('\n'),
   );
