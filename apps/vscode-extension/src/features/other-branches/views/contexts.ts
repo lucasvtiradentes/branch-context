@@ -6,6 +6,7 @@ import type {
 } from '@branch-context/core';
 import {
   AgentSessionScope,
+  BRANCH_CONFIG_DIR,
   CONFIG_DIR,
   createAgentSession,
   readAgentsFile,
@@ -336,7 +337,7 @@ function readBranchAgentSessions(context: ContextViewItem): AgentSession[] {
 }
 
 function getContextAgentsFilePath(context: ContextViewItem) {
-  return join(context.contextDir, SESSIONS_FILE_NAME);
+  return join(context.contextDir, BRANCH_CONFIG_DIR, SESSIONS_FILE_NAME);
 }
 
 function toActiveContext(context: BranchContextContextSummary): ContextViewItem {

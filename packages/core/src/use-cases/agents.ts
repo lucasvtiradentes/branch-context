@@ -11,7 +11,7 @@ import {
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { DEFAULT_SYMLINK, SESSIONS_FILE_NAME } from '../constants';
+import { DEFAULT_SYMLINK } from '../constants';
 import { getArchivedDir, listArchivedBranches, sanitizeBranchName } from '../core/sync';
 import {
   type AgentSession,
@@ -19,6 +19,7 @@ import {
   AgentSessionScope,
   createAgentSession,
   getBranchAgentsFilePath,
+  getBranchAgentsFilePathByDir,
   getBranchAgentsFilePathByKey,
   getCurrentAgentsFilePath,
   normalizeAgentsFile,
@@ -731,7 +732,7 @@ function getSyncAllAgentSessionTargets(repoRoot: string): SyncAllAgentSessionsTa
   const archivedTargets = listArchivedBranches(repoRoot).map((branchKey) => ({
     branch: archivedMeta[branchKey]?.branch ?? branchKey,
     branchKey,
-    agentsFilePath: join(archivedDir, branchKey, SESSIONS_FILE_NAME),
+    agentsFilePath: getBranchAgentsFilePathByDir(join(archivedDir, branchKey)),
     archived: true,
   }));
 

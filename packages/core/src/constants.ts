@@ -22,6 +22,7 @@ export const BRANCHES_DIR = 'branches';
 export const ARCHIVED_DIR = '_archived';
 
 export const DEFAULT_SYMLINK = '_branch';
+export const BRANCH_CONFIG_DIR = '.config';
 export const CONTEXT_FILE_NAME = 'context.md';
 export const SESSIONS_FILE_NAME = 'sessions.json';
 export const DEFAULT_TEMPLATE = '_default';

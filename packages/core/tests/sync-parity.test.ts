@@ -103,7 +103,7 @@ describe('sync parity', () => {
   it('creates branch context without template', () => {
     const workspace = createWorkspaceNoTemplate();
     expect(createBranchContext(workspace, 'main')).toBe(CreateBranchContextResult.CreatedEmpty);
-    expect(readdirSync(getBranchDir(workspace, 'main'))).toEqual([]);
+    expect(readdirSync(getBranchDir(workspace, 'main'))).toEqual(['.config']);
   });
 
   it('returns error when symlink path is regular file', () => {

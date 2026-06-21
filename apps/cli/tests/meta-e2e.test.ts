@@ -94,7 +94,9 @@ describe('meta e2e', () => {
       }
     }
 
-    const sessions = readAgentsFile(join(repo, DEFAULT_SYMLINK, SESSIONS_FILE_NAME)).sessions;
+    const sessions = readAgentsFile(
+      join(repo, DEFAULT_SYMLINK, '.config', SESSIONS_FILE_NAME),
+    ).sessions;
     expect(sessions.map((session) => session.sessionId)).toEqual(['codex-1']);
   });
 

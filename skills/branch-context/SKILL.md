@@ -94,10 +94,12 @@ Default layout:
 ```text
 .bctx/
   config.json
-  base_branch
   meta.json
   templates/<name>/context.md
-  branches/<sanitized-branch>/context.md
+  branches/<sanitized-branch>/
+    .config/base_branch
+    .config/sessions.json
+    context.md
   _archived/
 _branch -> .bctx/branches/<sanitized-current-branch>
 ```

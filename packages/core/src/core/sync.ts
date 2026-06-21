@@ -23,6 +23,7 @@ import {
   DEFAULT_SYMLINK,
   TEMPLATE_FILE_EXTENSIONS,
 } from '../constants';
+import { ensureBranchConfigDir } from '../data/branch-config';
 import {
   Config,
   getBranchesDir,
@@ -176,6 +177,7 @@ export function createBranchContext(
   const branchKey = sanitizeBranchName(branch);
 
   if (existsSync(branchDir)) {
+    ensureBranchConfigDir(branchDir);
     createBranchMeta(workspace, branchKey, branch);
     if (!existsSync(join(branchDir, CONTEXT_FILE_NAME))) {
       const templateDir = resolveTemplateDir(workspace, branch, template);
@@ -192,6 +194,7 @@ export function createBranchContext(
   }
 
   mkdirSync(branchDir, { recursive: true });
+  ensureBranchConfigDir(branchDir);
   createBranchMeta(workspace, branchKey, branch);
 
   const templateDir = resolveTemplateDir(workspace, branch, template);
@@ -216,6 +219,7 @@ export function resetBranchContext(
   }
 
   mkdirSync(branchDir, { recursive: true });
+  ensureBranchConfigDir(branchDir);
   copyTemplateToBranch(templateDir, branchDir, branch);
   return ResetBranchContextResult.Reset;
 }

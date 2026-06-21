@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { DEFAULT_SYMLINK, SESSIONS_FILE_NAME } from '../constants';
 import { getBranchDir } from '../core/sync';
+import { migrateBranchConfigFile } from '../migrations/2026-06-20-move-branch-config-files';
 import { getBranchesDir } from './config';
 
 export enum AgentSessionProvider {
@@ -51,16 +52,20 @@ export function createEmptyAgentsFile(): AgentsFile {
   };
 }
 
+export function getBranchAgentsFilePathByDir(branchDir: string) {
+  return migrateBranchConfigFile(branchDir, SESSIONS_FILE_NAME);
+}
+
 export function getCurrentAgentsFilePath(workspace: string) {
-  return join(workspace, DEFAULT_SYMLINK, SESSIONS_FILE_NAME);
+  return getBranchAgentsFilePathByDir(join(workspace, DEFAULT_SYMLINK));
 }
 
 export function getBranchAgentsFilePath(workspace: string, branch: string) {
-  return join(getBranchDir(workspace, branch), SESSIONS_FILE_NAME);
+  return getBranchAgentsFilePathByDir(getBranchDir(workspace, branch));
 }
 
 export function getBranchAgentsFilePathByKey(workspace: string, branchKey: string) {
-  return join(getBranchesDir(workspace), branchKey, SESSIONS_FILE_NAME);
+  return getBranchAgentsFilePathByDir(join(getBranchesDir(workspace), branchKey));
 }
 
 export function createAgentSession(input: AgentSessionInput): AgentSession {

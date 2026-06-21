@@ -134,13 +134,13 @@ describe('agents file', () => {
     syncBranch(workspace, 'feature/test');
 
     expect(getCurrentAgentsFilePath(workspace)).toBe(
-      join(workspace, DEFAULT_SYMLINK, SESSIONS_FILE_NAME),
+      join(workspace, DEFAULT_SYMLINK, '.config', SESSIONS_FILE_NAME),
     );
     expect(getBranchAgentsFilePath(workspace, 'feature/test')).toBe(
-      join(workspace, CONFIG_DIR, BRANCHES_DIR, 'feature-test', SESSIONS_FILE_NAME),
+      join(workspace, CONFIG_DIR, BRANCHES_DIR, 'feature-test', '.config', SESSIONS_FILE_NAME),
     );
     expect(getBranchAgentsFilePathByKey(workspace, 'feature-test')).toBe(
-      join(workspace, CONFIG_DIR, BRANCHES_DIR, 'feature-test', SESSIONS_FILE_NAME),
+      join(workspace, CONFIG_DIR, BRANCHES_DIR, 'feature-test', '.config', SESSIONS_FILE_NAME),
     );
   });
 
