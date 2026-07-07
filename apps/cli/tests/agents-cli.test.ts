@@ -26,7 +26,7 @@ describe('agents command', () => {
     expect(capture.output).toContain("'status:Show agent integration status'");
     expect(capture.output).toContain("'sync:Sync agent sessions'");
     expect(capture.output).toContain("'apply:Apply template to current branch'");
-    expect(capture.output).toContain("'source:Show or set the templates folder'");
+    expect(capture.output).toContain("'source:Show the templates folder'");
     expect(capture.output).toContain('_bctxd_templates');
     expect(capture.output).toContain('bctxd template source');
     expect(capture.output).toContain("'template apply')\n          _bctxd_templates");
@@ -40,7 +40,9 @@ describe('agents command', () => {
     });
 
     expect(capture.output).toContain('complete -F _bctxd_completion bctxd');
-    expect(capture.output).toContain('base init uninstall sync status agents prune template');
+    expect(capture.output).toContain(
+      'base setup init uninstall sync backup status agents prune template',
+    );
     expect(capture.output).toContain('status sync');
     expect(capture.output).toContain('apply source');
     expect(capture.output).toContain('bctxd template source');
@@ -57,7 +59,7 @@ describe('agents command', () => {
     expect(capture.output).toContain("-a 'agents' -d 'Agent integration commands'");
     expect(capture.output).toContain("-a 'sync' -d 'Sync agent sessions'");
     expect(capture.output).toContain("-a 'apply' -d 'Apply template to current branch'");
-    expect(capture.output).toContain("-a 'source' -d 'Show or set the templates folder'");
+    expect(capture.output).toContain("-a 'source' -d 'Show the templates folder'");
     expect(capture.output).toContain('__bctxd_templates');
     expect(capture.output).toContain('bctxd template source');
     expect(capture.output).toContain("__bctxd_using_subcommand 'template' 'apply'");

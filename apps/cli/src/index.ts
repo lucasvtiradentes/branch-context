@@ -6,12 +6,14 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CLI_NAME, VERSION } from '@branch-context/core';
 import type { Program as CaporalProgram } from '@caporal/core';
 import { registerAgentsCommands } from './commands/agents/register';
+import { registerBackupCommand } from './commands/backup';
 import { registerBaseCommand } from './commands/base';
 import { registerCompletionCommand } from './commands/completion';
 import { registerInitCommand, runInitCommand } from './commands/init';
 import { registerOnCheckoutCommand } from './commands/on-checkout';
 import { registerOnCommitCommand } from './commands/on-commit';
 import { registerPruneCommand } from './commands/prune';
+import { registerSetupCommand } from './commands/setup';
 import { registerStatusCommand } from './commands/status';
 import { registerSyncCommand } from './commands/sync';
 import { registerTemplateCommand } from './commands/template';
@@ -79,9 +81,11 @@ function createProgram(binName: string): CaporalProgram {
     });
 
   registerBaseCommand(program);
+  registerSetupCommand(program);
   registerInitCommand(program);
   registerUninstallCommand(program);
   registerSyncCommand(program);
+  registerBackupCommand(program);
   registerStatusCommand(program);
   registerAgentsCommands(program);
   registerPruneCommand(program);
@@ -93,8 +97,10 @@ function createProgram(binName: string): CaporalProgram {
   program.help(
     [
       'Examples:',
+      `  ${binName} setup`,
       `  ${binName} init`,
       `  ${binName} status`,
+      `  ${binName} backup`,
       `  ${binName} agents status`,
       `  ${binName} prune`,
       `  ${binName} template apply`,

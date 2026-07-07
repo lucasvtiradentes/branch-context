@@ -36,6 +36,13 @@ function cmdStatus(_args: string[]) {
     return 1;
   }
 
+  console.log(`Mode:        ${status.mode}`);
+  if (status.sharedPath) {
+    console.log(`Storage:     ${status.sharedPath}`);
+  }
+  console.log(`Repo store:  ${status.repoStorageDir}`);
+  console.log(`Templates:   ${status.templatesDir}`);
+  console.log(`Branches:    ${status.branchesDir}`);
   console.log(`Branch:      ${status.currentBranch}`);
   console.log(`Base:        ${status.baseBranch}`);
 

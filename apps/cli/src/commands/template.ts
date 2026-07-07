@@ -1,12 +1,9 @@
-import { existsSync } from 'node:fs';
-import { isAbsolute, resolve } from 'node:path';
 import { stdin as input } from 'node:process';
 import readline from 'node:readline/promises';
 import {
   applyTemplateToCurrentBranch,
   BranchContextActionErrorReason,
   CLI_NAME,
-  Config,
   configExists,
   getCurrentBranch,
   getTemplatesDir,
@@ -33,10 +30,7 @@ export function registerTemplateCommand(program: Program) {
     .argument('[name]', 'Template name')
     .action(({ args }) => cmdTemplate(stringArgs(args.name)));
 
-  program
-    .command('template source', 'Show or set the templates folder')
-    .argument('[path]', 'Templates folder path')
-    .action(({ args }) => cmdTemplateSource(stringArg(args.path)));
+  program.command('template source', 'Show the templates folder').action(() => cmdTemplateSource());
 }
 
 async function selectTemplate(templates: string[]) {
@@ -70,19 +64,7 @@ function stringArgs(value: unknown) {
   return value == null || value === '' ? [] : [String(value)];
 }
 
-function stringArg(value: unknown) {
-  return value == null || value === '' ? null : String(value);
-}
-
-function normalizeFolderArg(path: string) {
-  return path.trim();
-}
-
-function resolveFolderArg(gitRoot: string, path: string) {
-  return isAbsolute(path) ? path : resolve(gitRoot, path);
-}
-
-async function cmdTemplateSource(path: string | null) {
+async function cmdTemplateSource() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;
@@ -93,25 +75,7 @@ async function cmdTemplateSource(path: string | null) {
     return 1;
   }
 
-  if (!path) {
-    const config = Config.load(gitRoot);
-    console.log(`Templates folder: ${config.templatesFolder}`);
-    console.log(`Resolved: ${getTemplatesDir(gitRoot)}`);
-    return 0;
-  }
-
-  const templatesFolder = normalizeFolderArg(path);
-  const resolvedTemplatesFolder = resolveFolderArg(gitRoot, templatesFolder);
-  if (!existsSync(resolvedTemplatesFolder)) {
-    console.log(`error: templates folder does not exist: ${resolvedTemplatesFolder}`);
-    return 1;
-  }
-
-  const config = Config.load(gitRoot);
-  config.templatesFolder = templatesFolder;
-  config.save(gitRoot);
-  console.log(`Templates folder: ${templatesFolder}`);
-  console.log(`Resolved: ${getTemplatesDir(gitRoot)}`);
+  console.log(`Templates folder: ${getTemplatesDir(gitRoot)}`);
   return 0;
 }
 

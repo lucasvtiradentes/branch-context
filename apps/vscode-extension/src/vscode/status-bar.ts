@@ -1,12 +1,7 @@
-import { existsSync } from 'node:fs';
-import { isAbsolute, resolve } from 'node:path';
 import {
-  BRANCHES_DIR,
   BranchContextStatusIssueLevel,
-  CONFIG_DIR,
   type InitProjectOptions,
   initProject,
-  TEMPLATES_DIR,
 } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds, STATUS_BAR_PRIORITY } from '../constants';
@@ -160,11 +155,7 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
     return;
   }
 
-  const initOptions = await promptInitOptions(state.workspaceRoot);
-  if (!initOptions) {
-    logger.info('init prompt dismissed: folder selection cancelled');
-    return;
-  }
+  const initOptions = promptInitOptions();
 
   logger.info(`init project started: workspace=${state.workspaceRoot}`);
   const result = await initProject(
@@ -199,64 +190,8 @@ async function promptInitProject(state: BranchContextExtensionState): Promise<vo
   await vscode.window.showInformationMessage(`${APP_NAME}: initialized`);
 }
 
-async function promptInitOptions(workspaceRoot: string): Promise<InitProjectOptions | null> {
-  const branchesParentFolder = await promptPathInput(
-    'Branches parent folder',
-    `Paste an existing parent folder where ${BRANCHES_DIR}/ will be created`,
-    CONFIG_DIR,
-    workspaceRoot,
-    true,
-  );
-  if (branchesParentFolder === null) {
-    return null;
-  }
-
-  const templatesFolder = await promptPathInput(
-    'Templates folder',
-    'Paste an existing templates folder path',
-    `${CONFIG_DIR}/${TEMPLATES_DIR}`,
-    workspaceRoot,
-    true,
-  );
-  if (templatesFolder === null) {
-    return null;
-  }
-
-  return {
-    branchesParentFolder,
-    templatesFolder,
-  };
-}
-
-async function promptPathInput(
-  title: string,
-  prompt: string,
-  defaultValue: string,
-  workspaceRoot: string,
-  allowMissingDefault = false,
-): Promise<string | null> {
-  const value = await vscode.window.showInputBox({
-    title,
-    prompt,
-    value: defaultValue,
-    validateInput: (input) => {
-      const trimmed = input.trim();
-      if (!trimmed) {
-        return 'Path is required';
-      }
-
-      const resolved = isAbsolute(trimmed) ? trimmed : resolve(workspaceRoot, trimmed);
-      if (allowMissingDefault && trimmed === defaultValue) {
-        return null;
-      }
-      return existsSync(resolved) ? null : `Folder does not exist: ${resolved}`;
-    },
-  });
-  if (value === undefined) {
-    return null;
-  }
-
-  return value.trim();
+function promptInitOptions(): InitProjectOptions {
+  return {};
 }
 
 async function promptYesNoInput(title: string, placeHolder: string): Promise<boolean> {

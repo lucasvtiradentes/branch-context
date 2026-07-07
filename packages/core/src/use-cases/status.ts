@@ -1,4 +1,11 @@
-import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  readdirSync,
+  readFileSync,
+  readlinkSync,
+  realpathSync,
+} from 'node:fs';
 import { isAbsolute, join, sep as pathSeparator, relative } from 'node:path';
 import {
   CONTEXT_FILE_NAME,
@@ -15,7 +22,9 @@ import {
   Config,
   configExists,
   getBranchesDir,
+  getConfigDir,
   getTemplatesDir,
+  getWorkspaceSharedPath,
   listTemplates,
 } from '../data/config';
 import { loadArchivedMeta, loadBranchMeta } from '../data/meta';
@@ -80,6 +89,11 @@ type ContextSummaryOrderSource = Pick<BranchContextContextSummary, 'branch' | 'u
 export type BranchContextStatus = {
   gitRoot: string;
   initialized: boolean;
+  mode: 'local' | 'shared';
+  sharedPath: string | null;
+  repoStorageDir: string;
+  templatesDir: string;
+  branchesDir: string;
   currentBranch: string | null;
   currentContextDir: string | null;
   currentContextRelPath: string | null;
@@ -98,13 +112,19 @@ export type BranchContextStatus = {
 
 export function getStatus(gitRoot: string): BranchContextStatus {
   const initialized = configExists(gitRoot);
+  const sharedPath = getWorkspaceSharedPath(gitRoot);
+  const mode = sharedPath ? 'shared' : 'local';
+  const repoStorageDir = getExistingRealPath(getConfigDir(gitRoot));
+  const templatesDir = getTemplatesDir(gitRoot);
+  const branchesDir = getBranchesDir(gitRoot);
   const currentBranch = getCurrentBranch(gitRoot);
-  const currentContextDir = currentBranch ? getBranchDir(gitRoot, currentBranch) : null;
+  const currentContextDir =
+    initialized && currentBranch ? getBranchDir(gitRoot, currentBranch) : null;
   const currentContextRelPath = currentContextDir
     ? getWorkspaceRelativePath(gitRoot, currentContextDir)
     : null;
   const templates = initialized ? listTemplates(gitRoot) : [];
-  const templatesDirExists = initialized ? existsSync(getTemplatesDir(gitRoot)) : false;
+  const templatesDirExists = initialized ? existsSync(templatesDir) : false;
   const defaultTemplateExists = templates.includes(DEFAULT_TEMPLATE);
   const hooks = {
     checkout: initialized ? isHookInstalled(gitRoot, HOOK_POST_CHECKOUT) : false,
@@ -184,6 +204,11 @@ export function getStatus(gitRoot: string): BranchContextStatus {
   return {
     gitRoot,
     initialized,
+    mode,
+    sharedPath,
+    repoStorageDir,
+    templatesDir,
+    branchesDir,
     currentBranch,
     currentContextDir,
     currentContextRelPath,
@@ -199,6 +224,14 @@ export function getStatus(gitRoot: string): BranchContextStatus {
     archivedContexts,
     archivedCount,
   };
+}
+
+function getExistingRealPath(path: string) {
+  try {
+    return realpathSync(path);
+  } catch {
+    return path;
+  }
 }
 
 function getContextSummaries(

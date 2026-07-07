@@ -13,14 +13,6 @@ export const BranchContextConfigSchema = z
       .boolean()
       .optional()
       .describe('Include commit body text in the generated commits section'),
-    branches_folder: z
-      .string()
-      .optional()
-      .describe('Branches folder path. Relative paths are resolved from the repository root.'),
-    templates_folder: z
-      .string()
-      .optional()
-      .describe('Templates folder path. Relative paths are resolved from the repository root.'),
   })
   .describe('Branch Context configuration file');
 

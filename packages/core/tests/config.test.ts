@@ -26,19 +26,10 @@ describe('config', () => {
     expect(getConfigDir(workspace)).toBe(join(workspace, CONFIG_DIR));
   });
 
-  it('gets branches dir', () => {
+  it('gets local branches dir', () => {
     const workspace = createTempDir();
     mkdirSync(join(workspace, CONFIG_DIR));
     expect(getBranchesDir(workspace)).toBe(join(workspace, CONFIG_DIR, BRANCHES_DIR));
-  });
-
-  it('gets external branches dir from config', () => {
-    const workspace = createTempDir();
-    const externalPath = join(createTempDir(), BRANCHES_DIR);
-    new Config({
-      branchesFolder: externalPath,
-    }).save(workspace);
-    expect(getBranchesDir(workspace)).toBe(externalPath);
   });
 
   it('gets default template dir', () => {
@@ -53,16 +44,6 @@ describe('config', () => {
     expect(getTemplateDir(workspace, 'feature')).toBe(
       join(workspace, CONFIG_DIR, TEMPLATES_DIR, 'feature'),
     );
-  });
-
-  it('gets external template dir from config', () => {
-    const workspace = createTempDir();
-    const templatesPath = join(createTempDir(), TEMPLATES_DIR);
-    new Config({
-      templatesFolder: templatesPath,
-    }).save(workspace);
-    expect(getTemplatesDir(workspace)).toBe(templatesPath);
-    expect(getTemplateDir(workspace, 'feature')).toBe(join(templatesPath, 'feature'));
   });
 
   it('returns false when config is missing', async () => {
@@ -110,21 +91,6 @@ describe('config', () => {
     expect(Config.load(workspace).sound).toBe(true);
   });
 
-  it('persists branch and template folders', () => {
-    const workspace = createTempDir();
-    mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
-    const branchesFolder = join(createTempDir(), BRANCHES_DIR);
-    const templatesFolder = join(createTempDir(), TEMPLATES_DIR);
-    new Config({
-      branchesFolder,
-      templatesFolder,
-    }).save(workspace);
-
-    const loaded = Config.load(workspace);
-    expect(loaded.branchesFolder).toBe(branchesFolder);
-    expect(loaded.templatesFolder).toBe(templatesFolder);
-  });
-
   it('selects template by branch prefix when the template exists', () => {
     const config = new Config();
 
@@ -145,38 +111,22 @@ describe('config', () => {
     expect(Config.load(workspace).commitDescription).toBe(true);
   });
 
-  it('loads old storage and templates settings as folder paths', () => {
-    const workspace = createTempDir();
-    const externalPath = join(createTempDir(), 'project');
-    const templatesPath = join(createTempDir(), TEMPLATES_DIR);
-    mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
-    writeFileSync(
-      join(workspace, CONFIG_DIR, CONFIG_FILE),
-      JSON.stringify({
-        storage: { mode: 'external', external_path: externalPath },
-        templates: { mode: 'external', path: templatesPath },
-      }),
-    );
-
-    const loaded = Config.load(workspace);
-    expect(loaded.branchesFolder).toBe(join(externalPath, BRANCHES_DIR));
-    expect(loaded.templatesFolder).toBe(templatesPath);
-  });
-
-  it('falls back to default folders when custom folder paths are invalid', () => {
+  it('ignores removed folder path fields', () => {
     const workspace = createTempDir();
     mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
     writeFileSync(
       join(workspace, CONFIG_DIR, CONFIG_FILE),
       JSON.stringify({
-        branches_folder: '',
-        templates_folder: '',
+        branches_folder: '/tmp/old-branches',
+        templates_folder: '/tmp/old-templates',
+        sound: false,
       }),
     );
 
     const loaded = Config.load(workspace);
-    expect(loaded.branchesFolder).toBe(`${CONFIG_DIR}/${BRANCHES_DIR}`);
-    expect(loaded.templatesFolder).toBe(`${CONFIG_DIR}/${TEMPLATES_DIR}`);
+    expect(loaded.sound).toBe(false);
+    expect(getBranchesDir(workspace)).toBe(join(workspace, CONFIG_DIR, BRANCHES_DIR));
+    expect(getTemplatesDir(workspace)).toBe(join(workspace, CONFIG_DIR, TEMPLATES_DIR));
   });
 
   it('loads missing commit description as backward compatible default', () => {
@@ -195,8 +145,6 @@ describe('config', () => {
       default_base_branch: 'main',
       sound: false,
       commit_description: true,
-      branches_folder: '/tmp/bctx-contexts/project/branches',
-      templates_folder: '/tmp/bctx-templates',
     });
     expect(result.success).toBe(true);
   });
@@ -207,8 +155,8 @@ describe('config', () => {
       type: 'object',
       properties: {
         default_base_branch: { type: 'string' },
-        branches_folder: { type: 'string' },
-        templates_folder: { type: 'string' },
+        sound: { type: 'boolean' },
+        commit_description: { type: 'boolean' },
       },
     });
   });

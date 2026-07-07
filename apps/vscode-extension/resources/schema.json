@@ -21,14 +21,6 @@
     "commit_description": {
       "description": "Include commit body text in the generated commits section",
       "type": "boolean"
-    },
-    "branches_folder": {
-      "description": "Branches folder path. Relative paths are resolved from the repository root.",
-      "type": "string"
-    },
-    "templates_folder": {
-      "description": "Templates folder path. Relative paths are resolved from the repository root.",
-      "type": "string"
     }
   },
   "additionalProperties": false,
