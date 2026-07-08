@@ -249,6 +249,7 @@ function createGroupNode(
       sessions.map((session) =>
         createAgentSessionNode(session, {
           showIcon: showSessionIcons,
+          movable: true,
         }),
       ),
   };
@@ -328,6 +329,7 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
         pinnedItems.map((item) =>
           createAgentSessionNode(item, {
             pinned: true,
+            movable: true,
           }),
         ),
     },
@@ -337,7 +339,7 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
 
 function groupUnpinnedAgentSessions(items: AgentSessionViewItem[]) {
   if (agentSessionsGroupBy === AgentSessionsGroupBy.Flat) {
-    return items.map((item) => createAgentSessionNode(item));
+    return items.map((item) => createAgentSessionNode(item, { movable: true }));
   }
 
   if (agentSessionsGroupBy === AgentSessionsGroupBy.Date) {
