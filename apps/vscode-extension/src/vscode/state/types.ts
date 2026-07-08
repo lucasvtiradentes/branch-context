@@ -5,12 +5,10 @@ import type {
   BranchContextStatus,
   BranchGitSummary,
 } from '@branch-context/core';
-import type { CliDetectionState } from '../cli/detection';
 
 export type BranchContextExtensionState = {
   workspaceRoot: string | null;
   initialized: boolean;
-  cliDetection: CliDetectionState;
   status: BranchContextStatus | null;
   currentBranch: string | null;
   currentContextDir: string | null;

@@ -34,7 +34,7 @@ export function initializeTreeViews(context: vscode.ExtensionContext): void {
     [viewIds.agentSessions, agentSessionsProvider],
     [viewIds.gitChanges, gitChangesProvider],
     [viewIds.contexts, contextsProvider],
-    [viewIds.config, createTemplatesProvider(context)],
+    [viewIds.config, createTemplatesProvider()],
   ] as const;
 
   for (const [viewId, provider] of providers) {

@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { backupGlobalStorage } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { APP_NAME, commandIds } from '../../../constants';
 import { formatError } from '../../../shared/format/error';
@@ -14,32 +14,24 @@ export function registerBackupCommand(): vscode.Disposable {
         return;
       }
 
-      const command = state.cliDetection.command ?? 'bctx';
-      await vscode.window.withProgress(
+      const result = await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
           title: `${APP_NAME}: backing up global storage`,
         },
-        () => runBackup(command, state.workspaceRoot ?? undefined),
+        () => Promise.resolve(backupGlobalStorage(state.workspaceRoot ?? '')),
       );
+
+      if (!result.ok) {
+        await vscode.window.showErrorMessage(`${APP_NAME}: ${result.message}`);
+        return;
+      }
+
       branchContextState.refresh();
-      await vscode.window.showInformationMessage(`${APP_NAME}: backup finished`);
+      await vscode.window.showInformationMessage(`${APP_NAME}: ${result.message}`);
     } catch (error) {
       logger.error(`backup command error: ${logger.formatError(error)}`);
       await vscode.window.showErrorMessage(formatError(error));
     }
-  });
-}
-
-function runBackup(command: string, cwd?: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    execFile(command, ['backup'], { cwd }, (error, stdout, stderr) => {
-      if (error) {
-        reject(new Error(stderr.trim() || stdout.trim() || error.message));
-        return;
-      }
-
-      resolve();
-    });
   });
 }

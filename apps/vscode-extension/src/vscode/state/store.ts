@@ -7,7 +7,6 @@ import {
 import * as vscode from 'vscode';
 import { contextKeys } from '../../constants';
 import { logger } from '../../shared/logger';
-import { readCliDetection } from '../cli/detection';
 import { getWorkspaceInfo } from '../workspace';
 import type { BranchContextExtensionState } from './types';
 
@@ -61,12 +60,8 @@ class BranchContextStateStore {
 
   private read(): BranchContextExtensionState {
     const workspace = getWorkspaceInfo();
-    const cliDetection = readCliDetection();
     if (!workspace.workspaceRoot) {
-      return {
-        ...this.createEmptyState(),
-        cliDetection,
-      };
+      return this.createEmptyState();
     }
 
     try {
@@ -80,7 +75,6 @@ class BranchContextStateStore {
       return {
         workspaceRoot: workspace.workspaceRoot,
         initialized: status.initialized,
-        cliDetection,
         status,
         currentBranch: status.currentBranch,
         currentContextDir: status.currentContextDir,
@@ -98,7 +92,6 @@ class BranchContextStateStore {
       );
       return {
         ...this.createEmptyState(),
-        cliDetection,
         workspaceRoot: workspace.workspaceRoot,
         configPath: workspace.configPath,
       };
@@ -109,7 +102,6 @@ class BranchContextStateStore {
     return {
       workspaceRoot: null,
       initialized: false,
-      cliDetection: readCliDetection(),
       status: null,
       currentBranch: null,
       currentContextDir: null,
@@ -156,9 +148,6 @@ class BranchContextStateStore {
 
   private formatRefresh(state: BranchContextExtensionState): string {
     const issueCount = state.status?.issues.length ?? 0;
-    const cliStatus = state.cliDetection.installed
-      ? `${state.cliDetection.command ?? 'unknown'} ${state.cliDetection.version ?? 'unknown'}`
-      : (state.cliDetection.error ?? 'unknown');
     const recentCount = state.recentContexts.length;
     const archivedCount = state.archivedContexts.length;
     const commitCount = state.gitSummary?.ok ? state.gitSummary.commits.length : 0;
@@ -167,7 +156,6 @@ class BranchContextStateStore {
       'state refreshed:',
       `workspace=${state.workspaceRoot ?? 'none'}`,
       `initialized=${state.initialized}`,
-      `cli=${cliStatus}`,
       `branch=${state.currentBranch ?? 'none'}`,
       `contextDir=${state.currentContextDir ?? 'none'}`,
       `contextFile=${state.currentContextFile ?? 'none'}`,

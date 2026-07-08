@@ -10,9 +10,9 @@ import {
   type BranchContextTreeNode,
   BranchContextTreeNodeKind,
 } from '../../../shared/tree-items/types';
-import { type BranchContextExtensionState, branchContextState } from '../../../vscode/state';
+import { branchContextState } from '../../../vscode/state';
 
-export function createTemplatesProvider(context: vscode.ExtensionContext): StateTreeProvider {
+export function createTemplatesProvider(): StateTreeProvider {
   return new StateTreeProvider(() => {
     const state = branchContextState.get();
     if (!state.initialized || !state.workspaceRoot || !state.status) {
@@ -43,8 +43,6 @@ export function createTemplatesProvider(context: vscode.ExtensionContext): State
           title: 'Apply Template',
         },
       }),
-      createConfigNode('Extension', getExtensionVersion(context), 'extensions'),
-      createConfigNode('CLI', getCliDescription(state), 'terminal'),
       ...getIssueNodes(state.status.issues),
     ];
   });
@@ -82,20 +80,6 @@ function getModeCommand(mode: 'local' | 'global'): vscode.Command | undefined {
         title: 'Open Global Storage',
       }
     : undefined;
-}
-
-function getExtensionVersion(context: vscode.ExtensionContext) {
-  const { version } = context.extension.packageJSON as { version?: unknown };
-  return typeof version === 'string' ? version : 'unknown';
-}
-
-function getCliDescription(state: BranchContextExtensionState) {
-  const cli = state.cliDetection;
-  if (!cli.installed) {
-    return 'not found';
-  }
-
-  return `${cli.command ?? 'bctx'} ${cli.version ?? 'unknown'}`;
 }
 
 function getIssueNodes(issues: BranchContextStatusIssue[]) {
