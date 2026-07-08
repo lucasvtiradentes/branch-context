@@ -22,7 +22,7 @@ export function createTemplatesProvider(context: vscode.ExtensionContext): State
     const currentContext = state.recentContexts.find((context) => context.current);
     return [
       createConfigNode('Mode', state.status.mode, getModeIcon(state.status.mode), {
-        tooltip: state.status.sharedPath ?? state.status.repoStorageDir,
+        tooltip: state.status.globalPath ?? state.status.repoStorageDir,
         command: getModeCommand(state.status.mode),
       }),
       createConfigNode('Current branch', state.currentBranch ?? 'n/a', 'git-branch', {
@@ -71,15 +71,15 @@ function createConfigNode(
   };
 }
 
-function getModeIcon(mode: 'local' | 'shared') {
-  return mode === 'shared' ? 'cloud' : 'repo';
+function getModeIcon(mode: 'local' | 'global') {
+  return mode === 'global' ? 'cloud' : 'repo';
 }
 
-function getModeCommand(mode: 'local' | 'shared'): vscode.Command | undefined {
-  return mode === 'shared'
+function getModeCommand(mode: 'local' | 'global'): vscode.Command | undefined {
+  return mode === 'global'
     ? {
-        command: commandIds.openSharedStorage,
-        title: 'Open Shared Storage',
+        command: commandIds.openGlobalStorage,
+        title: 'Open Global Storage',
       }
     : undefined;
 }

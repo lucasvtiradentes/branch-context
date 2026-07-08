@@ -8,11 +8,11 @@ import type { Program as CaporalProgram } from '@caporal/core';
 import { registerBackupCommand } from './commands/backup';
 import { registerBaseCommand } from './commands/base';
 import { registerCompletionCommand } from './commands/completion';
+import { registerGlobalCommand } from './commands/global';
 import { registerInitCommand, runInitCommand } from './commands/init';
 import { registerOnCheckoutCommand } from './commands/on-checkout';
 import { registerOnCommitCommand } from './commands/on-commit';
 import { registerPruneCommand } from './commands/prune';
-import { registerSetupCommand } from './commands/setup';
 import { registerStatusCommand } from './commands/status';
 import { registerSyncCommand } from './commands/sync';
 import { registerTemplateCommand } from './commands/template';
@@ -25,8 +25,8 @@ let originalCwdRestored = false;
 export async function runCli(args = process.argv.slice(2)) {
   try {
     restoreOriginalCwd();
-    if (args[0] === 'init' && !args.includes('--help') && !args.includes('-h')) {
-      return await runInitCommand(args);
+    if (args[0] === 'init' && args.length === 1) {
+      return await runInitCommand();
     }
     const result = await getProgram().run(args.length === 0 ? ['--help'] : args);
     return typeof result === 'number' && result > 0 ? result : 0;
@@ -80,7 +80,7 @@ function createProgram(binName: string): CaporalProgram {
     });
 
   registerBaseCommand(program);
-  registerSetupCommand(program);
+  registerGlobalCommand(program);
   registerInitCommand(program);
   registerUninstallCommand(program);
   registerSyncCommand(program);
@@ -95,13 +95,13 @@ function createProgram(binName: string): CaporalProgram {
   program.help(
     [
       'Examples:',
-      `  ${binName} setup`,
+      `  ${binName} global ~/branches`,
       `  ${binName} init`,
       `  ${binName} status`,
       `  ${binName} backup`,
       `  ${binName} prune`,
-      `  ${binName} template apply`,
-      `  ${binName} template apply fix`,
+      `  ${binName} template`,
+      `  ${binName} template fix`,
       `  ${binName} --install-completion`,
     ].join('\n'),
   );

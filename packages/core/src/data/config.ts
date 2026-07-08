@@ -23,7 +23,7 @@ import { loadDefaultConfigResource } from '../resources';
 let defaultConfig: ReturnType<typeof loadDefaultConfigResource> | null = null;
 
 export type MachineConfig = {
-  shared_path?: string;
+  global_path?: string;
 };
 
 export class Config {
@@ -43,7 +43,7 @@ export class Config {
 
   static load(workspace: string) {
     return new Config({
-      ...readBehaviorConfig(getWorkspaceSharedConfigPath(workspace)),
+      ...readBehaviorConfig(getWorkspaceGlobalConfigPath(workspace)),
       ...readBehaviorConfig(getRepoConfigPath(workspace)),
     });
   }
@@ -90,8 +90,8 @@ export function loadMachineConfig(): MachineConfig {
   }
 
   const data = readJsonObject(path);
-  return typeof data.shared_path === 'string' && data.shared_path.trim()
-    ? { shared_path: data.shared_path.trim() }
+  return typeof data.global_path === 'string' && data.global_path.trim()
+    ? { global_path: data.global_path.trim() }
     : {};
 }
 
@@ -101,14 +101,14 @@ export function saveMachineConfig(config: MachineConfig) {
   writeJson(path, config);
 }
 
-export function getConfiguredSharedPath(override?: string | null) {
-  const value = override?.trim() || loadMachineConfig().shared_path || null;
+export function getConfiguredGlobalPath(override?: string | null) {
+  const value = override?.trim() || loadMachineConfig().global_path || null;
   return value ? expandHome(value) : null;
 }
 
-export function getActiveSharedPath(override?: string | null) {
-  const sharedPath = getConfiguredSharedPath(override);
-  return sharedPath && isDirectory(sharedPath) ? sharedPath : null;
+export function getActiveGlobalPath(override?: string | null) {
+  const globalPath = getConfiguredGlobalPath(override);
+  return globalPath && isDirectory(globalPath) ? globalPath : null;
 }
 
 export function getDefaultTemplate() {
@@ -123,18 +123,18 @@ export function getRepoConfigPath(workspace: string) {
   return join(getConfigDir(workspace), CONFIG_FILE);
 }
 
-export function getSharedConfigPath(sharedPath = getActiveSharedPath()) {
-  return sharedPath ? join(sharedPath, CONFIG_FILE) : null;
+export function getGlobalConfigPath(globalPath = getActiveGlobalPath()) {
+  return globalPath ? join(globalPath, CONFIG_FILE) : null;
 }
 
-export function getWorkspaceSharedConfigPath(workspace: string) {
-  const sharedPath = getWorkspaceSharedPath(workspace);
-  return sharedPath ? join(sharedPath, CONFIG_FILE) : null;
+export function getWorkspaceGlobalConfigPath(workspace: string) {
+  const globalPath = getWorkspaceGlobalPath(workspace);
+  return globalPath ? join(globalPath, CONFIG_FILE) : null;
 }
 
 export function getTemplatesDir(workspace: string) {
-  const sharedPath = getWorkspaceSharedPath(workspace);
-  return sharedPath ? join(sharedPath, TEMPLATES_DIR) : getLocalTemplatesDir(workspace);
+  const globalPath = getWorkspaceGlobalPath(workspace);
+  return globalPath ? join(globalPath, TEMPLATES_DIR) : getLocalTemplatesDir(workspace);
 }
 
 export function getTemplateDir(workspace: string, template = getDefaultTemplate()) {
@@ -189,7 +189,7 @@ function isDirectory(path: string) {
   }
 }
 
-export function getWorkspaceSharedPath(workspace: string) {
+export function getWorkspaceGlobalPath(workspace: string) {
   try {
     const configDir = getConfigDir(workspace);
     if (!lstatSync(configDir).isSymbolicLink()) {
@@ -197,18 +197,18 @@ export function getWorkspaceSharedPath(workspace: string) {
     }
 
     const configDirTarget = realpathSync(configDir);
-    const sharedPath = getActiveSharedPath();
-    if (sharedPath && isPathInside(configDirTarget, realpathSync(sharedPath))) {
-      return sharedPath;
+    const globalPath = getActiveGlobalPath();
+    if (globalPath && isPathInside(configDirTarget, realpathSync(globalPath))) {
+      return globalPath;
     }
 
-    return inferSharedPathFromConfigDirTarget(configDirTarget);
+    return inferGlobalPathFromConfigDirTarget(configDirTarget);
   } catch {
     return null;
   }
 }
 
-function inferSharedPathFromConfigDirTarget(configDirTarget: string) {
+function inferGlobalPathFromConfigDirTarget(configDirTarget: string) {
   const marker = `${pathSeparator}branches${pathSeparator}repos${pathSeparator}`;
   const markerIndex = configDirTarget.indexOf(marker);
   return markerIndex === -1

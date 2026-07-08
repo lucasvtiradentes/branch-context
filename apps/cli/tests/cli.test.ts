@@ -14,7 +14,7 @@ describe('cli dispatch', () => {
     expect(capture.output).not.toContain('bctx init');
   });
 
-  it('generates dev zsh completion with template subcommands', async () => {
+  it('generates dev zsh completion with template names', async () => {
     const capture = captureConsole();
 
     await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
@@ -22,14 +22,13 @@ describe('cli dispatch', () => {
     });
 
     expect(capture.output).toContain('#compdef bctxd');
-    expect(capture.output).toContain("'apply:Apply template to current branch'");
-    expect(capture.output).toContain("'source:Show the templates folder'");
+    expect(capture.output).toContain("'template:Apply template to current branch'");
     expect(capture.output).toContain('_bctxd_templates');
-    expect(capture.output).toContain('bctxd template source');
-    expect(capture.output).toContain("'template apply')\n          _bctxd_templates");
+    expect(capture.output).toContain('bctxd status');
+    expect(capture.output).toContain('template)\n          _bctxd_templates');
   });
 
-  it('generates bash completion with template subcommands', async () => {
+  it('generates bash completion with template names', async () => {
     const capture = captureConsole();
 
     await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
@@ -37,12 +36,14 @@ describe('cli dispatch', () => {
     });
 
     expect(capture.output).toContain('complete -F _bctxd_completion bctxd');
-    expect(capture.output).toContain('base setup init uninstall sync backup status prune template');
-    expect(capture.output).toContain('apply source');
-    expect(capture.output).toContain('bctxd template source');
+    expect(capture.output).toContain(
+      'base global init uninstall sync backup status prune template',
+    );
+    expect(capture.output).toContain('bctxd status');
+    expect(capture.output).toContain('COMP_WORDS[1]}" == "template"');
   });
 
-  it('generates fish completion with template subcommands', async () => {
+  it('generates fish completion with template names', async () => {
     const capture = captureConsole();
 
     await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
@@ -50,11 +51,10 @@ describe('cli dispatch', () => {
     });
 
     expect(capture.output).toContain('complete -c bctxd -f');
-    expect(capture.output).toContain("-a 'apply' -d 'Apply template to current branch'");
-    expect(capture.output).toContain("-a 'source' -d 'Show the templates folder'");
+    expect(capture.output).toContain("-a 'template' -d 'Apply template to current branch'");
     expect(capture.output).toContain('__bctxd_templates');
-    expect(capture.output).toContain('bctxd template source');
-    expect(capture.output).toContain("__bctxd_using_subcommand 'template' 'apply'");
+    expect(capture.output).toContain('bctxd status');
+    expect(capture.output).toContain("__bctxd_using_command 'template'");
   });
 
   it('prints help when no command is provided', async () => {

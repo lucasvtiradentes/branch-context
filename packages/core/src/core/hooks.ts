@@ -17,7 +17,7 @@ import {
   relative,
 } from 'node:path';
 import { CLI_NAME, GIT_DIR, HOOK_MARKER, HookType } from '../constants';
-import { gitConfigUnset, gitCurrentBranch, gitHooksPath, gitInfoExcludeAdd, gitRoot } from '../git';
+import { gitCurrentBranch, gitHooksPath, gitInfoExcludeAdd, gitRoot } from '../git';
 import { loadHookTemplateResource } from '../resources';
 
 export type PromptYesNo = (question: string) => Promise<boolean>;
@@ -371,10 +371,6 @@ function isHuskyShimHook(gitRootPath: string, hookPath: string) {
 
 export function getCurrentBranch(path?: string) {
   return gitCurrentBranch(path ?? process.cwd());
-}
-
-export function unsetGlobalHooksPath() {
-  return gitConfigUnset('core.hooksPath', 'global');
 }
 
 export function hookBasename(hookPath: string) {

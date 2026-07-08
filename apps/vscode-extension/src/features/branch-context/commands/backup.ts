@@ -18,7 +18,7 @@ export function registerBackupCommand(): vscode.Disposable {
       await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: `${APP_NAME}: backing up shared storage`,
+          title: `${APP_NAME}: backing up global storage`,
         },
         () => runBackup(command, state.workspaceRoot ?? undefined),
       );

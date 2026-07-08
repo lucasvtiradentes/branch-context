@@ -16,7 +16,7 @@ export const commandIds = {
   openConfig: `${APP_ID}.openConfig`,
   backup: `${APP_ID}.backup`,
   checkoutBranch: `${APP_ID}.checkoutBranch`,
-  openSharedStorage: `${APP_ID}.openSharedStorage`,
+  openGlobalStorage: `${APP_ID}.openGlobalStorage`,
   openCurrentContextFolder: `${APP_ID}.openCurrentContextFolder`,
   reviewDiff: `${APP_ID}.reviewDiff`,
   openCommitDiff: `${APP_ID}.internal.openCommitDiff`,

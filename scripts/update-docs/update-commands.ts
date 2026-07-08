@@ -5,13 +5,15 @@ import { READMES } from './shared';
 type TFields = 'COMMANDS';
 
 const COMMANDS: Array<[string, string]> = [
+  ['bctx global <path>', 'configure global storage'],
   ['bctx init', `set up ${CONFIG_DIR}/ and Git hooks`],
   ['bctx sync', 'refresh commit/file summaries'],
-  ['bctx status', 'check setup health and list branch contexts'],
+  ['bctx backup', 'commit and push global storage'],
+  ['bctx status', 'check health and list branch contexts'],
   ['bctx base', 'get/set base branch'],
   ['bctx template [name]', 'apply a template (e.g. fix, feature)'],
   ['bctx prune', 'archive contexts of deleted branches'],
-  ['bctx uninstall', `remove ${CONFIG_DIR}/ and hooks`],
+  ['bctx uninstall', 'remove Git hooks'],
 ];
 
 export function updateCommands() {

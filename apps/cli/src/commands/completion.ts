@@ -72,7 +72,7 @@ ${formatSubcommandArrays(subcommands)}
   _${binName}_templates() {
     git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
     if [[ -n "$git_root" ]]; then
-      templates_dir="$(${binName} template source 2>/dev/null | sed -n 's/^Templates folder: //p' | tail -n 1)"
+      templates_dir="$(${binName} status 2>/dev/null | sed -n 's/^Templates:   //p' | head -n 1)"
       if [[ -d "$templates_dir" ]]; then
         _values 'template' $(ls "$templates_dir" 2>/dev/null)
       fi
@@ -91,15 +91,13 @@ ${formatSubcommandArrays(subcommands)}
       ;;
     subcommand)
       case $words[2] in
+        template)
+          _${binName}_templates
+          ;;
 ${formatSubcommandCases(binName, subcommands)}
       esac
       ;;
     template_arg)
-      case "$words[2] $words[3]" in
-        'template apply')
-          _${binName}_templates
-          ;;
-      esac
       ;;
   esac
 }
@@ -122,19 +120,18 @@ function getBashCompletionScript(
       COMPREPLY=($(compgen -W "${roots.map((item) => item.name).join(' ')}" -- "$cur"))
       ;;
     2)
-      case "\${COMP_WORDS[1]}" in
-${formatBashSubcommandCases(subcommands)}
-      esac
-      ;;
-    3)
-      if [[ "\${COMP_WORDS[1]}" == "template" && "\${COMP_WORDS[2]}" == "apply" ]]; then
+      if [[ "\${COMP_WORDS[1]}" == "template" ]]; then
         git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
         if [[ -n "$git_root" ]]; then
-          templates_dir="$(${binName} template source 2>/dev/null | sed -n 's/^Templates folder: //p' | tail -n 1)"
+          templates_dir="$(${binName} status 2>/dev/null | sed -n 's/^Templates:   //p' | head -n 1)"
           if [[ -d "$templates_dir" ]]; then
             COMPREPLY=($(compgen -W "$(ls "$templates_dir" 2>/dev/null)" -- "$cur"))
           fi
         fi
+      else
+        case "\${COMP_WORDS[1]}" in
+${formatBashSubcommandCases(subcommands)}
+        esac
       fi
       ;;
   esac
@@ -173,7 +170,7 @@ end
 function __${binName}_templates
   set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
   if test -n "$git_root"
-    set -l templates_dir (${binName} template source 2>/dev/null | sed -n 's/^Templates folder: //p' | tail -n 1)
+    set -l templates_dir (${binName} status 2>/dev/null | sed -n 's/^Templates:   //p' | head -n 1)
     if test -d "$templates_dir"
       ls "$templates_dir" 2>/dev/null
     end
@@ -183,7 +180,7 @@ end
 complete -c ${binName} -f
 ${formatFishRootCompletions(binName, roots)}
 ${formatFishSubcommandCompletions(binName, subcommands)}
-complete -c ${binName} -f -n "__${binName}_using_subcommand 'template' 'apply'" -a "(__${binName}_templates)"`;
+complete -c ${binName} -f -n "__${binName}_using_command 'template'" -a "(__${binName}_templates)"`;
 }
 
 function getRootCommands(commands: Command[]) {

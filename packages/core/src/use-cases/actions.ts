@@ -32,12 +32,12 @@ import {
   Config,
   configExists,
   ensureConfig,
-  getActiveSharedPath,
+  getActiveGlobalPath,
   getBranchesDir,
   getConfigDir,
-  getSharedConfigPath,
+  getGlobalConfigPath,
   getTemplatesDir,
-  getWorkspaceSharedPath,
+  getWorkspaceGlobalPath,
   listTemplates,
 } from '../data/config';
 import { updateBranchMeta } from '../data/meta';
@@ -129,8 +129,8 @@ export type ContextActionResult =
 export type InitProjectResult =
   | {
       ok: true;
-      mode: 'local' | 'shared';
-      sharedPath: string | null;
+      mode: 'local' | 'global';
+      globalPath: string | null;
       configDir: string;
       configPath: string;
       templatesDir: string;
@@ -144,7 +144,6 @@ export type InitProjectResult =
 
 export type InitProjectOptions = {
   hookCommandName?: string | null;
-  sharedPath?: string | null;
 };
 
 export async function initProject(
@@ -152,16 +151,16 @@ export async function initProject(
   ask: PromptYesNo = yes,
   options: InitProjectOptions = {},
 ): Promise<InitProjectResult> {
-  const sharedPath = getActiveSharedPath(options.sharedPath);
-  const sharedInitResult = sharedPath ? initSharedBctx(gitRoot, sharedPath) : null;
-  if (sharedInitResult && !sharedInitResult.ok) {
-    return sharedInitResult;
+  const globalPath = getActiveGlobalPath();
+  const globalInitResult = globalPath ? initGlobalBctx(gitRoot, globalPath) : null;
+  if (globalInitResult && !globalInitResult.ok) {
+    return globalInitResult;
   }
 
   const alreadyInitialized = configExists(gitRoot);
   ensureConfig(gitRoot);
 
-  const mode = getWorkspaceSharedPath(gitRoot) ? 'shared' : 'local';
+  const mode = getWorkspaceGlobalPath(gitRoot) ? 'global' : 'local';
   const configDir = getDisplayPath(getConfigDir(gitRoot));
   const templatesDir = getDisplayPath(getTemplatesDir(gitRoot));
   const branchesDir = getDisplayPath(getBranchesDir(gitRoot));
@@ -181,7 +180,7 @@ export async function initProject(
   return {
     ok: true,
     mode,
-    sharedPath: getWorkspaceSharedPath(gitRoot),
+    globalPath: getWorkspaceGlobalPath(gitRoot),
     configDir,
     configPath: `${configDir}/${CONFIG_FILE}`,
     templatesDir,
@@ -201,9 +200,9 @@ function getDisplayPath(path: string) {
   }
 }
 
-function initSharedBctx(
+function initGlobalBctx(
   gitRoot: string,
-  sharedPath: string,
+  globalPath: string,
 ): { ok: true } | BranchContextActionError {
   const remote = gitOriginUrl(gitRoot);
   const ref = remote ? normalizeGitRemoteUrl(remote) : null;
@@ -211,18 +210,18 @@ function initSharedBctx(
     return { ok: true };
   }
 
-  const target = join(sharedPath, 'repos', ref.owner, ref.repo, CONFIG_DIR);
+  const target = join(globalPath, 'repos', ref.owner, ref.repo, CONFIG_DIR);
   mkdirSync(target, { recursive: true });
-  ensureSharedConfig(sharedPath);
-  const linkResult = ensureSharedLink(gitRoot, target);
+  ensureGlobalConfig(globalPath);
+  const linkResult = ensureGlobalLink(gitRoot, target);
   if (!linkResult.ok) {
     return linkResult;
   }
   return { ok: true };
 }
 
-function ensureSharedConfig(sharedPath: string) {
-  const configPath = getSharedConfigPath(sharedPath);
+function ensureGlobalConfig(globalPath: string) {
+  const configPath = getGlobalConfigPath(globalPath);
   if (configPath && !existsSync(configPath)) {
     mkdirSync(dirname(configPath), { recursive: true });
     writeFileSync(
@@ -232,7 +231,7 @@ function ensureSharedConfig(sharedPath: string) {
   }
 }
 
-function ensureSharedLink(
+function ensureGlobalLink(
   gitRoot: string,
   target: string,
 ): { ok: true } | BranchContextActionError {

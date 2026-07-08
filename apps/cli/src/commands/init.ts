@@ -23,27 +23,20 @@ const hookInstallMessages = {
 } as const satisfies Record<HookInstallResult, (hookName: string) => string | null>;
 
 export function registerInitCommand(program: Program) {
-  program
-    .command('init', 'Initialize and install hook')
-    .option('--shared-path <path>', 'Shared storage path override')
-    .action(({ options }) =>
-      cmdInit(typeof options.sharedPath === 'string' ? ['--shared-path', options.sharedPath] : []),
-    );
+  program.command('init', 'Initialize and install hook').action(() => cmdInit());
 }
 
-export async function runInitCommand(args: string[]) {
-  return await cmdInit(args);
+export async function runInitCommand() {
+  return await cmdInit();
 }
 
-async function cmdInit(args: string[]) {
+async function cmdInit() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;
   }
 
-  const result = await initProject(gitRoot, promptYesNo, {
-    sharedPath: argValue(args, '--shared-path'),
-  });
+  const result = await initProject(gitRoot, promptYesNo);
   if (!result.ok) {
     console.log(`error: ${result.message}`);
     return 1;
@@ -70,26 +63,11 @@ async function cmdInit(args: string[]) {
   return 0;
 }
 
-function argValue(args: string[], name: string) {
-  const equalPrefix = `${name}=`;
-  const equalValue = args.find((arg) => arg.startsWith(equalPrefix));
-  if (equalValue) {
-    return equalValue.slice(equalPrefix.length).trim() || null;
-  }
-
-  const index = args.indexOf(name);
-  if (index === -1) {
-    return null;
-  }
-  const value = args[index + 1];
-  return value && !value.startsWith('--') ? value.trim() : null;
-}
-
 function printInitResult(result: Extract<InitProjectResult, { ok: true }>) {
   if (!result.alreadyInitialized) {
     console.log(`Initialized: ${result.mode}`);
-    if (result.sharedPath) {
-      console.log(`  storage:   ${result.sharedPath}`);
+    if (result.globalPath) {
+      console.log(`  storage:   ${result.globalPath}`);
       console.log(`  symlink:   .bctx -> ${result.configDir}`);
     }
     console.log(`  config:    ${result.configPath}`);

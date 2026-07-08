@@ -5,10 +5,10 @@ import {
   CONFIG_DIR,
   CONTEXT_FILE_NAME,
   DEFAULT_SYMLINK,
+  DEFAULT_TEMPLATE,
   gitAdd,
   gitCheckout,
   gitCommit,
-  TEMPLATES_DIR,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
 import { runCli } from '../src/index';
@@ -123,15 +123,16 @@ describe('init command', () => {
     expect(capture.output).toContain('warning: base branch not found: origin/main');
   });
 
-  it('template source shows derived folder', async () => {
+  it('template applies by name', async () => {
     const repo = createGitRepo();
     process.chdir(repo);
     await runCli(['init']);
+    await runCli(['base', 'main']);
     const capture = captureConsole();
 
-    const result = await runCli(['template', 'source']);
+    const result = await runCli(['template', DEFAULT_TEMPLATE]);
 
     expect(result).toBe(0);
-    expect(capture.output).toContain(join(repo, CONFIG_DIR, TEMPLATES_DIR));
+    expect(capture.output).toContain(`Applied template '${DEFAULT_TEMPLATE}' to 'main'`);
   });
 });

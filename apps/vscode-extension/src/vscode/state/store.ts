@@ -172,7 +172,7 @@ class BranchContextStateStore {
       `contextDir=${state.currentContextDir ?? 'none'}`,
       `contextFile=${state.currentContextFile ?? 'none'}`,
       `mode=${state.status?.mode ?? 'none'}`,
-      `sharedPath=${state.status?.sharedPath ?? 'none'}`,
+      `globalPath=${state.status?.globalPath ?? 'none'}`,
       `repoStorage=${state.status?.repoStorageDir ?? 'none'}`,
       `templatesDir=${state.status?.templatesDir ?? 'none'}`,
       `recent=${recentCount}`,

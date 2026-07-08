@@ -14,7 +14,7 @@ import { registerContextActionCommands } from '../../features/branch-context/com
 import { registerOpenConfigCommand } from '../../features/branch-context/commands/open-config';
 import { registerOpenCurrentContextCommand } from '../../features/branch-context/commands/open-current-context';
 import { registerOpenCurrentContextFolderCommand } from '../../features/branch-context/commands/open-current-context-folder';
-import { registerOpenSharedStorageCommand } from '../../features/branch-context/commands/open-shared-storage';
+import { registerOpenGlobalStorageCommand } from '../../features/branch-context/commands/open-global-storage';
 import { registerSetBaseCommand } from '../../features/branch-context/commands/set-base';
 import { registerStatusCommand } from '../../features/branch-context/commands/status';
 import { registerSyncCommand } from '../../features/branch-context/commands/sync';
@@ -39,7 +39,7 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerBackupCommand(),
     registerCheckoutBranchCommand(),
     registerOpenConfigCommand(),
-    registerOpenSharedStorageCommand(),
+    registerOpenGlobalStorageCommand(),
     registerOpenCommitDiffCommand(),
     registerOpenCurrentContextFolderCommand(),
     registerResumeAgentSessionCommand(),

@@ -37,8 +37,8 @@ function cmdStatus(_args: string[]) {
   }
 
   console.log(`Mode:        ${status.mode}`);
-  if (status.sharedPath) {
-    console.log(`Storage:     ${status.sharedPath}`);
+  if (status.globalPath) {
+    console.log(`Storage:     ${status.globalPath}`);
   }
   console.log(`Repo store:  ${status.repoStorageDir}`);
   console.log(`Templates:   ${status.templatesDir}`);

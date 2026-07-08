@@ -39,13 +39,15 @@ This creates `.bctx/` and installs the post-checkout / post-commit hooks. `_bran
 
 <!-- <DYNFIELD:COMMANDS> -->
 ```sh
+bctx global <path>    # configure global storage
 bctx init             # set up .bctx/ and Git hooks
 bctx sync             # refresh commit/file summaries
-bctx status           # check setup health and list branch contexts
+bctx backup           # commit and push global storage
+bctx status           # check health and list branch contexts
 bctx base             # get/set base branch
-bctx template [name]  # apply a template (e.g. fix)
+bctx template [name]  # apply a template (e.g. fix, feature)
 bctx prune            # archive contexts of deleted branches
-bctx uninstall        # remove .bctx/ and hooks
+bctx uninstall        # remove Git hooks
 ```
 <!-- </DYNFIELD:COMMANDS> -->
 

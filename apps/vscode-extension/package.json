@@ -119,8 +119,8 @@
         "icon": "$(settings-gear)"
       },
       {
-        "command": "branch-context.openSharedStorage",
-        "title": "Branch Context: Open Shared Storage",
+        "command": "branch-context.openGlobalStorage",
+        "title": "Branch Context: Open Global Storage",
         "icon": "$(repo)"
       },
       {
@@ -453,7 +453,7 @@
           "when": "false"
         },
         {
-          "command": "branch-context.openSharedStorage",
+          "command": "branch-context.openGlobalStorage",
           "when": "false"
         }
       ],

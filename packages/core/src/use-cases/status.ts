@@ -23,7 +23,7 @@ import {
   getBranchesDir,
   getConfigDir,
   getTemplatesDir,
-  getWorkspaceSharedPath,
+  getWorkspaceGlobalPath,
   listTemplates,
 } from '../data/config';
 import { loadArchivedMeta, loadBranchMeta } from '../data/meta';
@@ -88,8 +88,8 @@ type ContextSummaryOrderSource = Pick<BranchContextContextSummary, 'branch' | 'u
 export type BranchContextStatus = {
   gitRoot: string;
   initialized: boolean;
-  mode: 'local' | 'shared';
-  sharedPath: string | null;
+  mode: 'local' | 'global';
+  globalPath: string | null;
   repoStorageDir: string;
   templatesDir: string;
   branchesDir: string;
@@ -111,8 +111,8 @@ export type BranchContextStatus = {
 
 export function getStatus(gitRoot: string): BranchContextStatus {
   const initialized = configExists(gitRoot);
-  const sharedPath = getWorkspaceSharedPath(gitRoot);
-  const mode = sharedPath ? 'shared' : 'local';
+  const globalPath = getWorkspaceGlobalPath(gitRoot);
+  const mode = globalPath ? 'global' : 'local';
   const repoStorageDir = getExistingRealPath(getConfigDir(gitRoot));
   const templatesDir = getTemplatesDir(gitRoot);
   const branchesDir = getBranchesDir(gitRoot);
@@ -204,7 +204,7 @@ export function getStatus(gitRoot: string): BranchContextStatus {
     gitRoot,
     initialized,
     mode,
-    sharedPath,
+    globalPath,
     repoStorageDir,
     templatesDir,
     branchesDir,

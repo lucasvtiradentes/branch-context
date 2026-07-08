@@ -4,9 +4,7 @@ import {
   applyTemplateToCurrentBranch,
   BranchContextActionErrorReason,
   CLI_NAME,
-  configExists,
   getCurrentBranch,
-  getTemplatesDir,
   listAvailableTemplates,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
@@ -26,11 +24,9 @@ const templateErrorMessages = {
 
 export function registerTemplateCommand(program: Program) {
   program
-    .command('template apply', 'Apply template to current branch')
+    .command('template', 'Apply template to current branch')
     .argument('[name]', 'Template name')
     .action(({ args }) => cmdTemplate(stringArgs(args.name)));
-
-  program.command('template source', 'Show the templates folder').action(() => cmdTemplateSource());
 }
 
 async function selectTemplate(templates: string[]) {
@@ -64,21 +60,6 @@ function stringArgs(value: unknown) {
   return value == null || value === '' ? [] : [String(value)];
 }
 
-async function cmdTemplateSource() {
-  const gitRoot = requireGitRoot();
-  if (!gitRoot) {
-    return 1;
-  }
-
-  if (!configExists(gitRoot)) {
-    console.log(`error: ${CLI_NAME} not initialized (run '${CLI_NAME} init')`);
-    return 1;
-  }
-
-  console.log(`Templates folder: ${getTemplatesDir(gitRoot)}`);
-  return 0;
-}
-
 async function cmdTemplate(args: string[]) {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
@@ -105,7 +86,7 @@ async function cmdTemplate(args: string[]) {
   let template = args[0];
   if (!template) {
     if (!input.isTTY) {
-      console.log(`usage: ${CLI_NAME} template apply <name>`);
+      console.log(`usage: ${CLI_NAME} template <name>`);
       console.log(`available: ${templates.join(', ')}`);
       return 1;
     }

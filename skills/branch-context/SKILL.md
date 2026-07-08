@@ -80,7 +80,7 @@ Fields:
 | `commit_description`  | boolean | include commit body in generated commits section |
 
 Notes:
-- Machine config uses `~/.config/branch-context/config.json` with `shared_path`.
+- Machine config uses `~/.config/branch-context/config.json` with `global_path`.
 - Branch template matching uses prefix before `/`, e.g. `fix/foo` → `fix`.
 
 ## Branch context model
@@ -110,7 +110,7 @@ Rules:
 
 ## Templates
 
-Template folders live under `.bctx/templates` in local mode and `<shared_path>/templates` in shared mode. `_default` is required.
+Template folders live under `.bctx/templates` in local mode and `<global_path>/templates` in global mode. `_default` is required.
 
 Rendered extensions:
 

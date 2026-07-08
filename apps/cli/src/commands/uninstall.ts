@@ -5,7 +5,6 @@ import {
   HookType,
   HookUninstallResult,
   uninstallHook,
-  unsetGlobalHooksPath,
 } from '@branch-context/core';
 import type { Program } from '@caporal/core';
 import { requireGitRoot } from '../helpers/git-root';
@@ -18,19 +17,10 @@ const hookUninstallMessages = {
 } as const satisfies Record<HookUninstallResult, (hookName: string) => string | null>;
 
 export function registerUninstallCommand(program: Program) {
-  program
-    .command('uninstall', 'Remove hook from current repo')
-    .option('--global', 'Unset global hooks path')
-    .action(({ options }) => cmdUninstall(options.global ? ['--global'] : []));
+  program.command('uninstall', 'Remove hooks from current repo').action(() => cmdUninstall());
 }
 
-function cmdUninstall(args: string[]) {
-  if (args.includes('--global')) {
-    unsetGlobalHooksPath();
-    console.log('Global hooks path unset');
-    return 0;
-  }
-
+function cmdUninstall() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;
