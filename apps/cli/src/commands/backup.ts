@@ -1,12 +1,19 @@
 import { backupGlobalStorage } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters } from 'unicommand';
+import { defineCliCommand } from '../helpers/command';
 import { requireGitRoot } from '../helpers/git-root';
 
-export function registerBackupCommand(program: Program) {
-  program.command('backup', 'Sync and push global storage').action(() => cmdBackup());
-}
+const metadata = defineCliCommand({
+  name: 'backup',
+  description: 'Sync and push global storage',
+});
 
-function cmdBackup() {
+export const { handler: backupHandler, cli: backupCli } = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+function handler() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;

@@ -9,19 +9,24 @@ import {
   listArchivedBranches,
   sanitizeBranchName,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters } from 'unicommand';
 import { printTable } from '../helpers/branches';
+import { defineCliCommand } from '../helpers/command';
 import { requireGitRoot } from '../helpers/git-root';
 import { green, red, yellow } from '../ui/color';
 import { multiSelect } from '../ui/prompt';
 
-export function registerPruneCommand(program: Program) {
-  program
-    .command('prune', 'Archive orphan contexts and delete branches')
-    .action(() => cmdPrune([]));
-}
+const metadata = defineCliCommand({
+  name: 'prune',
+  description: 'Archive orphan contexts and delete branches',
+});
 
-async function cmdPrune(_args: string[]) {
+export const { handler: pruneHandler, cli: pruneCli } = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+async function handler() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;

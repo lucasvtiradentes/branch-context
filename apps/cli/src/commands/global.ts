@@ -7,16 +7,22 @@ import {
   saveMachineConfig,
   TEMPLATES_DIR,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters } from 'unicommand';
+import { defineCliCommand } from '../helpers/command';
 
-export function registerGlobalCommand(program: Program) {
-  program
-    .command('global', 'Configure global storage')
-    .argument('<path>', 'Global storage path')
-    .action(({ args }) => cmdGlobal(typeof args.path === 'string' ? args.path : null));
-}
+const metadata = defineCliCommand({
+  name: 'global',
+  description: 'Configure global storage',
+  arguments: [{ synopsis: '<path>', description: 'Global storage path' }],
+});
 
-function cmdGlobal(globalPathArg: string | null) {
+export const { handler: globalHandler, cli: globalCli } = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+function handler({ path }: { path?: unknown }) {
+  const globalPathArg = typeof path === 'string' ? path : null;
   const globalPath = expandHome(globalPathArg?.trim() ?? '');
   if (!globalPath) {
     console.log('error: global path is required');

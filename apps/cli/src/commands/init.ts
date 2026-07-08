@@ -9,7 +9,8 @@ import {
   initProject,
   UpdateSymlinkResult,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters } from 'unicommand';
+import { defineCliCommand } from '../helpers/command';
 import { requireGitRoot } from '../helpers/git-root';
 import { promptYesNo } from '../ui/prompt';
 
@@ -22,15 +23,17 @@ const hookInstallMessages = {
   [HookInstallResult.AlreadyInstalled]: () => null,
 } as const satisfies Record<HookInstallResult, (hookName: string) => string | null>;
 
-export function registerInitCommand(program: Program) {
-  program.command('init', 'Initialize and install hook').action(() => cmdInit());
-}
+const metadata = defineCliCommand({
+  name: 'init',
+  description: 'Initialize and install hook',
+});
 
-export async function runInitCommand() {
-  return await cmdInit();
-}
+export const { handler: initHandler, cli: initCli } = createCommandAdapters({
+  metadata,
+  handler,
+});
 
-async function cmdInit() {
+async function handler() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;

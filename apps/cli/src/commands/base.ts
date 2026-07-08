@@ -4,7 +4,8 @@ import {
   getCurrentBase,
   setCurrentBase,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters } from 'unicommand';
+import { defineCliCommand } from '../helpers/command';
 import { requireGitRoot } from '../helpers/git-root';
 
 const baseErrorMessages = {
@@ -27,14 +28,19 @@ const baseErrorMessages = {
   (result: { message: string; branch?: string }) => string
 >;
 
-export function registerBaseCommand(program: Program) {
-  program
-    .command('base', 'Show or set base branch')
-    .argument('[branch]', 'Base branch')
-    .action(({ args }) => cmdBase(stringArgs(args.branch)));
-}
+const metadata = defineCliCommand({
+  name: 'base',
+  description: 'Show or set base branch',
+  arguments: [{ synopsis: '[branch]', description: 'Base branch' }],
+});
 
-function cmdBase(args: string[]) {
+export const { handler: baseHandler, cli: baseCli } = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+function handler({ branch }: { branch?: unknown }) {
+  const args = stringArgs(branch);
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;

@@ -9,8 +9,9 @@ import {
   HOOK_POST_COMMIT,
   TEMPLATES_DIR,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters } from 'unicommand';
 import { printTable } from '../helpers/branches';
+import { defineCliCommand } from '../helpers/command';
 import { requireGitRoot } from '../helpers/git-root';
 import { green, red, yellow } from '../ui/color';
 
@@ -18,11 +19,17 @@ const STATUS_OK = green('[ok]');
 const STATUS_ERROR = red('[!!]');
 const STATUS_WARN = yellow('[--]');
 
-export function registerStatusCommand(program: Program) {
-  program.command('status', 'Show status, health, and branches').action(() => cmdStatus([]));
-}
+const metadata = defineCliCommand({
+  name: 'status',
+  description: 'Show status, health, and branches',
+});
 
-function cmdStatus(_args: string[]) {
+export const { handler: statusHandler, cli: statusCli } = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+function handler() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;

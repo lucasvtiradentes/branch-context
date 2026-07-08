@@ -6,7 +6,8 @@ import {
   HookUninstallResult,
   uninstallHook,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters } from 'unicommand';
+import { defineCliCommand } from '../helpers/command';
 import { requireGitRoot } from '../helpers/git-root';
 
 const hookUninstallMessages = {
@@ -16,11 +17,17 @@ const hookUninstallMessages = {
   [HookUninstallResult.NotInstalled]: () => null,
 } as const satisfies Record<HookUninstallResult, (hookName: string) => string | null>;
 
-export function registerUninstallCommand(program: Program) {
-  program.command('uninstall', 'Remove hooks from current repo').action(() => cmdUninstall());
-}
+const metadata = defineCliCommand({
+  name: 'uninstall',
+  description: 'Remove hooks from current repo',
+});
 
-function cmdUninstall() {
+export const { handler: uninstallHandler, cli: uninstallCli } = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+function handler() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;

@@ -11,7 +11,7 @@ import {
   gitCommit,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { runCli } from '../src/index';
+import { runCli } from '../src/cli';
 import { captureConsole, createGitRepo, createTempDir, expectOk, git } from './helpers';
 
 describe('init command', () => {

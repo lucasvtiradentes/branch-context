@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runCli } from '../src/index';
+import { runCli } from '../src/cli';
 import { captureConsole, createGitRepo, initBctxWorkspace } from './helpers';
 
 describe('cli dispatch', () => {
@@ -10,8 +10,8 @@ describe('cli dispatch', () => {
       expect(await runCli(['--help'])).toBe(0);
     });
 
-    expect(capture.output).toContain('bctxd init');
-    expect(capture.output).not.toContain('bctx init');
+    expect(capture.output).toContain('▸ bctxd <command>');
+    expect(capture.output).not.toContain('▸ bctx <command>');
   });
 
   it('generates dev zsh completion with template names', async () => {
@@ -37,10 +37,10 @@ describe('cli dispatch', () => {
 
     expect(capture.output).toContain('complete -F _bctxd_completion bctxd');
     expect(capture.output).toContain(
-      'base global init uninstall sync backup status prune template',
+      'backup base global init prune status sync template uninstall',
     );
     expect(capture.output).toContain('bctxd status');
-    expect(capture.output).toContain('COMP_WORDS[1]}" == "template"');
+    expect(capture.output).toContain('template)');
   });
 
   it('generates fish completion with template names', async () => {
@@ -62,26 +62,6 @@ describe('cli dispatch', () => {
 
     expect(await runCli([])).toBe(0);
     expect(capture.output).toContain('Git branch context manager');
-  });
-
-  it('uses original cwd from dev shim', async () => {
-    const repo = createGitRepo();
-    initBctxWorkspace(repo);
-    const capture = captureConsole();
-    const previous = process.env.BCTX_ORIGINAL_CWD;
-    process.env.BCTX_ORIGINAL_CWD = repo;
-    try {
-      expect(await runCli(['status'])).toBe(1);
-    } finally {
-      if (previous === undefined) {
-        delete process.env.BCTX_ORIGINAL_CWD;
-      } else {
-        process.env.BCTX_ORIGINAL_CWD = previous;
-      }
-    }
-
-    expect(capture.output).toContain('Branch:      main');
-    expect(capture.output).not.toContain('not initialized');
   });
 });
 

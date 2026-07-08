@@ -7,7 +7,9 @@ import {
   getCurrentBranch,
   listAvailableTemplates,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters } from 'unicommand';
+import { defineCliCommand } from '../helpers/command';
+import { completeTemplatesCommand } from '../helpers/completion';
 import { requireGitRoot } from '../helpers/git-root';
 
 const CANCEL_TEMPLATE_SELECTION_INPUTS = new Set(['c', 'cancel']);
@@ -22,12 +24,17 @@ const templateErrorMessages = {
   [BranchContextActionErrorReason.InvalidPath]: (message: string) => `error: ${message}`,
 } as const satisfies Record<BranchContextActionErrorReason, (message: string) => string>;
 
-export function registerTemplateCommand(program: Program) {
-  program
-    .command('template', 'Apply template to current branch')
-    .argument('[name]', 'Template name')
-    .action(({ args }) => cmdTemplate(stringArgs(args.name)));
-}
+const metadata = defineCliCommand({
+  name: 'template',
+  description: 'Apply template to current branch',
+  arguments: [{ synopsis: '[name]', description: 'Template name' }],
+  completion: completeTemplatesCommand(),
+});
+
+export const { handler: templateHandler, cli: templateCli } = createCommandAdapters({
+  metadata,
+  handler,
+});
 
 async function selectTemplate(templates: string[]) {
   console.log('Templates:\n');
@@ -60,7 +67,8 @@ function stringArgs(value: unknown) {
   return value == null || value === '' ? [] : [String(value)];
 }
 
-async function cmdTemplate(args: string[]) {
+async function handler({ name }: { name?: unknown }) {
+  const args = stringArgs(name);
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;

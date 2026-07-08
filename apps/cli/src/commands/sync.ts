@@ -6,7 +6,8 @@ import {
   playSound,
   syncCurrentBranch,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters } from 'unicommand';
+import { defineCliCommand } from '../helpers/command';
 import { requireGitRoot } from '../helpers/git-root';
 
 const syncErrorMessages = {
@@ -26,11 +27,17 @@ const createResultStatuses: Partial<Record<CreateBranchContextResult, string>> =
   [CreateBranchContextResult.CreatedEmpty]: 'created (no template)',
 };
 
-export function registerSyncCommand(program: Program) {
-  program.command('sync', 'Sync context and update meta/tags').action(() => cmdSync([]));
-}
+const metadata = defineCliCommand({
+  name: 'sync',
+  description: 'Sync context and update meta/tags',
+});
 
-function cmdSync(_args: string[]) {
+export const { handler: syncHandler, cli: syncCli } = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+function handler() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;

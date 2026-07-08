@@ -7,7 +7,7 @@ import {
   syncBranch,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { runCli } from '../src/index';
+import { runCli } from '../src/cli';
 import { setMultiSelectOverride } from '../src/ui/prompt';
 import {
   captureConsole,

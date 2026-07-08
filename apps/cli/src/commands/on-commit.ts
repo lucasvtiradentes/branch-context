@@ -1,15 +1,21 @@
 import { relative } from 'node:path';
 import { syncBranchAfterCommit } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters } from 'unicommand';
+import { defineCliCommand } from '../helpers/command';
 import { requireGitRoot } from '../helpers/git-root';
 
-export function registerOnCommitCommand(program: Program) {
-  program
-    .command('on-commit', 'Run post-commit hook callback', { visible: false })
-    .action(() => cmdOnCommit([]));
-}
+const metadata = defineCliCommand({
+  name: 'on-commit',
+  description: 'Run post-commit hook callback',
+  config: { visible: false },
+});
 
-function cmdOnCommit(_args: string[]) {
+export const { handler: onCommitHandler, cli: onCommitCli } = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+function handler() {
   const gitRoot = requireGitRoot({ silent: true });
   if (!gitRoot) {
     return 1;
