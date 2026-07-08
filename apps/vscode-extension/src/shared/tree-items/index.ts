@@ -1,5 +1,4 @@
 export { initializeTreeItemDecorations } from './decorations';
-export { readDirectoryNodes } from './directory';
 export {
   createContextNode,
   createGroupNode,
