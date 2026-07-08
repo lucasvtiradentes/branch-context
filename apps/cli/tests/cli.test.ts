@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { runCli } from '../src/index';
 import { captureConsole, createGitRepo, initBctxWorkspace } from './helpers';
 
-describe('agents command', () => {
+describe('cli dispatch', () => {
   it('uses the dev binary name in help when requested', async () => {
     const capture = captureConsole();
 
@@ -11,11 +11,10 @@ describe('agents command', () => {
     });
 
     expect(capture.output).toContain('bctxd init');
-    expect(capture.output).toContain('bctxd agents status');
     expect(capture.output).not.toContain('bctx init');
   });
 
-  it('generates dev zsh completion with agents subcommands', async () => {
+  it('generates dev zsh completion with template subcommands', async () => {
     const capture = captureConsole();
 
     await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
@@ -23,8 +22,6 @@ describe('agents command', () => {
     });
 
     expect(capture.output).toContain('#compdef bctxd');
-    expect(capture.output).toContain("'status:Show agent integration status'");
-    expect(capture.output).toContain("'sync:Sync agent sessions'");
     expect(capture.output).toContain("'apply:Apply template to current branch'");
     expect(capture.output).toContain("'source:Show the templates folder'");
     expect(capture.output).toContain('_bctxd_templates');
@@ -32,7 +29,7 @@ describe('agents command', () => {
     expect(capture.output).toContain("'template apply')\n          _bctxd_templates");
   });
 
-  it('generates bash completion with agents subcommands', async () => {
+  it('generates bash completion with template subcommands', async () => {
     const capture = captureConsole();
 
     await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
@@ -40,15 +37,12 @@ describe('agents command', () => {
     });
 
     expect(capture.output).toContain('complete -F _bctxd_completion bctxd');
-    expect(capture.output).toContain(
-      'base setup init uninstall sync backup status agents prune template',
-    );
-    expect(capture.output).toContain('status sync');
+    expect(capture.output).toContain('base setup init uninstall sync backup status prune template');
     expect(capture.output).toContain('apply source');
     expect(capture.output).toContain('bctxd template source');
   });
 
-  it('generates fish completion with agents subcommands', async () => {
+  it('generates fish completion with template subcommands', async () => {
     const capture = captureConsole();
 
     await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
@@ -56,8 +50,6 @@ describe('agents command', () => {
     });
 
     expect(capture.output).toContain('complete -c bctxd -f');
-    expect(capture.output).toContain("-a 'agents' -d 'Agent integration commands'");
-    expect(capture.output).toContain("-a 'sync' -d 'Sync agent sessions'");
     expect(capture.output).toContain("-a 'apply' -d 'Apply template to current branch'");
     expect(capture.output).toContain("-a 'source' -d 'Show the templates folder'");
     expect(capture.output).toContain('__bctxd_templates');
@@ -70,25 +62,6 @@ describe('agents command', () => {
 
     expect(await runCli([])).toBe(0);
     expect(capture.output).toContain('Git branch context manager');
-    expect(capture.output).toContain('agents status');
-  });
-
-  it('prints help for invalid usage', async () => {
-    const capture = captureConsole();
-
-    expect(await runCli(['agents'])).toBe(1);
-    expect(capture.output).toContain('Unknown command');
-  });
-
-  it('shows agent status through cli dispatch', async () => {
-    const repo = createGitRepo();
-    initBctxWorkspace(repo);
-    process.chdir(repo);
-    const capture = captureConsole();
-
-    expect(await runCli(['agents', 'status'])).toBe(0);
-    expect(capture.output).toContain('Branch:');
-    expect(capture.output).toContain('Providers:    none');
   });
 
   it('uses original cwd from dev shim', async () => {
@@ -109,16 +82,6 @@ describe('agents command', () => {
 
     expect(capture.output).toContain('Branch:      main');
     expect(capture.output).not.toContain('not initialized');
-  });
-
-  it('syncs agents through cli dispatch', async () => {
-    const repo = createGitRepo();
-    initBctxWorkspace(repo);
-    process.chdir(repo);
-    const capture = captureConsole();
-
-    expect(await runCli(['agents', 'sync'])).toBe(0);
-    expect(capture.output).toContain('Synced agents: 0');
   });
 });
 

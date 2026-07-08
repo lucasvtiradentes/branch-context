@@ -98,7 +98,6 @@ bctx status          # check setup health and list branch contexts
 bctx base            # get/set base branch
 bctx template apply  # apply a template
 bctx prune           # archive contexts of deleted branches
-bctx agents status   # show indexed AI session pointers for the branch
 bctx uninstall       # remove .bctx/ and hooks
 ```
 <!-- </DYNFIELD:COMMANDS> -->

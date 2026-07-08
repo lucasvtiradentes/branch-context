@@ -45,12 +45,10 @@ bctx status           # check setup health and list branch contexts
 bctx base             # get/set base branch
 bctx template [name]  # apply a template (e.g. fix)
 bctx prune            # archive contexts of deleted branches
-bctx agents status    # show indexed AI session pointers for the branch
 bctx uninstall        # remove .bctx/ and hooks
 ```
 <!-- </DYNFIELD:COMMANDS> -->
 
-`bctx agents status` indexes local Codex, Claude Code, and Pi sessions for the current branch.
 
 For branch-scoped Pi sessions, install the Pi package from GitHub:
 

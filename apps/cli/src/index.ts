@@ -5,7 +5,6 @@ import { basename } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CLI_NAME, VERSION } from '@branch-context/core';
 import type { Program as CaporalProgram } from '@caporal/core';
-import { registerAgentsCommands } from './commands/agents/register';
 import { registerBackupCommand } from './commands/backup';
 import { registerBaseCommand } from './commands/base';
 import { registerCompletionCommand } from './commands/completion';
@@ -87,7 +86,6 @@ function createProgram(binName: string): CaporalProgram {
   registerSyncCommand(program);
   registerBackupCommand(program);
   registerStatusCommand(program);
-  registerAgentsCommands(program);
   registerPruneCommand(program);
   registerTemplateCommand(program);
   registerOnCheckoutCommand(program);
@@ -101,7 +99,6 @@ function createProgram(binName: string): CaporalProgram {
       `  ${binName} init`,
       `  ${binName} status`,
       `  ${binName} backup`,
-      `  ${binName} agents status`,
       `  ${binName} prune`,
       `  ${binName} template apply`,
       `  ${binName} template apply fix`,

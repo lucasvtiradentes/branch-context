@@ -11,9 +11,7 @@ enum CompletionShell {
   Zsh = 'zsh',
 }
 
-const PARENT_DESCRIPTIONS: Record<string, string> = {
-  agents: 'Agent integration commands',
-};
+const PARENT_DESCRIPTIONS: Record<string, string> = {};
 const completionShells = Object.values(CompletionShell);
 const completionScriptGenerators = {
   [CompletionShell.Bash]: getBashCompletionScript,
