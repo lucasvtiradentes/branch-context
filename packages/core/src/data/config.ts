@@ -4,11 +4,12 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   statSync,
   writeFileSync,
 } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, sep as pathSeparator, relative } from 'node:path';
 import {
   BRANCHES_DIR,
   CONFIG_DIR,
@@ -189,16 +190,35 @@ function isDirectory(path: string) {
 }
 
 export function getWorkspaceSharedPath(workspace: string) {
-  const sharedPath = getActiveSharedPath();
-  if (!sharedPath) {
-    return null;
-  }
-
   try {
-    return lstatSync(getConfigDir(workspace)).isSymbolicLink() ? sharedPath : null;
+    const configDir = getConfigDir(workspace);
+    if (!lstatSync(configDir).isSymbolicLink()) {
+      return null;
+    }
+
+    const configDirTarget = realpathSync(configDir);
+    const sharedPath = getActiveSharedPath();
+    if (sharedPath && isPathInside(configDirTarget, realpathSync(sharedPath))) {
+      return sharedPath;
+    }
+
+    return inferSharedPathFromConfigDirTarget(configDirTarget);
   } catch {
     return null;
   }
+}
+
+function inferSharedPathFromConfigDirTarget(configDirTarget: string) {
+  const marker = `${pathSeparator}branches${pathSeparator}repos${pathSeparator}`;
+  const markerIndex = configDirTarget.indexOf(marker);
+  return markerIndex === -1
+    ? null
+    : configDirTarget.slice(0, markerIndex + `${pathSeparator}branches`.length);
+}
+
+function isPathInside(path: string, parent: string) {
+  const relativePath = relative(parent, path);
+  return relativePath === '' || (!!relativePath && !relativePath.startsWith('..'));
 }
 
 function readBehaviorConfig(path: string | null): Partial<Config> {

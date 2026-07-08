@@ -13,7 +13,6 @@ import {
   DEFAULT_TEMPLATE,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
-  TEMPLATES_DIR,
 } from '../constants';
 import { getCurrentBranch, isHookInstalled } from '../core/hooks';
 import { getArchivedDir, getBranchDir, listArchivedBranches } from '../core/sync';
@@ -125,7 +124,7 @@ export function getStatus(gitRoot: string): BranchContextStatus {
     : null;
   const templates = initialized ? listTemplates(gitRoot) : [];
   const templatesDirExists = initialized ? existsSync(templatesDir) : false;
-  const defaultTemplateExists = templates.includes(DEFAULT_TEMPLATE);
+  const defaultTemplateExists = existsSync(join(templatesDir, DEFAULT_TEMPLATE, CONTEXT_FILE_NAME));
   const hooks = {
     checkout: initialized ? isHookInstalled(gitRoot, HOOK_POST_CHECKOUT) : false,
     commit: initialized ? isHookInstalled(gitRoot, HOOK_POST_COMMIT) : false,
@@ -158,14 +157,14 @@ export function getStatus(gitRoot: string): BranchContextStatus {
     if (!templatesDirExists) {
       issues.push({
         level: BranchContextStatusIssueLevel.Error,
-        message: `${TEMPLATES_DIR}/ missing`,
+        message: `templates folder missing: ${templatesDir}`,
       });
     }
 
     if (!defaultTemplateExists) {
       issues.push({
         level: BranchContextStatusIssueLevel.Error,
-        message: `${DEFAULT_TEMPLATE} template missing`,
+        message: `${DEFAULT_TEMPLATE} template missing: ${join(templatesDir, DEFAULT_TEMPLATE, CONTEXT_FILE_NAME)}`,
       });
     }
 
