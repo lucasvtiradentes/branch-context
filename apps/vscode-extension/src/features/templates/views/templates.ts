@@ -90,7 +90,7 @@ function getExtensionVersion(context: vscode.ExtensionContext) {
 }
 
 function getCliDescription(state: BranchContextExtensionState) {
-  const cli = state.cliCompatibility;
+  const cli = state.cliDetection;
   if (!cli.installed) {
     return 'not found';
   }

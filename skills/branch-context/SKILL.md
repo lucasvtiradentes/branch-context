@@ -139,15 +139,14 @@ Package: `apps/vscode-extension`.
 
 Activation flow:
 - `initializeCore()`:    logger and persisted state.
-- `initializeUi()`:      git diff provider, context UX, status bar, tree views, commands.
+- `initializeUi()`:      git diff provider, context UX, tree views, commands.
 - `initializeRuntime()`: branch context watcher and agent session indexer.
 
 Views:
-- Branch Context:     current `context.md` outline and quick actions.
 - Branch AI Sessions: indexed local agent sessions, grouping, resume, pin, rename, delete.
 - Branch Git Changes: changed files and commits versus base branch.
 - Other Branches:     contexts, checkout, archive, restore, delete.
-- Templates:          apply available templates.
+- Config:             mode, current branch, base branch, template, CLI info, issues.
 
 Important commands use `branch-context.*`. Check `apps/vscode-extension/package.json` before changing command ids, menus, views, or activation behavior.
 

@@ -7,7 +7,7 @@ import {
 import * as vscode from 'vscode';
 import { contextKeys } from '../../constants';
 import { logger } from '../../shared/logger';
-import { readCliCompatibility } from '../cli/compatibility';
+import { readCliDetection } from '../cli/detection';
 import { getWorkspaceInfo } from '../workspace';
 import type { BranchContextExtensionState } from './types';
 
@@ -61,11 +61,11 @@ class BranchContextStateStore {
 
   private read(): BranchContextExtensionState {
     const workspace = getWorkspaceInfo();
-    const cliCompatibility = readCliCompatibility();
+    const cliDetection = readCliDetection();
     if (!workspace.workspaceRoot) {
       return {
         ...this.createEmptyState(),
-        cliCompatibility,
+        cliDetection,
       };
     }
 
@@ -80,7 +80,7 @@ class BranchContextStateStore {
       return {
         workspaceRoot: workspace.workspaceRoot,
         initialized: status.initialized,
-        cliCompatibility,
+        cliDetection,
         status,
         currentBranch: status.currentBranch,
         currentContextDir: status.currentContextDir,
@@ -98,7 +98,7 @@ class BranchContextStateStore {
       );
       return {
         ...this.createEmptyState(),
-        cliCompatibility,
+        cliDetection,
         workspaceRoot: workspace.workspaceRoot,
         configPath: workspace.configPath,
       };
@@ -109,7 +109,7 @@ class BranchContextStateStore {
     return {
       workspaceRoot: null,
       initialized: false,
-      cliCompatibility: readCliCompatibility(),
+      cliDetection: readCliDetection(),
       status: null,
       currentBranch: null,
       currentContextDir: null,
@@ -156,9 +156,9 @@ class BranchContextStateStore {
 
   private formatRefresh(state: BranchContextExtensionState): string {
     const issueCount = state.status?.issues.length ?? 0;
-    const cliStatus = state.cliCompatibility.compatible
-      ? 'ok'
-      : (state.cliCompatibility.error ?? 'unknown');
+    const cliStatus = state.cliDetection.installed
+      ? `${state.cliDetection.command ?? 'unknown'} ${state.cliDetection.version ?? 'unknown'}`
+      : (state.cliDetection.error ?? 'unknown');
     const recentCount = state.recentContexts.length;
     const archivedCount = state.archivedContexts.length;
     const commitCount = state.gitSummary?.ok ? state.gitSummary.commits.length : 0;

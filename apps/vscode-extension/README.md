@@ -28,17 +28,14 @@ VS Code extension for [Branch Context](https://github.com/lucasvtiradentes/branc
 
 ## ⭐ Features
 
-- Sidebar (activity bar) with five views:
-  - Branch Context, current `context.md` outline and quick actions
+- Sidebar (activity bar) with four views:
   - Branch AI Sessions, indexed Codex / Claude Code / Pi sessions with resume, active state, pinning, grouping, source-file open, and delete actions
     - Pi does not store Git branch metadata by default; for branch-scoped Pi sessions, first install the Pi package: `pi install git:github.com/lucasvtiradentes/branch-context`
   - Branch Git Changes, files and commits on the current branch
   - Other Branches, list, checkout, archive, and restore contexts
-  - Templates, apply per-branch templates
-- Status bar entry with current branch and context state
+  - Config, mode, current branch, base branch, template, CLI info, and issues
 - CodeLens, decorations, and document symbols inside `context.md`
 - Commands for sync, status, set base, apply template, review diff, and more
-- CLI compatibility checks with update prompts when the installed CLI does not match the extension
 
 ## 🚀 Quick Start
 

@@ -14,7 +14,7 @@ export function registerBackupCommand(): vscode.Disposable {
         return;
       }
 
-      const command = state.cliCompatibility.command ?? 'bctx';
+      const command = state.cliDetection.command ?? 'bctx';
       await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
