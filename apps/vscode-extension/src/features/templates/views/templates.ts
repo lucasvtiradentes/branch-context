@@ -2,6 +2,7 @@ import {
   type BranchContextStatusIssue,
   BranchContextStatusIssueLevel,
   CONFIG_DIR,
+  Config,
 } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../../../constants';
@@ -20,11 +21,8 @@ export function createTemplatesProvider(): StateTreeProvider {
     }
 
     const currentContext = state.recentContexts.find((context) => context.current);
+    const config = Config.load(state.workspaceRoot);
     return [
-      createConfigNode('Mode', state.status.mode, getModeIcon(state.status.mode), {
-        tooltip: state.status.globalPath ?? state.status.repoStorageDir,
-        command: getModeCommand(state.status.mode),
-      }),
       createConfigNode('Current branch', state.currentBranch ?? 'n/a', 'git-branch', {
         command: {
           command: commandIds.checkoutBranch,
@@ -37,10 +35,22 @@ export function createTemplatesProvider(): StateTreeProvider {
           title: 'Set Base Branch',
         },
       }),
-      createConfigNode('Template', currentContext?.template ?? 'n/a', 'symbol-namespace', {
+      createConfigNode('Template', currentContext?.template ?? 'n/a', 'tag', {
         command: {
           command: commandIds.applyTemplate,
           title: 'Apply Template',
+        },
+      }),
+      createConfigNode('Sound', formatBoolean(config.sound), 'megaphone', {
+        command: {
+          command: commandIds.toggleSound,
+          title: 'Toggle Sound',
+        },
+      }),
+      createConfigNode('Commit description', formatBoolean(config.commitDescription), 'comment', {
+        command: {
+          command: commandIds.toggleCommitDescription,
+          title: 'Toggle Commit Description',
         },
       }),
       ...getIssueNodes(state.status.issues),
@@ -69,17 +79,12 @@ function createConfigNode(
   };
 }
 
-function getModeIcon(mode: 'local' | 'global') {
-  return mode === 'global' ? 'cloud' : 'repo';
+export function getConfigViewDescription() {
+  return branchContextState.get().status?.mode ?? '';
 }
 
-function getModeCommand(mode: 'local' | 'global'): vscode.Command | undefined {
-  return mode === 'global'
-    ? {
-        command: commandIds.openGlobalStorage,
-        title: 'Open Global Storage',
-      }
-    : undefined;
+function formatBoolean(value: boolean) {
+  return value ? 'on' : 'off';
 }
 
 function getIssueNodes(issues: BranchContextStatusIssue[]) {

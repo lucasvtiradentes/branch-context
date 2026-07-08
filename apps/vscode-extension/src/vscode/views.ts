@@ -18,7 +18,10 @@ import {
   getOtherBranchesViewDescription,
   saveContextsGroupCollapseState,
 } from '../features/other-branches/views/contexts';
-import { createTemplatesProvider } from '../features/templates/views/templates';
+import {
+  createTemplatesProvider,
+  getConfigViewDescription,
+} from '../features/templates/views/templates';
 import { initializeTreeItemDecorations } from '../shared/tree-items';
 
 export function initializeTreeViews(context: vscode.ExtensionContext): void {
@@ -82,6 +85,15 @@ export function initializeTreeViews(context: vscode.ExtensionContext): void {
         }),
         view.onDidExpandElement((event) => {
           void saveContextsGroupCollapseState(context, event.element, false);
+        }),
+      );
+    }
+
+    if (viewId === viewIds.config) {
+      view.description = getConfigViewDescription();
+      context.subscriptions.push(
+        provider.onDidChangeTreeData(() => {
+          view.description = getConfigViewDescription();
         }),
       );
     }

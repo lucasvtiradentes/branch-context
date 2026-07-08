@@ -10,6 +10,8 @@ export const commandIds = {
   sync: `${APP_ID}.sync`,
   setBase: `${APP_ID}.setBase`,
   applyTemplate: `${APP_ID}.applyTemplate`,
+  toggleSound: `${APP_ID}.toggleSound`,
+  toggleCommitDescription: `${APP_ID}.toggleCommitDescription`,
   openConfig: `${APP_ID}.openConfig`,
   backup: `${APP_ID}.backup`,
   checkoutBranch: `${APP_ID}.checkoutBranch`,
@@ -53,6 +55,7 @@ export const viewIds = {
 
 export const contextKeys = {
   initialized: `${APP_ID}.initialized`,
+  mode: `${APP_ID}.mode`,
   gitChangesMode: `${APP_ID}.gitChangesMode`,
   otherBranchesMode: `${APP_ID}.otherBranchesMode`,
 } as const;

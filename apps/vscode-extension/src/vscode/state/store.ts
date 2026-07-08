@@ -53,6 +53,7 @@ class BranchContextStateStore {
       contextKeys.initialized,
       nextState.initialized,
     );
+    void vscode.commands.executeCommand('setContext', contextKeys.mode, nextState.status?.mode);
     this.changeEmitter.fire(this.currentState);
     logger.debug(this.formatRefresh(this.currentState));
     return this.currentState;

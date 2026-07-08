@@ -12,6 +12,7 @@ import { registerOpenConfigCommand } from '../../features/branch-context/command
 import { registerOpenGlobalStorageCommand } from '../../features/branch-context/commands/open-global-storage';
 import { registerSetBaseCommand } from '../../features/branch-context/commands/set-base';
 import { registerSyncCommand } from '../../features/branch-context/commands/sync';
+import { registerToggleConfigCommands } from '../../features/branch-context/commands/toggle-config';
 import { registerCommitActionCommands } from '../../features/git-changes/commands/commit-actions';
 import { registerGroupGitChangedFilesCommand } from '../../features/git-changes/commands/group-git-changed-files';
 import { registerGroupGitCommitsCommand } from '../../features/git-changes/commands/group-git-commits';
@@ -45,6 +46,7 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerMoveAgentSessionCommand(),
     registerShowLogsCommand(),
     registerSyncAgentsCommand(),
+    ...registerToggleConfigCommands(),
     ...registerAgentSessionActionCommands(),
     ...registerCommitActionCommands(),
     ...registerContextActionCommands(),

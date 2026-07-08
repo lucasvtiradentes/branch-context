@@ -104,6 +104,16 @@
         "icon": "$(symbol-namespace)"
       },
       {
+        "command": "branch-context.toggleSound",
+        "title": "Branch Context: Toggle Sound",
+        "icon": "$(megaphone)"
+      },
+      {
+        "command": "branch-context.toggleCommitDescription",
+        "title": "Branch Context: Toggle Commit Description",
+        "icon": "$(comment)"
+      },
+      {
         "command": "branch-context.openConfig",
         "title": "Branch Context: Open Config",
         "icon": "$(settings-gear)"
@@ -111,7 +121,7 @@
       {
         "command": "branch-context.openGlobalStorage",
         "title": "Branch Context: Open Global Storage",
-        "icon": "$(repo)"
+        "icon": "$(folder-opened)"
       },
       {
         "command": "branch-context.backup",
@@ -366,6 +376,14 @@
         {
           "command": "branch-context.deleteContext",
           "when": "false"
+        },
+        {
+          "command": "branch-context.toggleSound",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.toggleCommitDescription",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -410,8 +428,8 @@
           "group": "navigation@2"
         },
         {
-          "command": "branch-context.sync",
-          "when": "view == branch-context.config && branch-context.initialized",
+          "command": "branch-context.openGlobalStorage",
+          "when": "view == branch-context.config && branch-context.initialized && branch-context.mode == global",
           "group": "navigation@1"
         },
         {
@@ -420,9 +438,14 @@
           "group": "navigation@2"
         },
         {
-          "command": "branch-context.openConfig",
+          "command": "branch-context.sync",
           "when": "view == branch-context.config && branch-context.initialized",
           "group": "navigation@3"
+        },
+        {
+          "command": "branch-context.openConfig",
+          "when": "view == branch-context.config && branch-context.initialized",
+          "group": "navigation@4"
         }
       ],
       "view/item/context": [
