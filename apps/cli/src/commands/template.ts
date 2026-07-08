@@ -27,6 +27,7 @@ const metadata = defineCommand({
   name: 'template',
   description: 'Apply template to current branch',
   arguments: [{ synopsis: '[name]', description: 'Template name' }],
+  options: [{ name: 'list', description: 'List templates' }],
   completion: completeTemplatesCommand(),
 });
 
@@ -66,7 +67,7 @@ function stringArgs(value: unknown) {
   return value == null || value === '' ? [] : [String(value)];
 }
 
-async function handler({ name }: { name?: unknown }) {
+async function handler({ list, name }: { list?: unknown; name?: unknown }) {
   const args = stringArgs(name);
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
@@ -79,12 +80,17 @@ async function handler({ name }: { name?: unknown }) {
     return 1;
   }
 
+  const templates = templatesResult.templates;
+  if (list) {
+    console.log(templates.join('\n'));
+    return 0;
+  }
+
   if (!getCurrentBranch(gitRoot)) {
     console.log('error: could not determine current branch');
     return 1;
   }
 
-  const templates = templatesResult.templates;
   if (templates.length === 0) {
     console.log('error: no templates found');
     return 1;

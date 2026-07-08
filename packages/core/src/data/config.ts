@@ -101,6 +101,14 @@ export function saveMachineConfig(config: MachineConfig) {
   writeJson(path, config);
 }
 
+export function ensureGlobalConfig(globalPath: string) {
+  const path = join(globalPath, CONFIG_FILE);
+  if (!existsSync(path)) {
+    mkdirSync(dirname(path), { recursive: true });
+    writeJson(path, getDefaultConfig());
+  }
+}
+
 export function getConfiguredGlobalPath(override?: string | null) {
   const value = override?.trim() || loadMachineConfig().global_path || null;
   return value ? expandHome(value) : null;

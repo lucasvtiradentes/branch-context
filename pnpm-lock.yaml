@@ -41,9 +41,6 @@ importers:
 
   apps/cli:
     dependencies:
-      '@caporal/core':
-        specifier: ^2.0.7
-        version: 2.0.7
       unicommand:
         specifier: file:../../../unicommand
         version: file:../unicommand

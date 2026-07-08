@@ -8,7 +8,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { CONFIG_DIR, CONFIG_FILE, DEFAULT_SYMLINK, HookType } from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
@@ -32,10 +32,10 @@ import {
   Config,
   configExists,
   ensureConfig,
+  ensureGlobalConfig,
   getActiveGlobalPath,
   getBranchesDir,
   getConfigDir,
-  getGlobalConfigPath,
   getTemplatesDir,
   getWorkspaceGlobalPath,
   listTemplates,
@@ -218,17 +218,6 @@ function initGlobalBctx(
     return linkResult;
   }
   return { ok: true };
-}
-
-function ensureGlobalConfig(globalPath: string) {
-  const configPath = getGlobalConfigPath(globalPath);
-  if (configPath && !existsSync(configPath)) {
-    mkdirSync(dirname(configPath), { recursive: true });
-    writeFileSync(
-      configPath,
-      `${JSON.stringify({ default_base_branch: 'origin/main', sound: true, commit_description: false }, null, 2)}\n`,
-    );
-  }
 }
 
 function ensureGlobalLink(

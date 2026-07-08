@@ -1,8 +1,9 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import {
   CONFIG_FILE,
+  ensureGlobalConfig,
   getMachineConfigPath,
   saveMachineConfig,
   TEMPLATES_DIR,
@@ -33,13 +34,7 @@ function handler({ path }: { path?: unknown }) {
   mkdirSync(join(globalPath, TEMPLATES_DIR), { recursive: true });
   mkdirSync(globalPath, { recursive: true });
 
-  const globalConfigPath = join(globalPath, CONFIG_FILE);
-  if (!existsSync(globalConfigPath)) {
-    writeFileSync(
-      globalConfigPath,
-      `${JSON.stringify({ default_base_branch: 'origin/main', sound: true, commit_description: false }, null, 2)}\n`,
-    );
-  }
+  ensureGlobalConfig(globalPath);
 
   console.log(`Machine config: ${getMachineConfigPath()}`);
   console.log(`Global path:    ${globalPath}`);

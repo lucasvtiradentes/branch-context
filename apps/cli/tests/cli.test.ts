@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { runCli } from '../src/cli';
-import { captureConsole, createGitRepo, initBctxWorkspace } from './helpers';
+import { captureConsole } from './helpers';
 
 describe('cli dispatch', () => {
   it('uses the dev binary name in help when requested', async () => {
@@ -24,7 +24,7 @@ describe('cli dispatch', () => {
     expect(capture.output).toContain('#compdef bctxd');
     expect(capture.output).toContain("'template:Apply template to current branch'");
     expect(capture.output).toContain('_bctxd_templates');
-    expect(capture.output).toContain('bctxd status');
+    expect(capture.output).toContain('bctxd template --list');
     expect(capture.output).toContain('template)\n          _bctxd_templates');
   });
 
@@ -39,7 +39,7 @@ describe('cli dispatch', () => {
     expect(capture.output).toContain(
       'backup base global init prune status sync template uninstall',
     );
-    expect(capture.output).toContain('bctxd status');
+    expect(capture.output).toContain('bctxd template --list');
     expect(capture.output).toContain('template)');
   });
 
@@ -53,7 +53,7 @@ describe('cli dispatch', () => {
     expect(capture.output).toContain('complete -c bctxd -f');
     expect(capture.output).toContain("-a 'template' -d 'Apply template to current branch'");
     expect(capture.output).toContain('__bctxd_templates');
-    expect(capture.output).toContain('bctxd status');
+    expect(capture.output).toContain('bctxd template --list');
     expect(capture.output).toContain("__bctxd_using_command 'template'");
   });
 
