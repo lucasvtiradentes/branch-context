@@ -1,6 +1,3 @@
-import { uninstallDevCommand } from 'unicommand';
+import { uninstallPackageDevCommand } from 'unicommand';
 
-uninstallDevCommand({
-  binDirEnvName: 'BCTX_DEV_BIN_DIR',
-  commandName: 'bctxd',
-});
+uninstallPackageDevCommand(import.meta.url, { commandName: 'bctxd' });

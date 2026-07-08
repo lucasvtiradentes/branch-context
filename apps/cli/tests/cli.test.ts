@@ -6,7 +6,7 @@ describe('cli dispatch', () => {
   it('uses the dev binary name in help when requested', async () => {
     const capture = captureConsole();
 
-    await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
+    await withEnv({ BRANCH_CONTEXT_PROG_NAME: 'bctxd' }, async () => {
       expect(await runCli(['--help'])).toBe(0);
     });
 
@@ -17,7 +17,7 @@ describe('cli dispatch', () => {
   it('generates dev zsh completion with template names', async () => {
     const capture = captureConsole();
 
-    await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
+    await withEnv({ BRANCH_CONTEXT_PROG_NAME: 'bctxd' }, async () => {
       expect(await runCli(['completion', 'zsh'])).toBe(0);
     });
 
@@ -31,7 +31,7 @@ describe('cli dispatch', () => {
   it('generates bash completion with template names', async () => {
     const capture = captureConsole();
 
-    await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
+    await withEnv({ BRANCH_CONTEXT_PROG_NAME: 'bctxd' }, async () => {
       expect(await runCli(['completion', 'bash'])).toBe(0);
     });
 
@@ -46,7 +46,7 @@ describe('cli dispatch', () => {
   it('generates fish completion with template names', async () => {
     const capture = captureConsole();
 
-    await withEnv({ BCTX_PROG_NAME: 'bctxd' }, async () => {
+    await withEnv({ BRANCH_CONTEXT_PROG_NAME: 'bctxd' }, async () => {
       expect(await runCli(['completion', 'fish'])).toBe(0);
     });
 
