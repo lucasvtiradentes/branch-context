@@ -1,6 +1,7 @@
 export const DIST_NAME = 'branch-ctx';
 export const PACKAGE_NAME = '@branch-context/core';
 export const CLI_NAME = 'bctx';
+export const CLI_PROGRAM_NAME_ENV = 'BRANCH_CONTEXT_PROG_NAME';
 export const VERSION = '0.2.1';
 
 export const GIT_DIR = '.git';

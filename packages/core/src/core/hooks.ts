@@ -16,7 +16,7 @@ import {
   sep as pathSeparator,
   relative,
 } from 'node:path';
-import { CLI_NAME, GIT_DIR, HOOK_MARKER, HookType } from '../constants';
+import { CLI_NAME, CLI_PROGRAM_NAME_ENV, GIT_DIR, HOOK_MARKER, HookType } from '../constants';
 import { gitCurrentBranch, gitHooksPath, gitInfoExcludeAdd, gitRoot } from '../git';
 import { loadHookTemplateResource } from '../resources';
 
@@ -65,7 +65,7 @@ function findOnPath(name: string) {
 }
 
 export function getBranchctxPath(commandName?: string | null) {
-  const progName = commandName ?? process.env.BCTX_PROG_NAME ?? CLI_NAME;
+  const progName = commandName ?? process.env[CLI_PROGRAM_NAME_ENV] ?? CLI_NAME;
   return findOnPath(progName) ?? progName;
 }
 
