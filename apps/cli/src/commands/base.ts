@@ -34,7 +34,7 @@ const metadata = defineCliCommand({
   arguments: [{ synopsis: '[branch]', description: 'Base branch' }],
 });
 
-export const { handler: baseHandler, cli: baseCli } = createCommandAdapters({
+export const baseCommand = createCommandAdapters({
   metadata,
   handler,
 });

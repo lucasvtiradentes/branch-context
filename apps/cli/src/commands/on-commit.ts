@@ -10,7 +10,7 @@ const metadata = defineCliCommand({
   config: { visible: false },
 });
 
-export const { handler: onCommitHandler, cli: onCommitCli } = createCommandAdapters({
+export const onCommitCommand = createCommandAdapters({
   metadata,
   handler,
 });

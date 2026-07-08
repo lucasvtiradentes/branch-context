@@ -28,7 +28,7 @@ const metadata = defineCliCommand({
   description: 'Initialize and install hook',
 });
 
-export const { handler: initHandler, cli: initCli } = createCommandAdapters({
+export const initCommand = createCommandAdapters({
   metadata,
   handler,
 });

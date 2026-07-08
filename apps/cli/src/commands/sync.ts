@@ -32,7 +32,7 @@ const metadata = defineCliCommand({
   description: 'Sync context and update meta/tags',
 });
 
-export const { handler: syncHandler, cli: syncCli } = createCommandAdapters({
+export const syncCommand = createCommandAdapters({
   metadata,
   handler,
 });

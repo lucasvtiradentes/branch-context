@@ -16,7 +16,7 @@ const metadata = defineCliCommand({
   arguments: [{ synopsis: '<path>', description: 'Global storage path' }],
 });
 
-export const { handler: globalHandler, cli: globalCli } = createCommandAdapters({
+export const globalCommand = createCommandAdapters({
   metadata,
   handler,
 });

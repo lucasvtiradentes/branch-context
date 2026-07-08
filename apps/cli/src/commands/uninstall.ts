@@ -22,7 +22,7 @@ const metadata = defineCliCommand({
   description: 'Remove hooks from current repo',
 });
 
-export const { handler: uninstallHandler, cli: uninstallCli } = createCommandAdapters({
+export const uninstallCommand = createCommandAdapters({
   metadata,
   handler,
 });

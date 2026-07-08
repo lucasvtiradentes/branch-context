@@ -8,7 +8,7 @@ const metadata = defineCliCommand({
   description: 'Sync and push global storage',
 });
 
-export const { handler: backupHandler, cli: backupCli } = createCommandAdapters({
+export const backupCommand = createCommandAdapters({
   metadata,
   handler,
 });

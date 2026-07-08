@@ -24,7 +24,7 @@ const metadata = defineCliCommand({
   description: 'Show status, health, and branches',
 });
 
-export const { handler: statusHandler, cli: statusCli } = createCommandAdapters({
+export const statusCommand = createCommandAdapters({
   metadata,
   handler,
 });

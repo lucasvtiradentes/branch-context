@@ -31,7 +31,7 @@ const metadata = defineCliCommand({
   completion: completeTemplatesCommand(),
 });
 
-export const { handler: templateHandler, cli: templateCli } = createCommandAdapters({
+export const templateCommand = createCommandAdapters({
   metadata,
   handler,
 });

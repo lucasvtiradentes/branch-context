@@ -21,7 +21,7 @@ const metadata = defineCliCommand({
   description: 'Archive orphan contexts and delete branches',
 });
 
-export const { handler: pruneHandler, cli: pruneCli } = createCommandAdapters({
+export const pruneCommand = createCommandAdapters({
   metadata,
   handler,
 });

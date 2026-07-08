@@ -13,7 +13,7 @@ const metadata = defineCliCommand({
   ],
 });
 
-export const { handler: onCheckoutHandler, cli: onCheckoutCli } = createCommandAdapters({
+export const onCheckoutCommand = createCommandAdapters({
   metadata,
   handler,
 });
