@@ -8,16 +8,13 @@ const APP_LOG_FILENAME = 'extension.log';
 export const APP_NAME = 'Branch Context';
 export const IS_DEV_EXTENSION = APP_ID.endsWith('-dev');
 export const commandIds = {
-  openCurrentContext: `${APP_ID}.openCurrentContext`,
   sync: `${APP_ID}.sync`,
-  status: `${APP_ID}.status`,
   setBase: `${APP_ID}.setBase`,
   applyTemplate: `${APP_ID}.applyTemplate`,
   openConfig: `${APP_ID}.openConfig`,
   backup: `${APP_ID}.backup`,
   checkoutBranch: `${APP_ID}.checkoutBranch`,
   openGlobalStorage: `${APP_ID}.openGlobalStorage`,
-  openCurrentContextFolder: `${APP_ID}.openCurrentContextFolder`,
   reviewDiff: `${APP_ID}.reviewDiff`,
   openCommitDiff: `${APP_ID}.internal.openCommitDiff`,
   copyCommitHash: `${APP_ID}.copyCommitHash`,
@@ -45,7 +42,6 @@ export const commandIds = {
   restoreContext: `${APP_ID}.restoreContext`,
   deleteContext: `${APP_ID}.deleteContext`,
   showLogs: `${APP_ID}.showLogs`,
-  syncAllAgentSessions: `${APP_ID}.syncAllAgentSessions`,
   syncAgents: `${APP_ID}.internal.syncAgents`,
 } as const;
 
@@ -53,7 +49,7 @@ export const viewIds = {
   agentSessions: `${APP_ID}.agentSessions`,
   gitChanges: `${APP_ID}.gitChanges`,
   contexts: `${APP_ID}.contexts`,
-  templates: `${APP_ID}.templates`,
+  config: `${APP_ID}.config`,
 } as const;
 
 export const contextKeys = {

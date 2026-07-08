@@ -76,7 +76,7 @@
           "icon": "resources/icon.svg"
         },
         {
-          "id": "branch-context.templates",
+          "id": "branch-context.config",
           "name": "Config",
           "icon": "resources/icon.svg"
         }
@@ -84,19 +84,9 @@
     },
     "commands": [
       {
-        "command": "branch-context.openCurrentContext",
-        "title": "Branch Context: Open Current Context",
-        "icon": "$(go-to-file)"
-      },
-      {
         "command": "branch-context.sync",
         "title": "Branch Context: Sync",
         "icon": "$(sync)"
-      },
-      {
-        "command": "branch-context.status",
-        "title": "Branch Context: Status",
-        "icon": "$(pulse)"
       },
       {
         "command": "branch-context.checkoutBranch",
@@ -127,11 +117,6 @@
         "command": "branch-context.backup",
         "title": "Branch Context: Backup",
         "icon": "$(cloud-upload)"
-      },
-      {
-        "command": "branch-context.openCurrentContextFolder",
-        "title": "Branch Context: Open Current Context Folder",
-        "icon": "$(folder-opened)"
       },
       {
         "command": "branch-context.reviewDiff",
@@ -262,70 +247,12 @@
         "command": "branch-context.showLogs",
         "title": "Branch Context: Show Logs",
         "icon": "$(output)"
-      },
-      {
-        "command": "branch-context.syncAllAgentSessions",
-        "title": "Branch Context: Sync All Branch AI Sessions",
-        "icon": "$(sync)"
-      },
-      {
-        "command": "branch-context.internal.syncAgents",
-        "title": "Branch Context: Sync Agents",
-        "icon": "$(sync)"
-      },
-      {
-        "command": "workbench.view.extension.branch-context",
-        "title": "Branch Context: Focus Branch Context View"
-      },
-      {
-        "command": "branch-context.agentSessions.focus",
-        "title": "Branch Context: Focus Branch AI Sessions"
-      },
-      {
-        "command": "branch-context.gitChanges.focus",
-        "title": "Branch Context: Focus Branch Git Changes"
-      },
-      {
-        "command": "branch-context.contexts.focus",
-        "title": "Branch Context: Focus Other Branches"
-      },
-      {
-        "command": "branch-context.templates.focus",
-        "title": "Branch Context: Focus Config"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "workbench.view.extension.branch-context",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.agentSessions.focus",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.gitChanges.focus",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.contexts.focus",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.templates.focus",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.openCurrentContext",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.sync",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.status",
+          "command": "branch-context.checkoutBranch",
           "when": "false"
         },
         {
@@ -337,11 +264,7 @@
           "when": "false"
         },
         {
-          "command": "branch-context.openConfig",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.openCurrentContextFolder",
+          "command": "branch-context.openGlobalStorage",
           "when": "false"
         },
         {
@@ -382,6 +305,10 @@
         },
         {
           "command": "branch-context.resumeAgentSession",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.showActiveAgentSession",
           "when": "false"
         },
         {
@@ -439,22 +366,6 @@
         {
           "command": "branch-context.deleteContext",
           "when": "false"
-        },
-        {
-          "command": "branch-context.internal.syncAgents",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.backup",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.checkoutBranch",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.openGlobalStorage",
-          "when": "false"
         }
       ],
       "view/title": [
@@ -500,17 +411,17 @@
         },
         {
           "command": "branch-context.sync",
-          "when": "view == branch-context.templates && branch-context.initialized",
+          "when": "view == branch-context.config && branch-context.initialized",
           "group": "navigation@1"
         },
         {
           "command": "branch-context.backup",
-          "when": "view == branch-context.templates && branch-context.initialized",
+          "when": "view == branch-context.config && branch-context.initialized",
           "group": "navigation@2"
         },
         {
           "command": "branch-context.openConfig",
-          "when": "view == branch-context.templates && branch-context.initialized",
+          "when": "view == branch-context.config && branch-context.initialized",
           "group": "navigation@3"
         }
       ],
