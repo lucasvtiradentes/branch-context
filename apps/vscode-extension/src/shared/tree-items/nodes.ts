@@ -1,7 +1,5 @@
-import { existsSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename } from 'node:path';
 import * as vscode from 'vscode';
-import { CONTEXT_FILE_NAME } from '../../constants';
 import { readDirectoryNodes } from './directory';
 import { type BranchContextTreeNode, BranchContextTreeNodeKind } from './types';
 
@@ -71,20 +69,6 @@ export function createContextNode(
     tooltip: options?.tooltip ?? contextDir,
     icon: options?.icon ?? new vscode.ThemeIcon('git-branch'),
     children: () => readDirectoryNodes(contextDir),
-  };
-}
-
-export function createTemplateNode(label: string, templateDir: string): BranchContextTreeNode {
-  const contextFile = join(templateDir, CONTEXT_FILE_NAME);
-  const hasContextFile = existsSync(contextFile);
-  const path = hasContextFile ? contextFile : templateDir;
-  return {
-    label,
-    kind: BranchContextTreeNodeKind.Template,
-    path,
-    tooltip: path,
-    icon: new vscode.ThemeIcon('symbol-namespace'),
-    command: hasContextFile ? openFileCommand(contextFile) : undefined,
   };
 }
 

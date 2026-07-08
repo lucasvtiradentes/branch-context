@@ -77,7 +77,7 @@
         },
         {
           "id": "branch-context.templates",
-          "name": "Templates",
+          "name": "Config",
           "icon": "resources/icon.svg"
         }
       ]
@@ -99,6 +99,11 @@
         "icon": "$(pulse)"
       },
       {
+        "command": "branch-context.checkoutBranch",
+        "title": "Branch Context: Checkout Branch",
+        "icon": "$(git-branch)"
+      },
+      {
         "command": "branch-context.setBase",
         "title": "Branch Context: Set Base",
         "icon": "$(git-branch)"
@@ -112,6 +117,16 @@
         "command": "branch-context.openConfig",
         "title": "Branch Context: Open Config",
         "icon": "$(settings-gear)"
+      },
+      {
+        "command": "branch-context.openSharedStorage",
+        "title": "Branch Context: Open Shared Storage",
+        "icon": "$(repo)"
+      },
+      {
+        "command": "branch-context.backup",
+        "title": "Branch Context: Backup",
+        "icon": "$(cloud-upload)"
       },
       {
         "command": "branch-context.openCurrentContextFolder",
@@ -286,7 +301,7 @@
       },
       {
         "command": "branch-context.templates.focus",
-        "title": "Branch Context: Focus Templates"
+        "title": "Branch Context: Focus Config"
       }
     ],
     "menus": {
@@ -438,6 +453,18 @@
         {
           "command": "branch-context.internal.syncAgents",
           "when": "false"
+        },
+        {
+          "command": "branch-context.backup",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.checkoutBranch",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.openSharedStorage",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -482,9 +509,19 @@
           "group": "navigation@2"
         },
         {
-          "command": "branch-context.openConfig",
+          "command": "branch-context.sync",
           "when": "view == branch-context.templates && branch-context.initialized",
           "group": "navigation@1"
+        },
+        {
+          "command": "branch-context.backup",
+          "when": "view == branch-context.templates && branch-context.initialized",
+          "group": "navigation@2"
+        },
+        {
+          "command": "branch-context.openConfig",
+          "when": "view == branch-context.templates && branch-context.initialized",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [

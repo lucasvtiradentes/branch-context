@@ -8,10 +8,13 @@ import {
 } from '../../features/agent-sessions/commands/sync-agents';
 import { registerToggleAgentSessionTextCommand } from '../../features/agent-sessions/commands/toggle-agent-session-text';
 import { registerApplyTemplateCommand } from '../../features/branch-context/commands/apply-template';
+import { registerBackupCommand } from '../../features/branch-context/commands/backup';
+import { registerCheckoutBranchCommand } from '../../features/branch-context/commands/checkout-branch';
 import { registerContextActionCommands } from '../../features/branch-context/commands/context-actions';
 import { registerOpenConfigCommand } from '../../features/branch-context/commands/open-config';
 import { registerOpenCurrentContextCommand } from '../../features/branch-context/commands/open-current-context';
 import { registerOpenCurrentContextFolderCommand } from '../../features/branch-context/commands/open-current-context-folder';
+import { registerOpenSharedStorageCommand } from '../../features/branch-context/commands/open-shared-storage';
 import { registerSetBaseCommand } from '../../features/branch-context/commands/set-base';
 import { registerShowDetailsCommand } from '../../features/branch-context/commands/show-details';
 import { registerStatusCommand } from '../../features/branch-context/commands/status';
@@ -36,7 +39,10 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerStatusCommand(),
     registerSetBaseCommand(),
     registerApplyTemplateCommand(),
+    registerBackupCommand(),
+    registerCheckoutBranchCommand(),
     registerOpenConfigCommand(),
+    registerOpenSharedStorageCommand(),
     registerOpenCommitDiffCommand(),
     registerOpenCurrentContextFolderCommand(),
     registerResumeAgentSessionCommand(),
