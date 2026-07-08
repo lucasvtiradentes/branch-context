@@ -6,8 +6,7 @@ import {
   HookUninstallResult,
   uninstallHook,
 } from '@branch-context/core';
-import { createCommandAdapters } from 'unicommand';
-import { defineCliCommand } from '../helpers/command';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 
 const hookUninstallMessages = {
@@ -17,7 +16,7 @@ const hookUninstallMessages = {
   [HookUninstallResult.NotInstalled]: () => null,
 } as const satisfies Record<HookUninstallResult, (hookName: string) => string | null>;
 
-const metadata = defineCliCommand({
+const metadata = defineCommand({
   name: 'uninstall',
   description: 'Remove hooks from current repo',
 });

@@ -9,9 +9,8 @@ import {
   HOOK_POST_COMMIT,
   TEMPLATES_DIR,
 } from '@branch-context/core';
-import { createCommandAdapters } from 'unicommand';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { printTable } from '../helpers/branches';
-import { defineCliCommand } from '../helpers/command';
 import { requireGitRoot } from '../helpers/git-root';
 import { green, red, yellow } from '../ui/color';
 
@@ -19,7 +18,7 @@ const STATUS_OK = green('[ok]');
 const STATUS_ERROR = red('[!!]');
 const STATUS_WARN = yellow('[--]');
 
-const metadata = defineCliCommand({
+const metadata = defineCommand({
   name: 'status',
   description: 'Show status, health, and branches',
 });

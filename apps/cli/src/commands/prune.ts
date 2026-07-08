@@ -9,14 +9,13 @@ import {
   listArchivedBranches,
   sanitizeBranchName,
 } from '@branch-context/core';
-import { createCommandAdapters } from 'unicommand';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { printTable } from '../helpers/branches';
-import { defineCliCommand } from '../helpers/command';
 import { requireGitRoot } from '../helpers/git-root';
 import { green, red, yellow } from '../ui/color';
 import { multiSelect } from '../ui/prompt';
 
-const metadata = defineCliCommand({
+const metadata = defineCommand({
   name: 'prune',
   description: 'Archive orphan contexts and delete branches',
 });

@@ -4,8 +4,7 @@ import {
   getCurrentBase,
   setCurrentBase,
 } from '@branch-context/core';
-import { createCommandAdapters } from 'unicommand';
-import { defineCliCommand } from '../helpers/command';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 
 const baseErrorMessages = {
@@ -28,7 +27,7 @@ const baseErrorMessages = {
   (result: { message: string; branch?: string }) => string
 >;
 
-const metadata = defineCliCommand({
+const metadata = defineCommand({
   name: 'base',
   description: 'Show or set base branch',
   arguments: [{ synopsis: '[branch]', description: 'Base branch' }],

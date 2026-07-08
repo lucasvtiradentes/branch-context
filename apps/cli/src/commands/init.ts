@@ -9,8 +9,7 @@ import {
   initProject,
   UpdateSymlinkResult,
 } from '@branch-context/core';
-import { createCommandAdapters } from 'unicommand';
-import { defineCliCommand } from '../helpers/command';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 import { promptYesNo } from '../ui/prompt';
 
@@ -23,7 +22,7 @@ const hookInstallMessages = {
   [HookInstallResult.AlreadyInstalled]: () => null,
 } as const satisfies Record<HookInstallResult, (hookName: string) => string | null>;
 
-const metadata = defineCliCommand({
+const metadata = defineCommand({
   name: 'init',
   description: 'Initialize and install hook',
 });

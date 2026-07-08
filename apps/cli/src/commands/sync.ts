@@ -6,8 +6,7 @@ import {
   playSound,
   syncCurrentBranch,
 } from '@branch-context/core';
-import { createCommandAdapters } from 'unicommand';
-import { defineCliCommand } from '../helpers/command';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 
 const syncErrorMessages = {
@@ -27,7 +26,7 @@ const createResultStatuses: Partial<Record<CreateBranchContextResult, string>> =
   [CreateBranchContextResult.CreatedEmpty]: 'created (no template)',
 };
 
-const metadata = defineCliCommand({
+const metadata = defineCommand({
   name: 'sync',
   description: 'Sync context and update meta/tags',
 });

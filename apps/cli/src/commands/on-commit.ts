@@ -1,10 +1,9 @@
 import { relative } from 'node:path';
 import { syncBranchAfterCommit } from '@branch-context/core';
-import { createCommandAdapters } from 'unicommand';
-import { defineCliCommand } from '../helpers/command';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 
-const metadata = defineCliCommand({
+const metadata = defineCommand({
   name: 'on-commit',
   description: 'Run post-commit hook callback',
   config: { visible: false },

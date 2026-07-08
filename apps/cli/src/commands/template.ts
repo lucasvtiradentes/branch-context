@@ -7,8 +7,7 @@ import {
   getCurrentBranch,
   listAvailableTemplates,
 } from '@branch-context/core';
-import { createCommandAdapters } from 'unicommand';
-import { defineCliCommand } from '../helpers/command';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { completeTemplatesCommand } from '../helpers/completion';
 import { requireGitRoot } from '../helpers/git-root';
 
@@ -24,7 +23,7 @@ const templateErrorMessages = {
   [BranchContextActionErrorReason.InvalidPath]: (message: string) => `error: ${message}`,
 } as const satisfies Record<BranchContextActionErrorReason, (message: string) => string>;
 
-const metadata = defineCliCommand({
+const metadata = defineCommand({
   name: 'template',
   description: 'Apply template to current branch',
   arguments: [{ synopsis: '[name]', description: 'Template name' }],

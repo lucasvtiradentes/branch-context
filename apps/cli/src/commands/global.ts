@@ -7,10 +7,9 @@ import {
   saveMachineConfig,
   TEMPLATES_DIR,
 } from '@branch-context/core';
-import { createCommandAdapters } from 'unicommand';
-import { defineCliCommand } from '../helpers/command';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 
-const metadata = defineCliCommand({
+const metadata = defineCommand({
   name: 'global',
   description: 'Configure global storage',
   arguments: [{ synopsis: '<path>', description: 'Global storage path' }],

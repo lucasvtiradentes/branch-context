@@ -1,9 +1,8 @@
 import { backupGlobalStorage } from '@branch-context/core';
-import { createCommandAdapters } from 'unicommand';
-import { defineCliCommand } from '../helpers/command';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 
-const metadata = defineCliCommand({
+const metadata = defineCommand({
   name: 'backup',
   description: 'Sync and push global storage',
 });
