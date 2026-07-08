@@ -30,8 +30,6 @@ export class Config {
   sound: boolean;
   soundFile: string | null;
   commitDescription: boolean;
-  branchesFolder: string;
-  templatesFolder: string;
 
   constructor(options: Partial<Config> = {}) {
     const defaults = getDefaultConfig();
@@ -40,8 +38,6 @@ export class Config {
     this.sound = options.sound ?? defaults.sound ?? true;
     this.soundFile = options.soundFile ?? null;
     this.commitDescription = options.commitDescription ?? defaults.commit_description ?? false;
-    this.branchesFolder = `${CONFIG_DIR}/${BRANCHES_DIR}`;
-    this.templatesFolder = `${CONFIG_DIR}/${TEMPLATES_DIR}`;
   }
 
   static load(workspace: string) {

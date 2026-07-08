@@ -84,20 +84,22 @@ I was tired of re-briefing Codex, Claude Code, and Pi about the same branch on e
    pi install git:github.com/lucasvtiradentes/branch-context
    ```
 
-   New Pi sessions now record `branch` metadata via `pi.appendEntry()`. Existing Pi sessions without that entry are treated as repo-scoped fallback sessions.
+   New Pi sessions record `branch` metadata via `pi.appendEntry()`.
 
 ## 🧰 Commands
 
 <!-- <DYNFIELD:COMMANDS> -->
 ```sh
-bctx init             # set up .bctx/ and Git hooks
-bctx sync             # refresh commit/file summaries
-bctx status           # check setup health and list branch contexts
-bctx base             # get/set base branch
-bctx template [name]  # apply a template (e.g. fix)
-bctx prune            # archive contexts of deleted branches
-bctx agents status    # show indexed AI session pointers for the branch
-bctx uninstall        # remove .bctx/ and hooks
+bctx setup           # configure shared storage
+bctx init            # set up .bctx/ and Git hooks
+bctx sync            # refresh commit/file summaries
+bctx backup          # commit and push shared storage
+bctx status          # check setup health and list branch contexts
+bctx base            # get/set base branch
+bctx template apply  # apply a template
+bctx prune           # archive contexts of deleted branches
+bctx agents status   # show indexed AI session pointers for the branch
+bctx uninstall       # remove .bctx/ and hooks
 ```
 <!-- </DYNFIELD:COMMANDS> -->
 
@@ -110,9 +112,7 @@ Default `.bctx/config.json`:
 {
   "default_base_branch": "origin/main",
   "sound": true,
-  "commit_description": false,
-  "branches_folder": ".bctx/branches",
-  "templates_folder": ".bctx/templates"
+  "commit_description": false
 }
 ```
 <!-- </DYNFIELD:CONFIG_JSON> -->

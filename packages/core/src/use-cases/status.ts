@@ -308,10 +308,10 @@ function createContextTemplateResolver(gitRoot: string, config: Config) {
   });
 
   return (branch: string, contextDir: string) => {
-    const fallback = config.getTemplateForBranch(branch, templates);
+    const branchTemplate = config.getTemplateForBranch(branch, templates);
     const content = readTextFile(join(contextDir, CONTEXT_FILE_NAME));
     if (!content) {
-      return fallback;
+      return branchTemplate;
     }
 
     const frontmatterTemplate = getFrontmatterTemplate(content);
@@ -319,14 +319,14 @@ function createContextTemplateResolver(gitRoot: string, config: Config) {
       return frontmatterTemplate;
     }
 
-    return inferTemplateFromContent(content, templateSignatures, fallback) ?? fallback;
+    return inferTemplateFromContent(content, templateSignatures, branchTemplate) ?? branchTemplate;
   };
 }
 
 function inferTemplateFromContent(
   content: string,
   templateSignatures: TemplateSignature[],
-  fallback: string,
+  branchTemplate: string,
 ) {
   const signature = createContentSignature(content);
   const scores = templateSignatures
@@ -340,7 +340,7 @@ function inferTemplateFromContent(
   }
 
   const tied = scores.filter((template) => template.score === best.score);
-  return tied.find((template) => template.name === fallback)?.name ?? best.name;
+  return tied.find((template) => template.name === branchTemplate)?.name ?? best.name;
 }
 
 function scoreTemplate(context: ContentSignature, template: ContentSignature) {

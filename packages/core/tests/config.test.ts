@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -14,7 +14,6 @@ import {
   getConfigDir,
   getResourcesDir,
   getTemplateDir,
-  getTemplatesDir,
   TEMPLATES_DIR,
 } from '../src/index';
 import { createTempDir } from './helpers';
@@ -75,8 +74,6 @@ describe('config', () => {
     copyInitConfig(workspace);
     const loaded = Config.load(workspace);
     expect(loaded.defaultBaseBranch).toBe('origin/main');
-    expect(loaded.branchesFolder).toBe(`${CONFIG_DIR}/${BRANCHES_DIR}`);
-    expect(loaded.templatesFolder).toBe(`${CONFIG_DIR}/${TEMPLATES_DIR}`);
   });
 
   it('finds resources when cwd is outside the package', () => {
@@ -109,35 +106,6 @@ describe('config', () => {
     mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
     new Config({ commitDescription: true }).save(workspace);
     expect(Config.load(workspace).commitDescription).toBe(true);
-  });
-
-  it('ignores removed folder path fields', () => {
-    const workspace = createTempDir();
-    mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
-    writeFileSync(
-      join(workspace, CONFIG_DIR, CONFIG_FILE),
-      JSON.stringify({
-        branches_folder: '/tmp/old-branches',
-        templates_folder: '/tmp/old-templates',
-        sound: false,
-      }),
-    );
-
-    const loaded = Config.load(workspace);
-    expect(loaded.sound).toBe(false);
-    expect(getBranchesDir(workspace)).toBe(join(workspace, CONFIG_DIR, BRANCHES_DIR));
-    expect(getTemplatesDir(workspace)).toBe(join(workspace, CONFIG_DIR, TEMPLATES_DIR));
-  });
-
-  it('loads missing commit description as backward compatible default', () => {
-    const workspace = createTempDir();
-    mkdirSync(join(workspace, CONFIG_DIR), { recursive: true });
-    writeFileSync(
-      join(workspace, CONFIG_DIR, CONFIG_FILE),
-      JSON.stringify({ sound: true, template_rules: [] }),
-    );
-    expect(existsSync(join(workspace, CONFIG_DIR, CONFIG_FILE))).toBe(true);
-    expect(Config.load(workspace).commitDescription).toBe(false);
   });
 
   it('validates config schema shape', () => {

@@ -1,8 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { BASE_BRANCH_FILE } from '../constants';
-import { migrateBranchConfigFile } from '../migrations/2026-06-20-move-branch-config-files';
-import { ensureBranchConfigDir } from './branch-config';
+import { ensureBranchConfigDir, getBranchConfigDir } from './branch-config';
 import { Config } from './config';
 
 function getConfigDefaultBaseBranch(workspace: string) {
@@ -10,7 +9,7 @@ function getConfigDefaultBaseBranch(workspace: string) {
 }
 
 export function getBaseBranch(workspace: string, branchDir: string) {
-  const filePath = migrateBranchConfigFile(branchDir, BASE_BRANCH_FILE);
+  const filePath = join(getBranchConfigDir(branchDir), BASE_BRANCH_FILE);
   if (existsSync(filePath)) {
     return readFileSync(filePath, 'utf8').trim();
   }

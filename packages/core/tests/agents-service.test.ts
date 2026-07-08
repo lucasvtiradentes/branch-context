@@ -99,12 +99,12 @@ describe('agent session service', () => {
     expect(existsSync(result.agentsFilePath ?? '')).toBe(true);
     expect(
       readAgentsFile(result.agentsFilePath ?? '')
-        .sessions.map((session) => session.provider)
+        .map((session) => session.provider)
         .sort(),
     ).toEqual([AgentSessionProvider.Claude, AgentSessionProvider.Codex, AgentSessionProvider.Pi]);
   });
 
-  it('does not write repo-scoped fallback sessions', () => {
+  it('does not write repo-scoped sessions', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     expectOk(gitCheckout(repo, 'feature/test', true));
@@ -125,7 +125,7 @@ describe('agent session service', () => {
       return;
     }
     expect(result.sessions).toEqual([]);
-    expect(readAgentsFile(result.agentsFilePath ?? '').sessions).toEqual([]);
+    expect(readAgentsFile(result.agentsFilePath ?? '')).toEqual([]);
   });
 
   it('preserves session metadata while syncing current agents file', () => {
@@ -133,22 +133,19 @@ describe('agent session service', () => {
     initBctxWorkspace(repo);
     expectOk(gitCheckout(repo, 'feature/test', true));
     const agentsFilePath = getCurrentAgentsFilePath(repo);
-    writeAgentsFile(agentsFilePath, {
-      version: 1,
-      sessions: [
-        {
-          provider: AgentSessionProvider.Codex,
-          sessionId: 'codex-1',
-          path: null,
-          model: null,
-          title: null,
-          startedAt: null,
-          updatedAt: '2026-05-01T10:00:00.000Z',
-          description: 'Pinned work',
-          pinnedAt: '2026-05-01T10:00:00.000Z',
-        },
-      ],
-    });
+    writeAgentsFile(agentsFilePath, [
+      {
+        provider: AgentSessionProvider.Codex,
+        sessionId: 'codex-1',
+        path: null,
+        model: null,
+        title: null,
+        startedAt: null,
+        updatedAt: '2026-05-01T10:00:00.000Z',
+        description: 'Pinned work',
+        pinnedAt: '2026-05-01T10:00:00.000Z',
+      },
+    ]);
     const codexRoot = createTempDir();
     copyCodexFixture(codexRoot, repo);
 
@@ -162,7 +159,7 @@ describe('agent session service', () => {
     if (!result.ok) {
       return;
     }
-    expect(readAgentsFile(agentsFilePath).sessions[0]).toMatchObject({
+    expect(readAgentsFile(agentsFilePath)[0]).toMatchObject({
       description: 'Pinned work',
       pinnedAt: '2026-05-01T10:00:00.000Z',
     });
@@ -172,42 +169,39 @@ describe('agent session service', () => {
     const repo = createGitRepo();
     initBctxWorkspace(repo);
     expectOk(gitCheckout(repo, 'feature/test', true));
-    writeAgentsFile(getCurrentAgentsFilePath(repo), {
-      version: 1,
-      sessions: [
-        createAgentSession({
-          provider: AgentSessionProvider.Codex,
-          sessionId: 'codex-current',
-          branch: 'feature/test',
-          path: null,
-          model: null,
-          title: null,
-          startedAt: null,
-          updatedAt: '2026-05-01T10:00:00.000Z',
-        }),
-        createAgentSession({
-          provider: AgentSessionProvider.Claude,
-          sessionId: 'claude-other',
-          branch: 'feature/other',
-          path: null,
-          model: null,
-          title: null,
-          startedAt: null,
-          updatedAt: '2026-05-01T11:00:00.000Z',
-        }),
-        createAgentSession({
-          provider: AgentSessionProvider.Codex,
-          sessionId: 'codex-repo',
-          branch: '',
-          scope: AgentSessionScope.Repo,
-          path: null,
-          model: null,
-          title: null,
-          startedAt: null,
-          updatedAt: '2026-05-01T12:00:00.000Z',
-        }),
-      ],
-    });
+    writeAgentsFile(getCurrentAgentsFilePath(repo), [
+      createAgentSession({
+        provider: AgentSessionProvider.Codex,
+        sessionId: 'codex-current',
+        branch: 'feature/test',
+        path: null,
+        model: null,
+        title: null,
+        startedAt: null,
+        updatedAt: '2026-05-01T10:00:00.000Z',
+      }),
+      createAgentSession({
+        provider: AgentSessionProvider.Claude,
+        sessionId: 'claude-other',
+        branch: 'feature/other',
+        path: null,
+        model: null,
+        title: null,
+        startedAt: null,
+        updatedAt: '2026-05-01T11:00:00.000Z',
+      }),
+      createAgentSession({
+        provider: AgentSessionProvider.Codex,
+        sessionId: 'codex-repo',
+        branch: '',
+        scope: AgentSessionScope.Repo,
+        path: null,
+        model: null,
+        title: null,
+        startedAt: null,
+        updatedAt: '2026-05-01T12:00:00.000Z',
+      }),
+    ]);
 
     const result = getCachedAgentSessions(repo, { branch: 'feature/test' });
 
@@ -313,12 +307,12 @@ describe('agent session service', () => {
       return;
     }
     expect(result.sessionCount).toBe(3);
-    expect(
-      readAgentsFile(getBranchAgentsFilePath(repo, 'feature/one')).sessions[0]?.sessionId,
-    ).toBe('codex-one');
-    expect(
-      readAgentsFile(getBranchAgentsFilePath(repo, 'feature/two')).sessions[0]?.sessionId,
-    ).toBe('codex-two');
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/one'))[0]?.sessionId).toBe(
+      'codex-one',
+    );
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/two'))[0]?.sessionId).toBe(
+      'codex-two',
+    );
     expect(
       result.branches.find((branch) => branch.branch === 'feature/old')?.sessions[0],
     ).toMatchObject({
@@ -367,11 +361,11 @@ describe('agent session service', () => {
       return;
     }
     expect(result.sessionCount).toBe(2);
-    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/one')).sessions[0]).toMatchObject({
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/one'))[0]).toMatchObject({
       provider: AgentSessionProvider.Pi,
       sessionId: 'pi-one',
     });
-    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/two')).sessions[0]).toMatchObject({
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/two'))[0]).toMatchObject({
       provider: AgentSessionProvider.Pi,
       sessionId: 'pi-two',
     });
@@ -395,7 +389,7 @@ describe('agent session service', () => {
       return;
     }
     expect(result.agentsFilePath).toBeTruthy();
-    expect(readAgentsFile(result.agentsFilePath ?? '').sessions[0]?.sessionId).toBe('codex-1');
+    expect(readAgentsFile(result.agentsFilePath ?? '')[0]?.sessionId).toBe('codex-1');
   });
 
   it('moves a Codex session to another branch and patches jsonl metadata', () => {
@@ -418,22 +412,19 @@ describe('agent session service', () => {
         JSON.stringify({ type: 'turn_context', payload: { cwd: repo, model: 'gpt-5.5' } }),
       ].join('\n'),
     );
-    writeAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'), {
-      version: 1,
-      sessions: [
-        {
-          provider: AgentSessionProvider.Codex,
-          sessionId: 'codex-1',
-          path: sessionFile,
-          model: 'gpt-5.5',
-          title: null,
-          startedAt: '2026-05-01T10:00:00.000Z',
-          updatedAt: '2026-05-01T10:00:00.000Z',
-          description: null,
-          pinnedAt: null,
-        },
-      ],
-    });
+    writeAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'), [
+      {
+        provider: AgentSessionProvider.Codex,
+        sessionId: 'codex-1',
+        path: sessionFile,
+        model: 'gpt-5.5',
+        title: null,
+        startedAt: '2026-05-01T10:00:00.000Z',
+        updatedAt: '2026-05-01T10:00:00.000Z',
+        description: null,
+        pinnedAt: null,
+      },
+    ]);
 
     const result = moveAgentSessionToBranch({
       repoRoot: repo,
@@ -444,10 +435,10 @@ describe('agent session service', () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/old')).sessions).toEqual([]);
-    expect(
-      readAgentsFile(getBranchAgentsFilePath(repo, 'feature/new')).sessions[0]?.sessionId,
-    ).toBe('codex-1');
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'))).toEqual([]);
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/new'))[0]?.sessionId).toBe(
+      'codex-1',
+    );
     expect(readFileSync(sessionFile, 'utf8')).toContain('"branch":"feature/new"');
   });
 
@@ -475,22 +466,19 @@ describe('agent session service', () => {
         }),
       ].join('\n'),
     );
-    writeAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'), {
-      version: 1,
-      sessions: [
-        {
-          provider: AgentSessionProvider.Pi,
-          sessionId: 'pi-1',
-          path: sessionFile,
-          model: null,
-          title: null,
-          startedAt: '2026-05-01T10:00:00.000Z',
-          updatedAt: '2026-05-01T10:00:00.000Z',
-          description: null,
-          pinnedAt: null,
-        },
-      ],
-    });
+    writeAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'), [
+      {
+        provider: AgentSessionProvider.Pi,
+        sessionId: 'pi-1',
+        path: sessionFile,
+        model: null,
+        title: null,
+        startedAt: '2026-05-01T10:00:00.000Z',
+        updatedAt: '2026-05-01T10:00:00.000Z',
+        description: null,
+        pinnedAt: null,
+      },
+    ]);
 
     const result = moveAgentSessionToBranch({
       repoRoot: repo,
@@ -501,10 +489,8 @@ describe('agent session service', () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/old')).sessions).toEqual([]);
-    expect(
-      readAgentsFile(getBranchAgentsFilePath(repo, 'feature/new')).sessions[0]?.sessionId,
-    ).toBe('pi-1');
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'))).toEqual([]);
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/new'))[0]?.sessionId).toBe('pi-1');
     expect(readFileSync(sessionFile, 'utf8')).toContain('"gitBranch":"feature/new"');
   });
 
@@ -522,22 +508,19 @@ describe('agent session service', () => {
         cwd: repo,
       }),
     );
-    writeAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'), {
-      version: 1,
-      sessions: [
-        {
-          provider: AgentSessionProvider.Pi,
-          sessionId: 'pi-1',
-          path: sessionFile,
-          model: null,
-          title: null,
-          startedAt: '2026-05-01T10:00:00.000Z',
-          updatedAt: '2026-05-01T10:00:00.000Z',
-          description: null,
-          pinnedAt: null,
-        },
-      ],
-    });
+    writeAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'), [
+      {
+        provider: AgentSessionProvider.Pi,
+        sessionId: 'pi-1',
+        path: sessionFile,
+        model: null,
+        title: null,
+        startedAt: '2026-05-01T10:00:00.000Z',
+        updatedAt: '2026-05-01T10:00:00.000Z',
+        description: null,
+        pinnedAt: null,
+      },
+    ]);
 
     const result = moveAgentSessionToBranch({
       repoRoot: repo,
@@ -565,22 +548,19 @@ describe('agent session service', () => {
         message: { role: 'user', content: 'hello' },
       }),
     );
-    writeAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'), {
-      version: 1,
-      sessions: [
-        {
-          provider: AgentSessionProvider.Claude,
-          sessionId: 'claude-1',
-          path: sessionFile,
-          model: null,
-          title: 'hello',
-          startedAt: '2026-05-01T10:00:00.000Z',
-          updatedAt: '2026-05-01T10:00:00.000Z',
-          description: null,
-          pinnedAt: null,
-        },
-      ],
-    });
+    writeAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'), [
+      {
+        provider: AgentSessionProvider.Claude,
+        sessionId: 'claude-1',
+        path: sessionFile,
+        model: null,
+        title: 'hello',
+        startedAt: '2026-05-01T10:00:00.000Z',
+        updatedAt: '2026-05-01T10:00:00.000Z',
+        description: null,
+        pinnedAt: null,
+      },
+    ]);
 
     const result = moveAgentSessionToBranch({
       repoRoot: repo,
@@ -591,10 +571,10 @@ describe('agent session service', () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/old')).sessions).toEqual([]);
-    expect(
-      readAgentsFile(getBranchAgentsFilePath(repo, 'feature/new')).sessions[0]?.sessionId,
-    ).toBe('claude-1');
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/old'))).toEqual([]);
+    expect(readAgentsFile(getBranchAgentsFilePath(repo, 'feature/new'))[0]?.sessionId).toBe(
+      'claude-1',
+    );
     expect(readFileSync(sessionFile, 'utf8')).toContain('"gitBranch":"feature/new"');
   });
 });

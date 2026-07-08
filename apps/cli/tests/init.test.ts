@@ -2,9 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   addToGitignore,
-  BRANCHES_DIR,
   CONFIG_DIR,
-  CONFIG_FILE,
   CONTEXT_FILE_NAME,
   DEFAULT_SYMLINK,
   gitAdd,
@@ -74,17 +72,14 @@ describe('init command', () => {
     }
   });
 
-  it('init gitignores local machine state but leaves templates trackable', async () => {
+  it('init excludes local machine state without changing gitignore', async () => {
     const repo = createGitRepo();
     process.chdir(repo);
     await runCli(['init']);
-    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
-    expect(gitignore).toContain(`${DEFAULT_SYMLINK}\n`);
-    expect(gitignore).toContain(`${CONFIG_DIR}/*\n`);
-    expect(gitignore).toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/\n`);
-    expect(gitignore).toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/**\n`);
-    expect(gitignore).not.toContain(`${CONFIG_DIR}/${CONFIG_FILE}`);
-    expect(gitignore).not.toContain(`${CONFIG_DIR}/${BRANCHES_DIR}/`);
+    const exclude = readFileSync(join(repo, '.git', 'info', 'exclude'), 'utf8');
+    expect(exclude).toContain(`${DEFAULT_SYMLINK}\n`);
+    expect(exclude).toContain(`${CONFIG_DIR}\n`);
+    expect(existsSync(join(repo, '.gitignore'))).toBe(false);
   });
 
   it('init syncs current branch through core service', async () => {

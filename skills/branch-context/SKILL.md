@@ -67,24 +67,20 @@ Command behavior:
 
 ## Config
 
-Default `.bctx/config.json` uses `origin/main`, sound on, commit descriptions off, `.bctx/branches`, and `.bctx/templates`.
+Default `.bctx/config.json` uses `origin/main`, sound on, and commit descriptions off.
 
 Fields:
 
-| Field                 | Type    | Meaning                                               |
-|-----------------------|---------|-------------------------------------------------------|
-| `$schema`             | string  | JSON schema URL                                       |
-| `default_base_branch` | string  | ref used for commits and changed files                |
-| `sound`               | boolean | play sound after sync                                 |
-| `sound_file`          | string  | custom sound file path                                |
-| `commit_description`  | boolean | include commit body in generated commits section      |
-| `branches_folder`     | string  | branch context folder; relative to repo root if local |
-| `templates_folder`    | string  | templates folder; relative to repo root if local      |
+| Field                 | Type    | Meaning                                          |
+|-----------------------|---------|--------------------------------------------------|
+| `$schema`             | string  | JSON schema URL                                  |
+| `default_base_branch` | string  | ref used for commits and changed files           |
+| `sound`               | boolean | play sound after sync                            |
+| `sound_file`          | string  | custom sound file path                           |
+| `commit_description`  | boolean | include commit body in generated commits section |
 
 Notes:
-- `Config.load()` tolerates missing or invalid config by falling back to defaults.
-- Legacy `storage.external_path` maps to `<external_path>/branches`.
-- Legacy `templates.path` maps to `templates_folder`.
+- Machine config uses `~/.config/branch-context/config.json` with `shared_path`.
 - Branch template matching uses prefix before `/`, e.g. `fix/foo` → `fix`.
 
 ## Branch context model
@@ -94,13 +90,14 @@ Default layout:
 ```text
 .bctx/
   config.json
-  meta.json
   templates/<name>/context.md
-  branches/<sanitized-branch>/
-    .config/base_branch
-    .config/sessions.json
-    context.md
-  _archived/
+  branches/
+    meta.json
+    <sanitized-branch>/
+      .config/base_branch
+      .config/sessions.json
+      context.md
+    _archived/
 _branch -> .bctx/branches/<sanitized-current-branch>
 ```
 
@@ -113,7 +110,7 @@ Rules:
 
 ## Templates
 
-Template folders live under `templates_folder`. `_default` is fallback.
+Template folders live under `.bctx/templates` in local mode and `<shared_path>/templates` in shared mode. `_default` is required.
 
 Rendered extensions:
 

@@ -47,14 +47,8 @@ enum OtherBranchesViewMode {
   AgentSessions = 'agentSessions',
 }
 
-enum LegacyContextsGroupBy {
-  Recent = 'recent',
-}
-
 const contextsGroupByValues = Object.values(ContextsGroupBy);
 const otherBranchesViewModeValues = Object.values(OtherBranchesViewMode);
-type SavedContextsGroupBy = ContextsGroupBy | LegacyContextsGroupBy;
-
 type ContextViewItem = {
   branch: string;
   branchKey: string;
@@ -85,7 +79,7 @@ let contextsCollapsedGroups = new Set<string>();
 export function initializeContextsViewState(context: vscode.ExtensionContext): void {
   const savedGroupBy = context.workspaceState.get<unknown>(contextsGroupByWorkspaceKey);
   if (isContextsGroupBy(savedGroupBy)) {
-    contextsGroupBy = normalizeContextsGroupBy(savedGroupBy);
+    contextsGroupBy = savedGroupBy;
   }
 
   const savedMode = context.workspaceState.get<unknown>(otherBranchesViewModeWorkspaceKey);
@@ -151,12 +145,8 @@ export async function toggleOtherBranchesViewMode(
   return otherBranchesViewMode;
 }
 
-function isContextsGroupBy(value: unknown): value is SavedContextsGroupBy {
-  return isStringValue([...contextsGroupByValues, LegacyContextsGroupBy.Recent], value);
-}
-
-function normalizeContextsGroupBy(value: SavedContextsGroupBy): ContextsGroupBy {
-  return value === LegacyContextsGroupBy.Recent ? ContextsGroupBy.Date : value;
+function isContextsGroupBy(value: unknown): value is ContextsGroupBy {
+  return isStringValue(contextsGroupByValues, value);
 }
 
 function isOtherBranchesViewMode(value: unknown): value is OtherBranchesViewMode {
@@ -326,7 +316,7 @@ function createBranchAgentSessionGroupNode({ context, sessions }: BranchAgentSes
 
 function readBranchAgentSessions(context: ContextViewItem): AgentSession[] {
   return readAgentsFile(getContextAgentsFilePath(context))
-    .sessions.map((session) =>
+    .map((session) =>
       createAgentSession({
         ...session,
         branch: context.branch,

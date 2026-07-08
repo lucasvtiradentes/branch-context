@@ -1,4 +1,3 @@
-import { CONFIG_DIR, TEMPLATES_DIR } from '@branch-context/core';
 import type { Command, Program } from '@caporal/core';
 
 type CompletionGroup = {
@@ -15,7 +14,6 @@ enum CompletionShell {
 const PARENT_DESCRIPTIONS: Record<string, string> = {
   agents: 'Agent integration commands',
 };
-const templatesRelDir = `${CONFIG_DIR}/${TEMPLATES_DIR}`;
 const completionShells = Object.values(CompletionShell);
 const completionScriptGenerators = {
   [CompletionShell.Bash]: getBashCompletionScript,
@@ -76,8 +74,7 @@ ${formatSubcommandArrays(subcommands)}
   _${binName}_templates() {
     git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
     if [[ -n "$git_root" ]]; then
-      templates_dir="$(${binName} template source 2>/dev/null | sed -n 's/^Resolved: //p' | tail -n 1)"
-      templates_dir="\${templates_dir:-$git_root/${templatesRelDir}}"
+      templates_dir="$(${binName} template source 2>/dev/null | sed -n 's/^Templates folder: //p' | tail -n 1)"
       if [[ -d "$templates_dir" ]]; then
         _values 'template' $(ls "$templates_dir" 2>/dev/null)
       fi
@@ -135,8 +132,7 @@ ${formatBashSubcommandCases(subcommands)}
       if [[ "\${COMP_WORDS[1]}" == "template" && "\${COMP_WORDS[2]}" == "apply" ]]; then
         git_root="$(git rev-parse --show-toplevel 2>/dev/null)"
         if [[ -n "$git_root" ]]; then
-          templates_dir="$(${binName} template source 2>/dev/null | sed -n 's/^Resolved: //p' | tail -n 1)"
-          templates_dir="\${templates_dir:-$git_root/${templatesRelDir}}"
+          templates_dir="$(${binName} template source 2>/dev/null | sed -n 's/^Templates folder: //p' | tail -n 1)"
           if [[ -d "$templates_dir" ]]; then
             COMPREPLY=($(compgen -W "$(ls "$templates_dir" 2>/dev/null)" -- "$cur"))
           fi
@@ -179,10 +175,7 @@ end
 function __${binName}_templates
   set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
   if test -n "$git_root"
-    set -l templates_dir (${binName} template source 2>/dev/null | sed -n 's/^Resolved: //p' | tail -n 1)
-    if test -z "$templates_dir"
-      set -l templates_dir "$git_root/${templatesRelDir}"
-    end
+    set -l templates_dir (${binName} template source 2>/dev/null | sed -n 's/^Templates folder: //p' | tail -n 1)
     if test -d "$templates_dir"
       ls "$templates_dir" 2>/dev/null
     end

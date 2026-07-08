@@ -299,9 +299,8 @@ function getCliCompatibilityTooltipLines(state: BranchContextExtensionState): st
   if (cli.compatible) {
     const lines = [markdownTooltipLine('CLI', `${cli.command ?? 'bctx'} ${cli.version}`)];
     if (cli.mismatch === CliCompatibilityMismatch.CliNewer) {
-      lines.push(markdownTooltipLine('Minimum CLI', cli.expectedVersion));
       lines.push(
-        `$(warning) ${escapeMarkdown(`CLI ${cli.version ?? 'unknown'} is newer than extension minimum ${cli.expectedVersion}`)}`,
+        `$(warning) ${escapeMarkdown(`CLI ${cli.version ?? 'unknown'} is newer than extension version ${cli.expectedVersion}`)}`,
       );
     }
     return lines;
@@ -309,7 +308,7 @@ function getCliCompatibilityTooltipLines(state: BranchContextExtensionState): st
 
   return [
     markdownTooltipLine('CLI', cli.installed ? (cli.version ?? 'unknown') : 'not found'),
-    markdownTooltipLine('Minimum CLI', cli.expectedVersion),
+    markdownTooltipLine('Expected CLI', cli.expectedVersion),
     `${cli.installed ? '$(error)' : '$(warning)'} ${escapeMarkdown(cli.error ?? 'CLI mismatch')}`,
   ];
 }
@@ -344,7 +343,7 @@ function getCliCompatibilityPromptMessage(state: BranchContextExtensionState): s
   }
 
   if (cli.mismatch === CliCompatibilityMismatch.CliOlder) {
-    return `${APP_NAME}: CLI version ${cli.version ?? 'unknown'} is older than extension minimum ${cli.expectedVersion}`;
+    return `${APP_NAME}: CLI version ${cli.version ?? 'unknown'} is older than extension version ${cli.expectedVersion}`;
   }
 
   return `${APP_NAME}: ${cli.error ?? 'CLI version could not be read'}`;

@@ -27,7 +27,7 @@ function initMetaRepo() {
   mkdirSync(getConfigDir(repo), { recursive: true });
   writeFileSync(
     join(getConfigDir(repo), CONFIG_FILE),
-    JSON.stringify({ default_base_branch: 'main', sound: false, template_rules: [] }),
+    JSON.stringify({ default_base_branch: 'main', sound: false, commit_description: false }),
   );
   process.chdir(repo);
   return repo;
@@ -94,9 +94,7 @@ describe('meta e2e', () => {
       }
     }
 
-    const sessions = readAgentsFile(
-      join(repo, DEFAULT_SYMLINK, '.config', SESSIONS_FILE_NAME),
-    ).sessions;
+    const sessions = readAgentsFile(join(repo, DEFAULT_SYMLINK, '.config', SESSIONS_FILE_NAME));
     expect(sessions.map((session) => session.sessionId)).toEqual(['codex-1']);
   });
 

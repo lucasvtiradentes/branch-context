@@ -8,7 +8,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname, isAbsolute, join, sep as pathSeparator, relative, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { CONFIG_DIR, CONFIG_FILE, DEFAULT_SYMLINK, HookType } from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
@@ -41,7 +41,7 @@ import {
   listTemplates,
 } from '../data/config';
 import { updateBranchMeta } from '../data/meta';
-import { gitOriginUrl, gitRefExists, normalizeGitRemoteUrl } from '../git';
+import { gitInfoExcludeAdd, gitOriginUrl, gitRefExists, normalizeGitRemoteUrl } from '../git';
 
 export enum BranchContextActionErrorReason {
   NotInitialized = 'not_initialized',
@@ -176,7 +176,7 @@ export async function initProject(
     commandName: options.hookCommandName,
   });
 
-  addInitGitignoreEntries(gitRoot, branchesDir, templatesDir);
+  addInitLocalExcludeEntries(gitRoot);
 
   return {
     ok: true,
@@ -293,57 +293,20 @@ function removeFromGitignore(gitRoot: string, shouldRemove: (value: string) => b
   writeFileSync(gitignoreFile, next.endsWith('\n') ? next : `${next}\n`);
 }
 
-function addInitGitignoreEntries(gitRoot: string, branchesDir: string, templatesDir: string) {
-  addToGitignore(gitRoot, DEFAULT_SYMLINK);
+function addInitLocalExcludeEntries(gitRoot: string) {
   removeFromGitignore(gitRoot, isBctxGitignoreModeEntry);
-
-  if (isRepoLocalTemplatesFolder(gitRoot, templatesDir)) {
-    addToGitignore(gitRoot, `${CONFIG_DIR}/*`);
-    addRepoFolderExceptionToGitignore(gitRoot, templatesDir);
-  } else {
-    addToGitignore(gitRoot, CONFIG_DIR);
-  }
-
-  const branchesRelPath = getRepoRelativePath(gitRoot, branchesDir);
-  if (branchesRelPath && !branchesRelPath.startsWith(`${CONFIG_DIR}/`)) {
-    addToGitignore(gitRoot, `${branchesRelPath}/`);
-  }
+  gitInfoExcludeAdd(gitRoot, DEFAULT_SYMLINK);
+  gitInfoExcludeAdd(gitRoot, CONFIG_DIR);
 }
 
 function isBctxGitignoreModeEntry(value: string) {
-  return value === CONFIG_DIR || value === `${CONFIG_DIR}/*` || value.startsWith(`!${CONFIG_DIR}/`);
-}
-
-function isRepoLocalTemplatesFolder(gitRoot: string, templatesDir: string) {
-  return getRepoRelativePath(gitRoot, templatesDir)?.startsWith(`${CONFIG_DIR}/`) ?? false;
-}
-
-function addRepoFolderExceptionToGitignore(gitRoot: string, folder: string) {
-  const relPath = getRepoRelativePath(gitRoot, folder);
-  if (!relPath?.startsWith(`${CONFIG_DIR}/`)) {
-    return;
-  }
-
-  addToGitignore(gitRoot, `!${relPath}/`);
-  addToGitignore(gitRoot, `!${relPath}/**`);
-}
-
-function getRepoRelativePath(gitRoot: string, path: string) {
-  const relPath = relative(getComparablePath(gitRoot), getComparablePath(path));
-  if (
-    !relPath ||
-    relPath === '..' ||
-    relPath.startsWith(`..${pathSeparator}`) ||
-    isAbsolute(relPath)
-  ) {
-    return null;
-  }
-
-  return relPath.replaceAll(pathSeparator, '/');
-}
-
-function getComparablePath(path: string) {
-  return existsSync(path) ? realpathSync(path) : resolve(path);
+  return (
+    value === DEFAULT_SYMLINK ||
+    value === CONFIG_DIR ||
+    value === `${CONFIG_DIR}/*` ||
+    value === `${CONFIG_DIR}/` ||
+    value.startsWith(`!${CONFIG_DIR}/`)
+  );
 }
 
 export function syncCurrentBranch(

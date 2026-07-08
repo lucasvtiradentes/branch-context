@@ -38,7 +38,7 @@ function createSession(overrides: Partial<ReturnType<typeof createAgentSession>>
 
 describe('agents file', () => {
   it('creates empty agents file data', () => {
-    expect(createEmptyAgentsFile()).toEqual({ version: 1, sessions: [] });
+    expect(createEmptyAgentsFile()).toEqual([]);
   });
 
   it('reads empty data when file is missing', () => {
@@ -56,9 +56,9 @@ describe('agents file', () => {
   it('writes agents file', () => {
     const workspace = createWorkspace();
     const path = join(workspace, 'nested', SESSIONS_FILE_NAME);
-    writeAgentsFile(path, { version: 1, sessions: [createSession()] });
+    writeAgentsFile(path, [createSession()]);
     expect(existsSync(path)).toBe(true);
-    const sessions = JSON.parse(readFileSync(path, 'utf8')).sessions;
+    const sessions = JSON.parse(readFileSync(path, 'utf8'));
     expect(sessions).toHaveLength(1);
     expect(sessions[0]).not.toHaveProperty('branch');
     expect(sessions[0]).not.toHaveProperty('scope');
@@ -68,12 +68,11 @@ describe('agents file', () => {
     const workspace = createWorkspace();
     const path = join(workspace, SESSIONS_FILE_NAME);
 
-    writeAgentsFile(path, {
-      version: 1,
-      sessions: [createSession({ provider: AgentSessionProvider.Pi, sessionId: 'pi-1' })],
-    });
+    writeAgentsFile(path, [
+      createSession({ provider: AgentSessionProvider.Pi, sessionId: 'pi-1' }),
+    ]);
 
-    expect(readAgentsFile(path).sessions[0]?.provider).toBe(AgentSessionProvider.Pi);
+    expect(readAgentsFile(path)[0]?.provider).toBe(AgentSessionProvider.Pi);
   });
 
   it('upserts sessions by provider and id', () => {
@@ -83,9 +82,9 @@ describe('agents file', () => {
     upsertAgentSession(path, createSession({ title: 'Old' }));
     const updated = upsertAgentSession(path, createSession({ title: 'New', model: 'gpt-5.6' }));
 
-    expect(updated.sessions).toHaveLength(1);
-    expect(updated.sessions[0]?.title).toBe('New');
-    expect(updated.sessions[0]?.model).toBe('gpt-5.6');
+    expect(updated).toHaveLength(1);
+    expect(updated[0]?.title).toBe('New');
+    expect(updated[0]?.model).toBe('gpt-5.6');
   });
 
   it('sorts newest sessions first', () => {
@@ -109,7 +108,7 @@ describe('agents file', () => {
       }),
     );
 
-    expect(updated.sessions.map((session) => session.sessionId)).toEqual(['new', 'old']);
+    expect(updated.map((session) => session.sessionId)).toEqual(['new', 'old']);
   });
 
   it('updates session metadata', () => {
@@ -122,7 +121,7 @@ describe('agents file', () => {
       pinnedAt: '2026-05-01T11:00:00.000Z',
     });
 
-    expect(updated.sessions[0]).toMatchObject({
+    expect(updated[0]).toMatchObject({
       description: 'New label',
       pinnedAt: '2026-05-01T11:00:00.000Z',
     });

@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { CLI_NAME, DIST_NAME, VERSION } from '@branch-context/core';
+import { CLI_NAME, VERSION } from '@branch-context/core';
 import { IS_DEV_EXTENSION } from '../../constants';
 import { logger } from '../../shared/logger';
 
@@ -123,10 +123,7 @@ function resolveCliCompatibility(): CliCompatibilityState {
 
 function getCliCommandCandidates(): CliCommandCandidate[] {
   if (!IS_DEV_EXTENSION) {
-    return [
-      { command: CLI_NAME, label: CLI_NAME },
-      { command: DIST_NAME, label: DIST_NAME },
-    ];
+    return [{ command: CLI_NAME, label: CLI_NAME }];
   }
 
   const commands: CliCommandCandidate[] = [{ command: DEV_CLI_NAME, label: DEV_CLI_NAME }];
@@ -164,12 +161,12 @@ function getVersionMismatchError(
   mismatch: CliCompatibilityMismatch,
   version: string,
   expectedVersion: string,
-): string {
+): string | null {
   if (mismatch === CliCompatibilityMismatch.CliOlder) {
-    return `CLI ${version} is older than extension minimum ${expectedVersion}`;
+    return `CLI ${version} is older than extension version ${expectedVersion}`;
   }
 
-  return `CLI ${version} does not satisfy extension minimum ${expectedVersion}`;
+  return null;
 }
 
 function compareVersions(left: string, right: string): number {

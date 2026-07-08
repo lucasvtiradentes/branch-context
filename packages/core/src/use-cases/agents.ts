@@ -212,9 +212,7 @@ export function getAgentSessions(
   const branchKey = sanitizeBranchName(branch);
   const agentsFilePath = getExistingAgentsFilePath(repoRoot);
   const cachedSessions = agentsFilePath
-    ? readAgentsFile(agentsFilePath).sessions.map((session) =>
-        storedSessionToAgentSession(session, branch),
-      )
+    ? readAgentsFile(agentsFilePath).map((session) => storedSessionToAgentSession(session, branch))
     : [];
   const scannedSessions = scanAgentSessions({ ...options, repoRoot, branch });
   const sessions = mergeSessions(cachedSessions, scannedSessions)
@@ -249,7 +247,7 @@ export function getCachedAgentSessions(
   const agentsFilePath = getExistingAgentsFilePath(repoRoot);
   const sessions = agentsFilePath
     ? readAgentsFile(agentsFilePath)
-        .sessions.map((session) => storedSessionToAgentSession(session, branch))
+        .map((session) => storedSessionToAgentSession(session, branch))
         .sort(compareSessions)
     : [];
 
@@ -286,10 +284,7 @@ export function syncAgentSessions(
     (session) => session.scope === AgentSessionScope.Branch && session.branch === result.branch,
   );
   const currentAgentsFile = readAgentsFile(agentsFilePath);
-  const nextAgentsFile = normalizeAgentsFile({
-    ...currentAgentsFile,
-    sessions: exactSessions,
-  });
+  const nextAgentsFile = normalizeAgentsFile(exactSessions);
   const written = !agentsFilesEqual(currentAgentsFile, nextAgentsFile);
   if (written) {
     writeAgentsFile(agentsFilePath, nextAgentsFile);
@@ -344,7 +339,7 @@ export function moveAgentSessionToBranch(options: {
   const toAgentsFilePath =
     options.toAgentsFilePath ?? getBranchAgentsFilePath(options.repoRoot, options.toBranch);
   const fromAgentsFile = readAgentsFile(fromAgentsFilePath);
-  const session = fromAgentsFile.sessions.find(
+  const session = fromAgentsFile.find(
     (candidate) =>
       candidate.provider === options.provider && candidate.sessionId === options.sessionId,
   );
@@ -370,24 +365,20 @@ export function moveAgentSessionToBranch(options: {
     return patchResult;
   }
 
-  const nextFromAgentsFile = normalizeAgentsFile({
-    ...fromAgentsFile,
-    sessions: fromAgentsFile.sessions.filter(
+  const nextFromAgentsFile = normalizeAgentsFile(
+    fromAgentsFile.filter(
       (candidate) =>
         candidate.provider !== options.provider || candidate.sessionId !== options.sessionId,
     ),
-  });
+  );
   const toAgentsFile = readAgentsFile(toAgentsFilePath);
-  const nextToAgentsFile = normalizeAgentsFile({
-    ...toAgentsFile,
-    sessions: [
-      ...toAgentsFile.sessions.filter(
-        (candidate) =>
-          candidate.provider !== options.provider || candidate.sessionId !== options.sessionId,
-      ),
-      session,
-    ],
-  });
+  const nextToAgentsFile = normalizeAgentsFile([
+    ...toAgentsFile.filter(
+      (candidate) =>
+        candidate.provider !== options.provider || candidate.sessionId !== options.sessionId,
+    ),
+    session,
+  ]);
 
   writeAgentsFile(fromAgentsFilePath, nextFromAgentsFile);
   writeAgentsFile(toAgentsFilePath, nextToAgentsFile);
@@ -747,16 +738,13 @@ function syncAgentSessionsForBranch(
 ): SyncAllAgentSessionsBranchResult {
   const { branch, branchKey, agentsFilePath, archived } = target;
   const currentAgentsFile = readAgentsFile(agentsFilePath);
-  const cachedSessions = currentAgentsFile.sessions.map((session) =>
+  const cachedSessions = currentAgentsFile.map((session) =>
     storedSessionToAgentSession(session, branch),
   );
   const sessions = mergeSessions(cachedSessions, scannedSessions)
     .filter((session) => session.scope === AgentSessionScope.Branch && session.branch === branch)
     .sort(compareSessions);
-  const nextAgentsFile = normalizeAgentsFile({
-    ...currentAgentsFile,
-    sessions,
-  });
+  const nextAgentsFile = normalizeAgentsFile(sessions);
   const written = !agentsFilesEqual(currentAgentsFile, nextAgentsFile);
 
   if (written) {
