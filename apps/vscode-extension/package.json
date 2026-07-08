@@ -61,11 +61,6 @@
     "views": {
       "branch-context": [
         {
-          "id": "branch-context.currentContext",
-          "name": "Branch Context",
-          "icon": "resources/icon.svg"
-        },
-        {
           "id": "branch-context.agentSessions",
           "name": "Branch AI Sessions",
           "icon": "resources/icon.svg"
@@ -278,10 +273,6 @@
         "title": "Branch Context: Focus Branch Context View"
       },
       {
-        "command": "branch-context.currentContext.focus",
-        "title": "Branch Context: Focus Branch Context"
-      },
-      {
         "command": "branch-context.agentSessions.focus",
         "title": "Branch Context: Focus Branch AI Sessions"
       },
@@ -302,10 +293,6 @@
       "commandPalette": [
         {
           "command": "workbench.view.extension.branch-context",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.currentContext.focus",
           "when": "false"
         },
         {
@@ -454,26 +441,6 @@
         }
       ],
       "view/title": [
-        {
-          "command": "branch-context.sync",
-          "when": "view == branch-context.currentContext && branch-context.initialized",
-          "group": "navigation@1"
-        },
-        {
-          "command": "branch-context.setBase",
-          "when": "view == branch-context.currentContext && branch-context.initialized",
-          "group": "navigation@3"
-        },
-        {
-          "command": "branch-context.applyTemplate",
-          "when": "view == branch-context.currentContext && branch-context.initialized",
-          "group": "navigation@4"
-        },
-        {
-          "command": "branch-context.openCurrentContextFolder",
-          "when": "view == branch-context.currentContext && branch-context.initialized",
-          "group": "navigation@5"
-        },
         {
           "command": "branch-context.reviewDiff",
           "when": "view == branch-context.gitChanges && branch-context.initialized",

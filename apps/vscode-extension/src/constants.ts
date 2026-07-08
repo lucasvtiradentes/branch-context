@@ -53,7 +53,6 @@ export const commandIds = {
 } as const;
 
 export const viewIds = {
-  currentContext: `${APP_ID}.currentContext`,
   agentSessions: `${APP_ID}.agentSessions`,
   gitChanges: `${APP_ID}.gitChanges`,
   contexts: `${APP_ID}.contexts`,
