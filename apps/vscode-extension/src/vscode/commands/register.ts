@@ -16,7 +16,6 @@ import { registerOpenCurrentContextCommand } from '../../features/branch-context
 import { registerOpenCurrentContextFolderCommand } from '../../features/branch-context/commands/open-current-context-folder';
 import { registerOpenSharedStorageCommand } from '../../features/branch-context/commands/open-shared-storage';
 import { registerSetBaseCommand } from '../../features/branch-context/commands/set-base';
-import { registerShowDetailsCommand } from '../../features/branch-context/commands/show-details';
 import { registerStatusCommand } from '../../features/branch-context/commands/status';
 import { registerSyncCommand } from '../../features/branch-context/commands/sync';
 import { registerCommitActionCommands } from '../../features/git-changes/commands/commit-actions';
@@ -29,8 +28,6 @@ import { registerGroupContextsCommand } from '../../features/other-branches/comm
 import { registerMoveAgentSessionCommand } from '../../features/other-branches/commands/move-agent-session';
 import { registerToggleOtherBranchesModeCommand } from '../../features/other-branches/commands/toggle-other-branches-mode';
 import { registerShowLogsCommand } from './show-logs';
-import { registerUpdateCliCommand } from './update-cli';
-import { registerUpdateExtensionCommand } from './update-extension';
 
 export function registerCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
@@ -55,10 +52,7 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     registerGroupContextsCommand(context),
     registerToggleOtherBranchesModeCommand(context),
     registerMoveAgentSessionCommand(),
-    registerUpdateCliCommand(),
-    registerUpdateExtensionCommand(),
     registerShowLogsCommand(),
-    registerShowDetailsCommand(),
     registerSyncAllAgentSessionsCommand(),
     registerSyncAgentsCommand(),
     ...registerAgentSessionActionCommands(),

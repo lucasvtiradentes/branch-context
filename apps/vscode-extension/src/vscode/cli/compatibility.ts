@@ -27,7 +27,7 @@ export type CliCompatibilityState = {
   updateCommand: string;
 };
 
-export enum CliCompatibilityMismatch {
+enum CliCompatibilityMismatch {
   None = 'none',
   Missing = 'missing',
   Unreadable = 'unreadable',

@@ -7,8 +7,6 @@ const APP_ID = 'branch-context';
 const APP_LOG_FILENAME = 'extension.log';
 export const APP_NAME = 'Branch Context';
 export const IS_DEV_EXTENSION = APP_ID.endsWith('-dev');
-export const STATUS_BAR_PRIORITY = 10;
-
 export const commandIds = {
   openCurrentContext: `${APP_ID}.openCurrentContext`,
   sync: `${APP_ID}.sync`,
@@ -46,13 +44,9 @@ export const commandIds = {
   archiveContext: `${APP_ID}.archiveContext`,
   restoreContext: `${APP_ID}.restoreContext`,
   deleteContext: `${APP_ID}.deleteContext`,
-  updateCli: `${APP_ID}.updateCli`,
-  updateExtension: `${APP_ID}.updateExtension`,
   showLogs: `${APP_ID}.showLogs`,
   syncAllAgentSessions: `${APP_ID}.syncAllAgentSessions`,
   syncAgents: `${APP_ID}.internal.syncAgents`,
-  showStatusBarActions: `${APP_ID}.internal.showStatusBarActions`,
-  showDetails: `${APP_ID}.internal.showDetails`,
 } as const;
 
 export const viewIds = {

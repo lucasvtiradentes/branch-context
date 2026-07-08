@@ -1,14 +1,18 @@
-import { CONFIG_DIR } from '@branch-context/core';
+import {
+  type BranchContextStatusIssue,
+  BranchContextStatusIssueLevel,
+  CONFIG_DIR,
+} from '@branch-context/core';
 import * as vscode from 'vscode';
 import { commandIds } from '../../../constants';
-import { createMessageNode, StateTreeProvider } from '../../../shared/tree-items';
+import { createGroupNode, createMessageNode, StateTreeProvider } from '../../../shared/tree-items';
 import {
   type BranchContextTreeNode,
   BranchContextTreeNodeKind,
 } from '../../../shared/tree-items/types';
-import { branchContextState } from '../../../vscode/state';
+import { type BranchContextExtensionState, branchContextState } from '../../../vscode/state';
 
-export function createTemplatesProvider(): StateTreeProvider {
+export function createTemplatesProvider(context: vscode.ExtensionContext): StateTreeProvider {
   return new StateTreeProvider(() => {
     const state = branchContextState.get();
     if (!state.initialized || !state.workspaceRoot || !state.status) {
@@ -39,6 +43,9 @@ export function createTemplatesProvider(): StateTreeProvider {
           title: 'Apply Template',
         },
       }),
+      createConfigNode('Extension', getExtensionVersion(context), 'extensions'),
+      createConfigNode('CLI', getCliDescription(state), 'terminal'),
+      ...getIssueNodes(state.status.issues),
     ];
   });
 }
@@ -75,4 +82,42 @@ function getModeCommand(mode: 'local' | 'shared'): vscode.Command | undefined {
         title: 'Open Shared Storage',
       }
     : undefined;
+}
+
+function getExtensionVersion(context: vscode.ExtensionContext) {
+  const { version } = context.extension.packageJSON as { version?: unknown };
+  return typeof version === 'string' ? version : 'unknown';
+}
+
+function getCliDescription(state: BranchContextExtensionState) {
+  const cli = state.cliCompatibility;
+  if (!cli.installed) {
+    return 'not found';
+  }
+
+  return `${cli.command ?? 'bctx'} ${cli.version ?? 'unknown'}`;
+}
+
+function getIssueNodes(issues: BranchContextStatusIssue[]) {
+  if (issues.length === 0) {
+    return [];
+  }
+
+  return [
+    createGroupNode(
+      'Issues',
+      issues.map((issue) =>
+        createConfigNode(
+          issue.level,
+          issue.message,
+          issue.level === BranchContextStatusIssueLevel.Error ? 'error' : 'warning',
+        ),
+      ),
+      {
+        description: String(issues.length),
+        icon: new vscode.ThemeIcon('warning'),
+        collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+      },
+    ),
+  ];
 }
