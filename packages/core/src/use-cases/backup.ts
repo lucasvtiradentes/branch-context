@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { getActiveGlobalPath } from '../data/config';
+import { getWorkspaceGlobalPath } from '../data/config';
 import { syncCurrentBranch } from './actions';
 
 export enum BackupGlobalStorageResultStatus {
@@ -23,9 +23,9 @@ export type BackupGlobalStorageResult =
     };
 
 export function backupGlobalStorage(workspaceRoot: string): BackupGlobalStorageResult {
-  const globalPath = getActiveGlobalPath();
+  const globalPath = getWorkspaceGlobalPath(workspaceRoot);
   if (!globalPath) {
-    return { ok: false, message: 'global_path is not configured or does not exist' };
+    return { ok: false, message: 'workspace is not using global storage' };
   }
 
   if (!existsSync(join(globalPath, '.git'))) {
