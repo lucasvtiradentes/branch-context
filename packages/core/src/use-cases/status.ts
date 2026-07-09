@@ -189,13 +189,13 @@ export function getStatus(gitRoot: string): BranchContextStatus {
       });
     }
 
-    const orphanCount = Array.from(contexts.entries()).filter(
-      ([, info]) => info.context && !info.local,
-    ).length;
-    if (orphanCount > 0) {
+    const orphanContextBranches = Array.from(contexts.entries())
+      .filter(([, info]) => info.context && !info.local)
+      .map(([branch]) => branch);
+    if (orphanContextBranches.length > 0) {
       issues.push({
         level: BranchContextStatusIssueLevel.Warning,
-        message: `${orphanCount} orphan contexts`,
+        message: formatOrphanContextIssue(orphanContextBranches),
       });
     }
   }
@@ -231,6 +231,11 @@ function getExistingRealPath(path: string) {
   } catch {
     return path;
   }
+}
+
+function formatOrphanContextIssue(branches: string[]) {
+  const label = branches.length === 1 ? 'orphan context' : 'orphan contexts';
+  return `${branches.length} ${label}: ${branches.join(', ')}`;
 }
 
 function getContextSummaries(

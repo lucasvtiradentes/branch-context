@@ -65,7 +65,7 @@ type ConfigNodeOptions = {
 
 function createConfigNode(
   label: string,
-  description: string,
+  description: string | undefined,
   icon: string,
   options: ConfigNodeOptions = {},
 ): BranchContextTreeNode {
@@ -73,7 +73,7 @@ function createConfigNode(
     label,
     description,
     kind: BranchContextTreeNodeKind.Message,
-    tooltip: options.tooltip ?? description,
+    tooltip: options.tooltip ?? description ?? label,
     icon: new vscode.ThemeIcon(icon),
     command: options.command,
   };
@@ -97,8 +97,8 @@ function getIssueNodes(issues: BranchContextStatusIssue[]) {
       'Issues',
       issues.map((issue) =>
         createConfigNode(
-          issue.level,
           issue.message,
+          undefined,
           issue.level === BranchContextStatusIssueLevel.Error ? 'error' : 'warning',
         ),
       ),

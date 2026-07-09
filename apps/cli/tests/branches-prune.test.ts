@@ -53,7 +53,7 @@ describe('branches and prune commands', () => {
     git(['branch', '-D', 'feature/old'], repo);
     const capture = captureConsole();
     await runCli(['status']);
-    expect(capture.output).toContain('orphan');
+    expect(capture.output).toContain('1 orphan context: feature/old');
   });
 
   it('prune does nothing when no orphans', async () => {
