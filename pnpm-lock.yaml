@@ -39,14 +39,14 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       unicommand:
-        specifier: file:../unicommand
-        version: file:../unicommand
+        specifier: ^0.0.2
+        version: 0.0.2
 
   apps/cli:
     dependencies:
       unicommand:
-        specifier: file:../../../unicommand
-        version: file:../unicommand
+        specifier: ^0.0.2
+        version: 0.0.2
     devDependencies:
       '@branch-context/core':
         specifier: workspace:*
@@ -2934,8 +2934,9 @@ packages:
     resolution: {integrity: sha512-xXnp4kTyor2Zq+J1FfPI6Eq3ew5h6Vl0F/8d9XU5zZQf1tX9s2Su1/3PiMmUANFULpmksxkClamIZcaUqryHsQ==}
     engines: {node: '>=20.18.1'}
 
-  unicommand@file:../unicommand:
-    resolution: {directory: ../unicommand, type: directory}
+  unicommand@0.0.2:
+    resolution: {integrity: sha512-Lt/Wpko8VinmoSWSY6tO2UTkJhw/i9fFdBq4/MLtYNr/dhE7w91TZoGtyPGNZn7POHwvwrhXVBK6a5DiBORy4g==}
+    engines: {node: '>=22', pnpm: '>=10'}
 
   unicorn-magic@0.1.0:
     resolution: {integrity: sha512-lRfVq8fE8gz6QMBuDM6a+LO3IAzTi05H6gCVaUpir2E1Rwpo4ZUog45KpNXKC/Mn3Yb9UDuHumeFTo9iV/D9FQ==}
@@ -5960,7 +5961,7 @@ snapshots:
 
   undici@7.25.0: {}
 
-  unicommand@file:../unicommand:
+  unicommand@0.0.2:
     dependencies:
       '@caporal/core': 2.0.7
       zod: 4.4.3

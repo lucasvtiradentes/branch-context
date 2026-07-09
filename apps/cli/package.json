@@ -24,7 +24,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "unicommand": "file:../../../unicommand"
+    "unicommand": "^0.0.2"
   },
   "devDependencies": {
     "@branch-context/core": "workspace:*",
