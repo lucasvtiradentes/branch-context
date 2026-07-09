@@ -1,6 +1,5 @@
 import {
   BranchContextActionErrorReason,
-  CLI_NAME,
   getCurrentBase,
   setCurrentBase,
 } from '@branch-context/core';
@@ -8,12 +7,11 @@ import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 
 const baseErrorMessages = {
-  [BranchContextActionErrorReason.NotInitialized]: () =>
-    `error: not initialized. Run '${CLI_NAME} init' first`,
+  [BranchContextActionErrorReason.NotInitialized]: () => "error: not initialized. Run 'init' first",
   [BranchContextActionErrorReason.NoCurrentBranch]: () =>
     'error: could not determine current branch',
   [BranchContextActionErrorReason.MissingContext]: (result: { branch?: string }) =>
-    `error: no context for '${result.branch}'. Run '${CLI_NAME} sync' first`,
+    `error: no context for '${result.branch}'. Run 'sync' first`,
   [BranchContextActionErrorReason.BaseBranchNotFound]: (result: { message: string }) =>
     `error: ${result.message}`,
   [BranchContextActionErrorReason.NoTemplates]: (result: { message: string }) =>

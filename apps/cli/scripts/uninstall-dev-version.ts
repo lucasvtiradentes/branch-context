@@ -1,3 +1,3 @@
-import { uninstallPackageDevCommand } from 'unicommand';
+import { uninstallPackageDevCommands } from 'unicommand';
 
-uninstallPackageDevCommand(import.meta.url, { commandName: 'bctxd' });
+uninstallPackageDevCommands(import.meta.url, { commandNames: ['bctxd'] });

@@ -1,6 +1,5 @@
 import {
   BranchContextActionErrorReason,
-  CLI_NAME,
   Config,
   CreateBranchContextResult,
   playSound,
@@ -10,8 +9,7 @@ import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 
 const syncErrorMessages = {
-  [BranchContextActionErrorReason.NotInitialized]: () =>
-    `error: not initialized. Run '${CLI_NAME} init' first`,
+  [BranchContextActionErrorReason.NotInitialized]: () => "error: not initialized. Run 'init' first",
   [BranchContextActionErrorReason.NoCurrentBranch]: () =>
     'error: could not determine current branch',
   [BranchContextActionErrorReason.MissingContext]: (message: string) => `error: ${message}`,

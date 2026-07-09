@@ -3,7 +3,6 @@ import readline from 'node:readline/promises';
 import {
   applyTemplateToCurrentBranch,
   BranchContextActionErrorReason,
-  CLI_NAME,
   getCurrentBranch,
   listAvailableTemplates,
 } from '@branch-context/core';
@@ -76,7 +75,7 @@ async function handler({ list, name }: { list?: unknown; name?: unknown }) {
 
   const templatesResult = listAvailableTemplates(gitRoot);
   if (!templatesResult.ok) {
-    console.log(`error: ${CLI_NAME} not initialized (run '${CLI_NAME} init')`);
+    console.log("error: not initialized (run 'init')");
     return 1;
   }
 
@@ -99,7 +98,7 @@ async function handler({ list, name }: { list?: unknown; name?: unknown }) {
   let template = args[0];
   if (!template) {
     if (!input.isTTY) {
-      console.log(`usage: ${CLI_NAME} template <name>`);
+      console.log('usage: template <name>');
       console.log(`available: ${templates.join(', ')}`);
       return 1;
     }

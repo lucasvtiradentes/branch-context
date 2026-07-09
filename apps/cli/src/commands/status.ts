@@ -1,7 +1,6 @@
 import {
   BranchContextStatusIssueLevel,
   BranchContextSymlinkState,
-  CLI_NAME,
   DEFAULT_SYMLINK,
   DEFAULT_TEMPLATE,
   getStatus,
@@ -37,8 +36,8 @@ function handler() {
   const status = getStatus(gitRoot);
 
   if (!status.initialized) {
-    console.log(`error: ${CLI_NAME} not initialized`);
-    console.log(`run: ${CLI_NAME} init`);
+    console.log('error: not initialized');
+    console.log('run: init');
     return 1;
   }
 

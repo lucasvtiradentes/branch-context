@@ -1,4 +1,4 @@
-import { CLI_NAME, syncBranchAfterCheckout } from '@branch-context/core';
+import { syncBranchAfterCheckout } from '@branch-context/core';
 import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 
@@ -19,7 +19,7 @@ export const onCheckoutCommand = createCommandAdapters({
 
 function handler({ oldBranch, newBranch }: { oldBranch?: unknown; newBranch?: unknown }) {
   if (oldBranch === undefined || newBranch === undefined) {
-    console.log(`usage: ${CLI_NAME} on-checkout <old_branch> <new_branch>`);
+    console.log('usage: on-checkout <old_branch> <new_branch>');
     return 1;
   }
 

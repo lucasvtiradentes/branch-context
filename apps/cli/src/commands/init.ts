@@ -1,6 +1,5 @@
 import {
   BranchContextActionErrorReason,
-  CLI_NAME,
   DEFAULT_SYMLINK,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
@@ -18,7 +17,7 @@ const hookInstallMessages = {
   [HookInstallResult.Updated]: (hookName: string) => `Hook updated: ${hookName}`,
   [HookInstallResult.Appended]: (hookName: string) => `Hook appended: ${hookName}`,
   [HookInstallResult.HookExists]: (hookName: string) =>
-    `warning: ${hookName} hook exists but not managed by ${CLI_NAME}`,
+    `warning: ${hookName} hook exists but not managed by branch-context`,
   [HookInstallResult.AlreadyInstalled]: () => null,
 } as const satisfies Record<HookInstallResult, (hookName: string) => string | null>;
 

@@ -1,3 +1,3 @@
-import { installPackageDevCommand } from 'unicommand';
+import { installPackageDevCommands } from 'unicommand';
 
-installPackageDevCommand(import.meta.url, { commandName: 'bctxd' });
+installPackageDevCommands(import.meta.url, { commandNames: ['bctxd'] });

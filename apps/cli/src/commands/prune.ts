@@ -1,6 +1,5 @@
 import {
   archiveBranch,
-  CLI_NAME,
   collectBranchInfo,
   configExists,
   getCurrentBranch,
@@ -32,7 +31,7 @@ async function handler() {
   }
 
   if (!configExists(gitRoot)) {
-    console.log(`error: not initialized. Run '${CLI_NAME} init' first`);
+    console.log("error: not initialized. Run 'init' first");
     return 1;
   }
 
@@ -128,6 +127,6 @@ async function handler() {
     }
   }
 
-  console.log(`\nDone. Use '${CLI_NAME} status' to see current contexts.`);
+  console.log("\nDone. Use 'status' to see current contexts.");
   return 0;
 }
