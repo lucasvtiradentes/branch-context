@@ -58,6 +58,12 @@ jobs:
       - name: Run check
         run: pnpm run check
 
+      - name: Check generated docs
+        run: pnpm run check:docs
+
+      - name: Run knip
+        run: pnpm run knip
+
   build:
     if: inputs.run_build
     runs-on: ubuntu-latest

@@ -90,15 +90,16 @@ I was tired of re-briefing Codex, Claude Code, and Pi about the same branch on e
 
 <!-- <DYNFIELD:COMMANDS> -->
 ```sh
-bctx global <path>    # configure global storage
-bctx init             # set up .bctx/ and Git hooks
-bctx sync             # refresh commit/file summaries
-bctx backup           # commit and push global storage
-bctx status           # check health and list branch contexts
-bctx base             # get/set base branch
-bctx template [name]  # apply a template (e.g. fix, feature)
-bctx prune            # archive contexts of deleted branches
-bctx uninstall        # remove Git hooks
+# other commands
+bctx backup
+bctx base [branch]
+bctx global <path>
+bctx init
+bctx prune
+bctx status
+bctx sync
+bctx template [name] [--list]
+bctx uninstall
 ```
 <!-- </DYNFIELD:COMMANDS> -->
 

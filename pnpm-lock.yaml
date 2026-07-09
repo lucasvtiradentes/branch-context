@@ -38,6 +38,9 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+      unicommand:
+        specifier: file:../unicommand
+        version: file:../unicommand
 
   apps/cli:
     dependencies:
