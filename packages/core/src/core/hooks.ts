@@ -31,6 +31,7 @@ export enum HookInstallResult {
   HookExists = 'hook_exists',
   Appended = 'appended',
   Updated = 'updated',
+  CommandNotFound = 'command_not_found',
 }
 
 export enum HookUninstallResult {
@@ -66,11 +67,16 @@ function findOnPath(name: string) {
 
 export function getBranchctxPath(commandName?: string | null) {
   const progName = commandName ?? DEFAULT_HOOK_COMMAND_NAME;
-  return findOnPath(progName) ?? progName;
+  return findOnPath(progName);
 }
 
 export function getCallback(hookType: HookType, options: InstallHookOptions = {}) {
   const branchctxPath = getBranchctxPath(options.commandName);
+  if (!branchctxPath) {
+    throw new Error(
+      `Command not found in PATH: ${options.commandName ?? DEFAULT_HOOK_COMMAND_NAME}`,
+    );
+  }
   return `"${branchctxPath}" ${hookCallbacks[hookType]}`;
 }
 
@@ -182,6 +188,10 @@ export async function installHook(
   ask?: PromptYesNo,
   options: InstallHookOptions = {},
 ): Promise<HookInstallResult> {
+  if (!getBranchctxPath(options.commandName)) {
+    return HookInstallResult.CommandNotFound;
+  }
+
   const prompt = ask ?? noPrompt;
   const customHooksDir = getCustomHooksDir(gitRootPath);
   const managedHookPath = getExistingManagedHookPath(gitRootPath, hookType);

@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { delimiter, join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { gitConfig } from '../src/git';
 import {
   getHookPath,
@@ -14,7 +14,22 @@ import {
   resetConfirmationState,
   uninstallHook,
 } from '../src/index';
-import { createGitRepo } from './helpers';
+import { createGitRepo, createTempDir } from './helpers';
+
+const originalPath = process.env.PATH;
+
+beforeEach(() => {
+  process.env.PATH = originalPath;
+  addFakeCommandToPath('bctx');
+});
+
+function addFakeCommandToPath(commandName: string) {
+  const binDir = createTempDir();
+  const commandPath = join(binDir, commandName);
+  writeFileSync(commandPath, '#!/bin/sh\n');
+  chmodSync(commandPath, 0o755);
+  process.env.PATH = `${binDir}${delimiter}${process.env.PATH ?? ''}`;
+}
 
 describe('post-checkout hook', () => {
   it('installs hook', async () => {
@@ -28,11 +43,20 @@ describe('post-checkout hook', () => {
 
   it('installs hook with custom command name', async () => {
     const repo = createGitRepo();
+    addFakeCommandToPath('custom-bctxd-test');
     expect(
       await installHook(repo, HOOK_POST_CHECKOUT, undefined, { commandName: 'custom-bctxd-test' }),
     ).toBe(HookInstallResult.Installed);
     const content = readFileSync(getHookPath(repo, HOOK_POST_CHECKOUT), 'utf8');
-    expect(content).toContain('"custom-bctxd-test" on-checkout');
+    expect(content).toContain('/custom-bctxd-test" on-checkout');
+  });
+
+  it('does not install hook when command is missing', async () => {
+    const repo = createGitRepo();
+    expect(
+      await installHook(repo, HOOK_POST_CHECKOUT, undefined, { commandName: 'missing-bctx' }),
+    ).toBe(HookInstallResult.CommandNotFound);
+    expect(existsSync(getHookPath(repo, HOOK_POST_CHECKOUT))).toBe(false);
   });
 
   it('detects already installed hook', async () => {
@@ -56,6 +80,7 @@ describe('post-checkout hook', () => {
 
   it('updates managed husky hook before installing inactive git hook', async () => {
     const repo = createGitRepo();
+    addFakeCommandToPath('custom-bctxd-test');
     expect(gitConfig(repo, 'core.hooksPath', '.husky/_').status).toBe(0);
     mkdirSync(join(repo, '.husky', '_'), { recursive: true });
     writeFileSync(join(repo, '.husky', '_', 'h'), '');
@@ -71,7 +96,7 @@ describe('post-checkout hook', () => {
     ).toBe(HookInstallResult.Updated);
 
     const content = readFileSync(hookPath, 'utf8');
-    expect(content).toContain('"custom-bctxd-test" on-checkout');
+    expect(content).toContain('/custom-bctxd-test" on-checkout');
     expect(existsSync(join(repo, '.git', 'hooks', HOOK_POST_CHECKOUT))).toBe(false);
   });
 

@@ -19,7 +19,10 @@ const hookInstallMessages = {
   [HookInstallResult.HookExists]: (hookName: string) =>
     `warning: ${hookName} hook exists but not managed by branch-context`,
   [HookInstallResult.AlreadyInstalled]: () => null,
+  [HookInstallResult.CommandNotFound]: () => 'error: command not found in PATH',
 } as const satisfies Record<HookInstallResult, (hookName: string) => string | null>;
+
+const PROGRAM_NAME_ENV = 'BRANCH_CONTEXT_PROG_NAME';
 
 const metadata = defineCommand({
   name: 'init',
@@ -37,13 +40,22 @@ async function handler() {
     return 1;
   }
 
-  const result = await initProject(gitRoot, promptYesNo);
+  const result = await initProject(gitRoot, promptYesNo, {
+    hookCommandName: process.env[PROGRAM_NAME_ENV],
+  });
   if (!result.ok) {
     console.log(`error: ${result.message}`);
     return 1;
   }
 
   printInitResult(result);
+
+  const hookCommandMissing =
+    result.checkoutHook === HookInstallResult.CommandNotFound ||
+    result.commitHook === HookInstallResult.CommandNotFound;
+  if (hookCommandMissing) {
+    return 1;
+  }
 
   if (result.syncResult.ok) {
     if (result.syncResult.symlinkResult === UpdateSymlinkResult.ErrorNotSymlink) {
