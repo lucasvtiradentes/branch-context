@@ -10,9 +10,24 @@ import {
   gitCheckout,
   gitCommit,
 } from '@branch-context/core';
-import { describe, expect, it } from 'vitest';
-import { runCli } from '../src/cli';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { runCli } from '../dist/cli.js';
 import { captureConsole, createGitRepo, createTempDir, expectOk, git } from './helpers';
+
+const PROGRAM_NAME_ENV = 'BRANCH_CONTEXT_PROG_NAME';
+const originalProgramName = process.env[PROGRAM_NAME_ENV];
+
+beforeAll(() => {
+  process.env[PROGRAM_NAME_ENV] = 'node';
+});
+
+afterAll(() => {
+  if (originalProgramName === undefined) {
+    delete process.env[PROGRAM_NAME_ENV];
+    return;
+  }
+  process.env[PROGRAM_NAME_ENV] = originalProgramName;
+});
 
 describe('init command', () => {
   it('creates gitignore file when adding entry', () => {

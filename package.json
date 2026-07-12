@@ -1,6 +1,7 @@
 {
   "name": "branch-context-monorepo",
   "private": true,
+  "type": "module",
   "version": "0.0.0",
   "packageManager": "pnpm@10.33.0",
   "keywords": [
@@ -44,6 +45,6 @@
     "tsx": "^4.21.0",
     "turbo": "^2.9.6",
     "typescript": "^6.0.3",
-    "unicommand": "^0.0.2"
+    "unicommand": "^0.0.3"
   }
 }
