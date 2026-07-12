@@ -56,6 +56,10 @@ export function resetConfirmationState() {
 }
 
 function findOnPath(name: string) {
+  if (isAbsolute(name) && existsSync(name)) {
+    return name;
+  }
+
   for (const dir of (process.env.PATH ?? '').split(delimiter)) {
     const candidate = join(dir, name);
     if (existsSync(candidate)) {
