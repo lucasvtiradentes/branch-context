@@ -30,7 +30,33 @@ describe('agent provider parsers', () => {
     expect(session.cwd).toBe('/repo/project');
     expect(session.branch).toBe('feature/test');
     expect(session.model).toBe('claude-opus-4-7');
-    expect(session.title).toBe('Claude title');
+    expect(session.initialMessage).toBe('testando claude');
+    expect(session.lastMessage).toBe('testando claude');
+  });
+
+  it('reads initial and last Claude messages from large sessions', () => {
+    const root = createTempDir();
+    const sessionPath = join(root, 'claude-large.jsonl');
+    writeFileSync(
+      sessionPath,
+      [
+        JSON.stringify({
+          type: 'user',
+          cwd: '/repo/project',
+          sessionId: 'claude-large',
+          timestamp: '2026-05-01T14:21:29.940Z',
+          gitBranch: 'feature/test',
+          message: { role: 'user', content: 'first prompt' },
+        }),
+        JSON.stringify({ type: 'assistant', message: { content: 'x'.repeat(2_000) } }),
+        JSON.stringify({ type: 'user', message: { role: 'user', content: 'last prompt' } }),
+      ].join('\n'),
+    );
+
+    const session = parseClaudeSessionFile(sessionPath, 1_000);
+
+    expect(session.initialMessage).toBe('first prompt');
+    expect(session.lastMessage).toBe('last prompt');
   });
 
   it('parses Codex native branch sessions', () => {
@@ -41,13 +67,15 @@ describe('agent provider parsers', () => {
     expect(session.branch).toBe('feature/test');
     expect(session.model).toBe('gpt-5.5');
     expect(session.source).toBe('cli');
-    expect(session.title).toBe('testando codex');
+    expect(session.initialMessage).toBe('testando codex');
+    expect(session.lastMessage).toBe('testando codex');
   });
 
   it('prefers Codex event messages over injected response items', () => {
     const session = parseCodexSessionFile(join(fixturesDir, 'codex-injected.jsonl'));
 
-    expect(session.title).toBe('real prompt');
+    expect(session.initialMessage).toBe('real prompt');
+    expect(session.lastMessage).toBe('real prompt');
   });
 
   it('ignores Codex injected response items before the first prompt', () => {
@@ -79,7 +107,8 @@ describe('agent provider parsers', () => {
 
     const session = parseCodexSessionFile(sessionPath);
 
-    expect(session.title).toBeNull();
+    expect(session.initialMessage).toBeNull();
+    expect(session.lastMessage).toBeNull();
   });
 
   it('parses Pi branch sessions', () => {
@@ -90,7 +119,8 @@ describe('agent provider parsers', () => {
     expect(session.branch).toBe('feature/test');
     expect(session.repoRoot).toBe('/repo/project');
     expect(session.model).toBe('gpt-5.5');
-    expect(session.title).toBe('testando pi');
+    expect(session.initialMessage).toBe('testando pi');
+    expect(session.lastMessage).toBe('testando pi');
   });
 
   it('uses the latest Pi branch metadata entry', () => {

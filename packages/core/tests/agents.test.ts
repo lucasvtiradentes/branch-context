@@ -27,7 +27,8 @@ function createSession(overrides: Partial<ReturnType<typeof createAgentSession>>
     branch: 'feature/test',
     path: '~/.codex/sessions/session.jsonl',
     model: 'gpt-5.5',
-    title: 'First prompt',
+    initialMessage: 'First prompt',
+    lastMessage: 'First prompt',
     startedAt: '2026-05-01T10:00:00.000Z',
     updatedAt: '2026-05-01T10:00:00.000Z',
     description: null,
@@ -79,11 +80,14 @@ describe('agents file', () => {
     const workspace = createWorkspace();
     const path = join(workspace, SESSIONS_FILE_NAME);
 
-    upsertAgentSession(path, createSession({ title: 'Old' }));
-    const updated = upsertAgentSession(path, createSession({ title: 'New', model: 'gpt-5.6' }));
+    upsertAgentSession(path, createSession({ initialMessage: 'Old', lastMessage: 'Old' }));
+    const updated = upsertAgentSession(
+      path,
+      createSession({ initialMessage: 'New', lastMessage: 'New', model: 'gpt-5.6' }),
+    );
 
     expect(updated).toHaveLength(1);
-    expect(updated[0]?.title).toBe('New');
+    expect(updated[0]?.initialMessage).toBe('New');
     expect(updated[0]?.model).toBe('gpt-5.6');
   });
 

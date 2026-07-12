@@ -25,7 +25,8 @@ export type AgentSession = {
   scope: AgentSessionScope;
   path: string | null;
   model: string | null;
-  title: string | null;
+  initialMessage: string | null;
+  lastMessage: string | null;
   startedAt: string | null;
   updatedAt: string | null;
   description: string | null;
@@ -158,7 +159,8 @@ function stripStoredAgentSession(session: StoredAgentSession): StoredAgentSessio
     sessionId: session.sessionId,
     path: session.path,
     model: session.model,
-    title: session.title,
+    initialMessage: session.initialMessage,
+    lastMessage: session.lastMessage,
     startedAt: session.startedAt,
     updatedAt: session.updatedAt,
     description: session.description,
@@ -201,7 +203,8 @@ function createStoredAgentSession(input: AgentSessionInput | AgentSession): Stor
     sessionId: input.sessionId,
     path: input.path,
     model: input.model,
-    title: input.title,
+    initialMessage: input.initialMessage,
+    lastMessage: input.lastMessage,
     startedAt: input.startedAt,
     updatedAt: input.updatedAt,
     description: input.description ?? null,
@@ -221,7 +224,8 @@ function parseStoredAgentSession(value: unknown): StoredAgentSession[] {
       typeof session.sessionId === 'string' &&
       isNullableString(session.path) &&
       isNullableString(session.model) &&
-      isNullableString(session.title) &&
+      isNullableString(session.initialMessage) &&
+      isNullableString(session.lastMessage) &&
       isNullableString(session.startedAt) &&
       isNullableString(session.updatedAt) &&
       isNullableString(session.description) &&
@@ -237,7 +241,8 @@ function parseStoredAgentSession(value: unknown): StoredAgentSession[] {
       sessionId: session.sessionId,
       path: session.path,
       model: session.model,
-      title: session.title,
+      initialMessage: session.initialMessage,
+      lastMessage: session.lastMessage,
       startedAt: session.startedAt,
       updatedAt: session.updatedAt,
       description: session.description,
@@ -257,7 +262,8 @@ function isStoredAgentSession(value: unknown): value is StoredAgentSession {
     typeof session.sessionId === 'string' &&
     isNullableString(session.path) &&
     isNullableString(session.model) &&
-    isNullableString(session.title) &&
+    isNullableString(session.initialMessage) &&
+    isNullableString(session.lastMessage) &&
     isNullableString(session.startedAt) &&
     isNullableString(session.updatedAt) &&
     isNullableString(session.description) &&

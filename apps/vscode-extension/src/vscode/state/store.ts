@@ -195,7 +195,8 @@ function agentSessionsEqual(left: AgentSession[], right: AgentSession[]): boolea
       session.scope === other.scope &&
       session.path === other.path &&
       session.model === other.model &&
-      session.title === other.title &&
+      session.initialMessage === other.initialMessage &&
+      session.lastMessage === other.lastMessage &&
       session.startedAt === other.startedAt &&
       session.updatedAt === other.updatedAt &&
       session.description === other.description &&
