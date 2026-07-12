@@ -7,5 +7,3 @@ build
 *.tsbuildinfo
 *.vsix
 dist-dev
-_branch
-.bctx/*

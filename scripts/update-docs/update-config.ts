@@ -6,12 +6,7 @@ import { READMES, ROOT_DIR } from './shared';
 type TFields = 'CONFIG_JSON';
 
 export function updateConfig() {
-  const config = getJson(join(ROOT_DIR, 'packages/core/resources', CONFIG_FILE)) as {
-    template_rules?: unknown[];
-  };
-  if (Array.isArray(config.template_rules)) {
-    config.template_rules = config.template_rules.slice(0, 2);
-  }
+  const config = getJson(join(ROOT_DIR, 'packages/core/resources', CONFIG_FILE));
   const content = ['```json', JSON.stringify(config, null, 2), '```'].join('\n');
 
   for (const path of Object.values(READMES)) {

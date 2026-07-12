@@ -1,17 +1,15 @@
 import {
   BranchContextActionErrorReason,
-  CLI_NAME,
   Config,
   CreateBranchContextResult,
   playSound,
   syncCurrentBranch,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 
 const syncErrorMessages = {
-  [BranchContextActionErrorReason.NotInitialized]: () =>
-    `error: not initialized. Run '${CLI_NAME} init' first`,
+  [BranchContextActionErrorReason.NotInitialized]: () => "error: not initialized. Run 'init' first",
   [BranchContextActionErrorReason.NoCurrentBranch]: () =>
     'error: could not determine current branch',
   [BranchContextActionErrorReason.MissingContext]: (message: string) => `error: ${message}`,
@@ -26,11 +24,17 @@ const createResultStatuses: Partial<Record<CreateBranchContextResult, string>> =
   [CreateBranchContextResult.CreatedEmpty]: 'created (no template)',
 };
 
-export function registerSyncCommand(program: Program) {
-  program.command('sync', 'Sync context and update meta/tags').action(() => cmdSync([]));
-}
+const metadata = defineCommand({
+  name: 'sync',
+  description: 'Sync context and update meta/tags',
+});
 
-function cmdSync(_args: string[]) {
+export const syncCommand = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+function handler() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;

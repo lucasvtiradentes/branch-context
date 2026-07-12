@@ -10,7 +10,6 @@ export enum BranchContextTreeNodeKind {
   Folder = 'folder',
   Group = 'group',
   Context = 'context',
-  Template = 'template',
   Commit = 'commit',
   Agent = 'agent',
 }

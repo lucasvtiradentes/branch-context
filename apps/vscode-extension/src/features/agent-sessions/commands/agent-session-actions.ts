@@ -182,9 +182,9 @@ function removeCachedAgentSession(
       ? getBranchAgentsFilePath(state.workspaceRoot, branch)
       : getCurrentAgentsFilePath(state.workspaceRoot));
   const agentsFile = readAgentsFile(agentsFilePath);
-  const sessions = agentsFile.sessions.filter(
+  const sessions = agentsFile.filter(
     (session) => session.provider !== provider || session.sessionId !== sessionId,
   );
 
-  writeAgentsFile(agentsFilePath, { ...agentsFile, sessions });
+  writeAgentsFile(agentsFilePath, sessions);
 }

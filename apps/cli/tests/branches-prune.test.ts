@@ -7,7 +7,8 @@ import {
   syncBranch,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { runCli } from '../src/index';
+import { runCli } from '../src/cli';
+import { pruneCommand } from '../src/commands/prune';
 import { setMultiSelectOverride } from '../src/ui/prompt';
 import {
   captureConsole,
@@ -53,7 +54,7 @@ describe('branches and prune commands', () => {
     git(['branch', '-D', 'feature/old'], repo);
     const capture = captureConsole();
     await runCli(['status']);
-    expect(capture.output).toContain('orphan');
+    expect(capture.output).toContain('1 orphan context: feature/old');
   });
 
   it('prune does nothing when no orphans', async () => {
@@ -77,7 +78,7 @@ describe('branches and prune commands', () => {
     git(['branch', '-D', 'feature/old'], repo);
     setMultiSelectOverride(() => [0]);
     const capture = captureConsole();
-    expect(await runCli(['prune'])).toBe(0);
+    expect(await pruneCommand.handler({})).toBe(0);
     expect(capture.output).toContain('Archiving');
     expect(capture.output).toContain('feature');
   });
@@ -103,7 +104,7 @@ describe('branches and prune commands', () => {
     expectOk(gitCheckout(repo, 'main'));
     setMultiSelectOverride(() => []);
     const capture = captureConsole();
-    expect(await runCli(['prune'])).toBe(0);
+    expect(await pruneCommand.handler({})).toBe(0);
     expect(capture.output).toContain('feature/local-only');
     expect(capture.output.split('Select')[1]).not.toContain('feature/synced');
   });

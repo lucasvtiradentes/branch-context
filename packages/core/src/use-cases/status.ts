@@ -1,4 +1,11 @@
-import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  readdirSync,
+  readFileSync,
+  readlinkSync,
+  realpathSync,
+} from 'node:fs';
 import { isAbsolute, join, sep as pathSeparator, relative } from 'node:path';
 import {
   CONTEXT_FILE_NAME,
@@ -6,7 +13,6 @@ import {
   DEFAULT_TEMPLATE,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
-  TEMPLATES_DIR,
 } from '../constants';
 import { getCurrentBranch, isHookInstalled } from '../core/hooks';
 import { getArchivedDir, getBranchDir, listArchivedBranches } from '../core/sync';
@@ -15,7 +21,9 @@ import {
   Config,
   configExists,
   getBranchesDir,
+  getConfigDir,
   getTemplatesDir,
+  getWorkspaceGlobalPath,
   listTemplates,
 } from '../data/config';
 import { loadArchivedMeta, loadBranchMeta } from '../data/meta';
@@ -80,6 +88,11 @@ type ContextSummaryOrderSource = Pick<BranchContextContextSummary, 'branch' | 'u
 export type BranchContextStatus = {
   gitRoot: string;
   initialized: boolean;
+  mode: 'local' | 'global';
+  globalPath: string | null;
+  repoStorageDir: string;
+  templatesDir: string;
+  branchesDir: string;
   currentBranch: string | null;
   currentContextDir: string | null;
   currentContextRelPath: string | null;
@@ -98,14 +111,20 @@ export type BranchContextStatus = {
 
 export function getStatus(gitRoot: string): BranchContextStatus {
   const initialized = configExists(gitRoot);
+  const globalPath = getWorkspaceGlobalPath(gitRoot);
+  const mode = globalPath ? 'global' : 'local';
+  const repoStorageDir = getExistingRealPath(getConfigDir(gitRoot));
+  const templatesDir = getTemplatesDir(gitRoot);
+  const branchesDir = getBranchesDir(gitRoot);
   const currentBranch = getCurrentBranch(gitRoot);
-  const currentContextDir = currentBranch ? getBranchDir(gitRoot, currentBranch) : null;
+  const currentContextDir =
+    initialized && currentBranch ? getBranchDir(gitRoot, currentBranch) : null;
   const currentContextRelPath = currentContextDir
     ? getWorkspaceRelativePath(gitRoot, currentContextDir)
     : null;
   const templates = initialized ? listTemplates(gitRoot) : [];
-  const templatesDirExists = initialized ? existsSync(getTemplatesDir(gitRoot)) : false;
-  const defaultTemplateExists = templates.includes(DEFAULT_TEMPLATE);
+  const templatesDirExists = initialized ? existsSync(templatesDir) : false;
+  const defaultTemplateExists = existsSync(join(templatesDir, DEFAULT_TEMPLATE, CONTEXT_FILE_NAME));
   const hooks = {
     checkout: initialized ? isHookInstalled(gitRoot, HOOK_POST_CHECKOUT) : false,
     commit: initialized ? isHookInstalled(gitRoot, HOOK_POST_COMMIT) : false,
@@ -138,14 +157,14 @@ export function getStatus(gitRoot: string): BranchContextStatus {
     if (!templatesDirExists) {
       issues.push({
         level: BranchContextStatusIssueLevel.Error,
-        message: `${TEMPLATES_DIR}/ missing`,
+        message: `templates folder missing: ${templatesDir}`,
       });
     }
 
     if (!defaultTemplateExists) {
       issues.push({
         level: BranchContextStatusIssueLevel.Error,
-        message: `${DEFAULT_TEMPLATE} template missing`,
+        message: `${DEFAULT_TEMPLATE} template missing: ${join(templatesDir, DEFAULT_TEMPLATE, CONTEXT_FILE_NAME)}`,
       });
     }
 
@@ -170,13 +189,13 @@ export function getStatus(gitRoot: string): BranchContextStatus {
       });
     }
 
-    const orphanCount = Array.from(contexts.entries()).filter(
-      ([, info]) => info.context && !info.local,
-    ).length;
-    if (orphanCount > 0) {
+    const orphanContextBranches = Array.from(contexts.entries())
+      .filter(([, info]) => info.context && !info.local)
+      .map(([branch]) => branch);
+    if (orphanContextBranches.length > 0) {
       issues.push({
         level: BranchContextStatusIssueLevel.Warning,
-        message: `${orphanCount} orphan contexts`,
+        message: formatOrphanContextIssue(orphanContextBranches),
       });
     }
   }
@@ -184,6 +203,11 @@ export function getStatus(gitRoot: string): BranchContextStatus {
   return {
     gitRoot,
     initialized,
+    mode,
+    globalPath,
+    repoStorageDir,
+    templatesDir,
+    branchesDir,
     currentBranch,
     currentContextDir,
     currentContextRelPath,
@@ -199,6 +223,19 @@ export function getStatus(gitRoot: string): BranchContextStatus {
     archivedContexts,
     archivedCount,
   };
+}
+
+function getExistingRealPath(path: string) {
+  try {
+    return realpathSync(path);
+  } catch {
+    return path;
+  }
+}
+
+function formatOrphanContextIssue(branches: string[]) {
+  const label = branches.length === 1 ? 'orphan context' : 'orphan contexts';
+  return `${branches.length} ${label}: ${branches.join(', ')}`;
 }
 
 function getContextSummaries(
@@ -275,10 +312,10 @@ function createContextTemplateResolver(gitRoot: string, config: Config) {
   });
 
   return (branch: string, contextDir: string) => {
-    const fallback = config.getTemplateForBranch(branch, templates);
+    const branchTemplate = config.getTemplateForBranch(branch, templates);
     const content = readTextFile(join(contextDir, CONTEXT_FILE_NAME));
     if (!content) {
-      return fallback;
+      return branchTemplate;
     }
 
     const frontmatterTemplate = getFrontmatterTemplate(content);
@@ -286,14 +323,14 @@ function createContextTemplateResolver(gitRoot: string, config: Config) {
       return frontmatterTemplate;
     }
 
-    return inferTemplateFromContent(content, templateSignatures, fallback) ?? fallback;
+    return inferTemplateFromContent(content, templateSignatures, branchTemplate) ?? branchTemplate;
   };
 }
 
 function inferTemplateFromContent(
   content: string,
   templateSignatures: TemplateSignature[],
-  fallback: string,
+  branchTemplate: string,
 ) {
   const signature = createContentSignature(content);
   const scores = templateSignatures
@@ -307,7 +344,7 @@ function inferTemplateFromContent(
   }
 
   const tied = scores.filter((template) => template.score === best.score);
-  return tied.find((template) => template.name === fallback)?.name ?? best.name;
+  return tied.find((template) => template.name === branchTemplate)?.name ?? best.name;
 }
 
 function scoreTemplate(context: ContentSignature, template: ContentSignature) {

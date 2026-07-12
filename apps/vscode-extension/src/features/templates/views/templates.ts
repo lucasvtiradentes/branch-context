@@ -1,32 +1,112 @@
-import { join } from 'node:path';
-import { CONFIG_DIR } from '@branch-context/core';
 import {
-  createMessageNode,
-  createTemplateNode,
-  StateTreeProvider,
-} from '../../../shared/tree-items';
+  type BranchContextStatusIssue,
+  BranchContextStatusIssueLevel,
+  CONFIG_DIR,
+  Config,
+} from '@branch-context/core';
+import * as vscode from 'vscode';
+import { commandIds } from '../../../constants';
+import { createGroupNode, createMessageNode, StateTreeProvider } from '../../../shared/tree-items';
+import {
+  type BranchContextTreeNode,
+  BranchContextTreeNodeKind,
+} from '../../../shared/tree-items/types';
 import { branchContextState } from '../../../vscode/state';
-import { getWorkspaceInfo } from '../../../vscode/workspace';
 
 export function createTemplatesProvider(): StateTreeProvider {
   return new StateTreeProvider(() => {
     const state = branchContextState.get();
-    if (!state.initialized || !state.workspaceRoot) {
+    if (!state.initialized || !state.workspaceRoot || !state.status) {
       return [createMessageNode(`No ${CONFIG_DIR} config`)];
     }
 
-    if (state.templates.length === 0) {
-      return [createMessageNode('No templates')];
-    }
-
-    const workspace = getWorkspaceInfo(state.workspaceRoot);
-    if (!workspace.templatesDir) {
-      return [createMessageNode('No templates')];
-    }
-
-    const templatesDir = workspace.templatesDir;
-    return state.templates.map((template) =>
-      createTemplateNode(template, join(templatesDir, template)),
-    );
+    const currentContext = state.recentContexts.find((context) => context.current);
+    const config = Config.load(state.workspaceRoot);
+    return [
+      createConfigNode('Current branch', state.currentBranch ?? 'n/a', 'git-branch', {
+        command: {
+          command: commandIds.checkoutBranch,
+          title: 'Checkout Branch',
+        },
+      }),
+      createConfigNode('Base branch', state.status.baseBranch ?? 'n/a', 'git-compare', {
+        command: {
+          command: commandIds.setBase,
+          title: 'Set Base Branch',
+        },
+      }),
+      createConfigNode('Template', currentContext?.template ?? 'n/a', 'tag', {
+        command: {
+          command: commandIds.applyTemplate,
+          title: 'Apply Template',
+        },
+      }),
+      createConfigNode('Sound', formatBoolean(config.sound), 'megaphone', {
+        command: {
+          command: commandIds.toggleSound,
+          title: 'Toggle Sound',
+        },
+      }),
+      createConfigNode('Commit description', formatBoolean(config.commitDescription), 'comment', {
+        command: {
+          command: commandIds.toggleCommitDescription,
+          title: 'Toggle Commit Description',
+        },
+      }),
+      ...getIssueNodes(state.status.issues),
+    ];
   });
+}
+
+type ConfigNodeOptions = {
+  tooltip?: string;
+  command?: vscode.Command;
+};
+
+function createConfigNode(
+  label: string,
+  description: string | undefined,
+  icon: string,
+  options: ConfigNodeOptions = {},
+): BranchContextTreeNode {
+  return {
+    label,
+    description,
+    kind: BranchContextTreeNodeKind.Message,
+    tooltip: options.tooltip ?? description ?? label,
+    icon: new vscode.ThemeIcon(icon),
+    command: options.command,
+  };
+}
+
+export function getConfigViewDescription() {
+  return branchContextState.get().status?.mode ?? '';
+}
+
+function formatBoolean(value: boolean) {
+  return value ? 'on' : 'off';
+}
+
+function getIssueNodes(issues: BranchContextStatusIssue[]) {
+  if (issues.length === 0) {
+    return [];
+  }
+
+  return [
+    createGroupNode(
+      'Issues',
+      issues.map((issue) =>
+        createConfigNode(
+          issue.message,
+          undefined,
+          issue.level === BranchContextStatusIssueLevel.Error ? 'error' : 'warning',
+        ),
+      ),
+      {
+        description: String(issues.length),
+        icon: new vscode.ThemeIcon('warning'),
+        collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+      },
+    ),
+  ];
 }

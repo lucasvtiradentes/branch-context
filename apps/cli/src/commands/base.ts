@@ -1,19 +1,17 @@
 import {
   BranchContextActionErrorReason,
-  CLI_NAME,
   getCurrentBase,
   setCurrentBase,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 
 const baseErrorMessages = {
-  [BranchContextActionErrorReason.NotInitialized]: () =>
-    `error: not initialized. Run '${CLI_NAME} init' first`,
+  [BranchContextActionErrorReason.NotInitialized]: () => "error: not initialized. Run 'init' first",
   [BranchContextActionErrorReason.NoCurrentBranch]: () =>
     'error: could not determine current branch',
   [BranchContextActionErrorReason.MissingContext]: (result: { branch?: string }) =>
-    `error: no context for '${result.branch}'. Run '${CLI_NAME} sync' first`,
+    `error: no context for '${result.branch}'. Run 'sync' first`,
   [BranchContextActionErrorReason.BaseBranchNotFound]: (result: { message: string }) =>
     `error: ${result.message}`,
   [BranchContextActionErrorReason.NoTemplates]: (result: { message: string }) =>
@@ -27,14 +25,19 @@ const baseErrorMessages = {
   (result: { message: string; branch?: string }) => string
 >;
 
-export function registerBaseCommand(program: Program) {
-  program
-    .command('base', 'Show or set base branch')
-    .argument('[branch]', 'Base branch')
-    .action(({ args }) => cmdBase(stringArgs(args.branch)));
-}
+const metadata = defineCommand({
+  name: 'base',
+  description: 'Show or set base branch',
+  arguments: [{ synopsis: '[branch]', description: 'Base branch' }],
+});
 
-function cmdBase(args: string[]) {
+export const baseCommand = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+function handler({ branch }: { branch?: unknown }) {
+  const args = stringArgs(branch);
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;

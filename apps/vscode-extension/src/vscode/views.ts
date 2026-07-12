@@ -8,10 +8,6 @@ import {
   saveAgentSessionGroupCollapseState,
 } from '../features/agent-sessions/views/agent-sessions';
 import {
-  createCurrentContextProvider,
-  getCurrentContextViewDescription,
-} from '../features/branch-context/views/current-context';
-import {
   createGitChangesProvider,
   getGitChangesViewDescription,
   initializeGitChangesMode,
@@ -22,7 +18,10 @@ import {
   getOtherBranchesViewDescription,
   saveContextsGroupCollapseState,
 } from '../features/other-branches/views/contexts';
-import { createTemplatesProvider } from '../features/templates/views/templates';
+import {
+  createTemplatesProvider,
+  getConfigViewDescription,
+} from '../features/templates/views/templates';
 import { initializeTreeItemDecorations } from '../shared/tree-items';
 
 export function initializeTreeViews(context: vscode.ExtensionContext): void {
@@ -30,32 +29,21 @@ export function initializeTreeViews(context: vscode.ExtensionContext): void {
   initializeAgentSessionsViewState(context);
   initializeGitChangesMode(context);
 
-  const currentContextProvider = createCurrentContextProvider();
   const agentSessionsProvider = createAgentSessionsProvider();
   initializeActiveAgentSessions(context, () => agentSessionsProvider.refresh());
   const gitChangesProvider = createGitChangesProvider();
   const contextsProvider = createContextsProvider();
   const providers = [
-    [viewIds.currentContext, currentContextProvider],
     [viewIds.agentSessions, agentSessionsProvider],
     [viewIds.gitChanges, gitChangesProvider],
     [viewIds.contexts, contextsProvider],
-    [viewIds.templates, createTemplatesProvider()],
+    [viewIds.config, createTemplatesProvider()],
   ] as const;
 
   for (const [viewId, provider] of providers) {
     context.subscriptions.push(provider);
     const view = vscode.window.createTreeView(viewId, { treeDataProvider: provider });
     context.subscriptions.push(view);
-    if (viewId === viewIds.currentContext) {
-      view.description = getCurrentContextViewDescription();
-      context.subscriptions.push(
-        provider.onDidChangeTreeData(() => {
-          view.description = getCurrentContextViewDescription();
-        }),
-      );
-    }
-
     if (viewId === viewIds.agentSessions) {
       view.description = getAgentSessionsViewDescription();
       context.subscriptions.push(
@@ -97,6 +85,15 @@ export function initializeTreeViews(context: vscode.ExtensionContext): void {
         }),
         view.onDidExpandElement((event) => {
           void saveContextsGroupCollapseState(context, event.element, false);
+        }),
+      );
+    }
+
+    if (viewId === viewIds.config) {
+      view.description = getConfigViewDescription();
+      context.subscriptions.push(
+        provider.onDidChangeTreeData(() => {
+          view.description = getConfigViewDescription();
         }),
       );
     }

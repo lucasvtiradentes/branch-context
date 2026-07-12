@@ -1,13 +1,15 @@
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
-import { isAbsolute, join, sep as pathSeparator, relative, resolve } from 'node:path';
 import {
-  BRANCHES_DIR,
-  CONFIG_DIR,
-  CONFIG_FILE,
-  DEFAULT_SYMLINK,
-  HookType,
-  TEMPLATES_DIR,
-} from '../constants';
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
+import { join } from 'node:path';
+import { CONFIG_DIR, CONFIG_FILE, DEFAULT_SYMLINK, HookType } from '../constants';
 import type { TagUpdate } from '../core/context-tags';
 import { updateContextTags } from '../core/context-tags';
 import { getCurrentBranch, installHook, type PromptYesNo } from '../core/hooks';
@@ -29,15 +31,17 @@ import { getBaseBranch, saveBaseBranch } from '../data/branch-base';
 import {
   Config,
   configExists,
-  copyInitConfig,
+  ensureConfig,
+  ensureGlobalConfig,
+  getActiveGlobalPath,
   getBranchesDir,
   getConfigDir,
-  getLocalTemplatesDir,
   getTemplatesDir,
+  getWorkspaceGlobalPath,
   listTemplates,
 } from '../data/config';
 import { updateBranchMeta } from '../data/meta';
-import { gitRefExists } from '../git';
+import { gitInfoExcludeAdd, gitOriginUrl, gitRefExists, normalizeGitRemoteUrl } from '../git';
 
 export enum BranchContextActionErrorReason {
   NotInitialized = 'not_initialized',
@@ -125,6 +129,8 @@ export type ContextActionResult =
 export type InitProjectResult =
   | {
       ok: true;
+      mode: 'local' | 'global';
+      globalPath: string | null;
       configDir: string;
       configPath: string;
       templatesDir: string;
@@ -137,9 +143,7 @@ export type InitProjectResult =
   | BranchContextActionError;
 
 export type InitProjectOptions = {
-  branchesParentFolder?: string | null;
   hookCommandName?: string | null;
-  templatesFolder?: string | null;
 };
 
 export async function initProject(
@@ -147,20 +151,19 @@ export async function initProject(
   ask: PromptYesNo = yes,
   options: InitProjectOptions = {},
 ): Promise<InitProjectResult> {
-  const configDir = getConfigDir(gitRoot);
+  const globalPath = getActiveGlobalPath();
+  const globalInitResult = globalPath ? initGlobalBctx(gitRoot, globalPath) : null;
+  if (globalInitResult && !globalInitResult.ok) {
+    return globalInitResult;
+  }
+
   const alreadyInitialized = configExists(gitRoot);
+  ensureConfig(gitRoot);
 
-  if (!alreadyInitialized) {
-    mkdirSync(configDir, { recursive: true });
-    copyInitConfig(gitRoot);
-  }
-
-  const configResult = configureInitFolders(gitRoot, options);
-  if (!configResult.ok) {
-    return configResult;
-  }
-  const templatesDir = getTemplatesDir(gitRoot);
-  const branchesDir = getBranchesDir(gitRoot);
+  const mode = getWorkspaceGlobalPath(gitRoot) ? 'global' : 'local';
+  const configDir = getDisplayPath(getConfigDir(gitRoot));
+  const templatesDir = getDisplayPath(getTemplatesDir(gitRoot));
+  const branchesDir = getDisplayPath(getBranchesDir(gitRoot));
 
   mkdirSync(branchesDir, { recursive: true });
   ensureInitTemplates(gitRoot, templatesDir, alreadyInitialized);
@@ -172,10 +175,12 @@ export async function initProject(
     commandName: options.hookCommandName,
   });
 
-  addInitGitignoreEntries(gitRoot, branchesDir, templatesDir);
+  addInitLocalExcludeEntries(gitRoot);
 
   return {
     ok: true,
+    mode,
+    globalPath: getWorkspaceGlobalPath(gitRoot),
     configDir,
     configPath: `${configDir}/${CONFIG_FILE}`,
     templatesDir,
@@ -187,78 +192,71 @@ export async function initProject(
   };
 }
 
-function configureInitFolders(
+function getDisplayPath(path: string) {
+  try {
+    return realpathSync(path);
+  } catch {
+    return path;
+  }
+}
+
+function initGlobalBctx(
   gitRoot: string,
-  options: InitProjectOptions,
-): { ok: true; config: Config } | BranchContextActionError {
-  const config = Config.load(gitRoot);
-  let changed = false;
-
-  if (options.branchesParentFolder !== undefined && options.branchesParentFolder !== null) {
-    const branchesFolder = normalizeBranchesFolder(options.branchesParentFolder);
-    const parentFolder = resolve(resolveConfiguredFolder(gitRoot, branchesFolder), '..');
-    if (!existsSync(parentFolder)) {
-      return invalidPath(`branches parent folder does not exist: ${parentFolder}`);
-    }
-    config.branchesFolder = branchesFolder;
-    changed = true;
+  globalPath: string,
+): { ok: true } | BranchContextActionError {
+  const remote = gitOriginUrl(gitRoot);
+  const ref = remote ? normalizeGitRemoteUrl(remote) : null;
+  if (!ref) {
+    return { ok: true };
   }
 
-  if (options.templatesFolder !== undefined && options.templatesFolder !== null) {
-    const templatesFolder = normalizeConfiguredFolder(options.templatesFolder);
-    const resolvedTemplatesFolder = resolveConfiguredFolder(gitRoot, templatesFolder);
-    if (
-      templatesFolder !== `${CONFIG_DIR}/${TEMPLATES_DIR}` &&
-      !existsSync(resolvedTemplatesFolder)
-    ) {
-      return invalidPath(`templates folder does not exist: ${resolvedTemplatesFolder}`);
-    }
-    config.templatesFolder = templatesFolder;
-    changed = true;
+  const target = join(globalPath, 'repos', ref.owner, ref.repo, CONFIG_DIR);
+  mkdirSync(target, { recursive: true });
+  ensureGlobalConfig(globalPath);
+  const linkResult = ensureGlobalLink(gitRoot, target);
+  if (!linkResult.ok) {
+    return linkResult;
   }
-
-  if (changed) {
-    config.save(gitRoot);
-  }
-  return { ok: true, config };
+  return { ok: true };
 }
 
-function ensureInitTemplates(gitRoot: string, templatesDir: string, alreadyInitialized: boolean) {
-  if (templatesDir === getLocalTemplatesDir(gitRoot) && !alreadyInitialized) {
-    copyInitTemplates(templatesDir);
-    return;
+function ensureGlobalLink(
+  gitRoot: string,
+  target: string,
+): { ok: true } | BranchContextActionError {
+  const link = getConfigDir(gitRoot);
+  if (existsSync(link) || isBrokenSymlink(link)) {
+    if (!isSymlink(link)) {
+      return invalidPath(`${CONFIG_DIR} exists but is not a symlink`);
+    }
+    rmSync(link, { force: true });
   }
 
+  symlinkSync(target, link, 'dir');
+  return { ok: true };
+}
+
+function ensureInitTemplates(_gitRoot: string, templatesDir: string, _alreadyInitialized: boolean) {
   mkdirSync(templatesDir, { recursive: true });
-  if (listTemplates(gitRoot).length === 0) {
+  if (listTemplates(_gitRoot).length === 0) {
     copyInitTemplates(templatesDir);
   }
 }
 
-function normalizeConfiguredFolder(path: string) {
-  return normalizeConfiguredPathValue(path.trim());
-}
-
-function normalizeBranchesFolder(path: string) {
-  const parentFolder = normalizeConfiguredFolder(path);
-  return appendConfiguredPathSegment(parentFolder, BRANCHES_DIR);
-}
-
-function resolveConfiguredFolder(gitRoot: string, path: string) {
-  return isAbsolute(path) ? path : resolve(gitRoot, path);
-}
-
-function appendConfiguredPathSegment(path: string, segment: string) {
-  if (isAbsolute(path)) {
-    return join(path, segment);
+function isSymlink(path: string) {
+  try {
+    return lstatSync(path).isSymbolicLink();
+  } catch {
+    return false;
   }
-
-  const normalized = normalizeConfiguredPathValue(path).replace(/[\\/]+$/, '');
-  return normalized && normalized !== '.' ? `${normalized}/${segment}` : segment;
 }
 
-function normalizeConfiguredPathValue(path: string) {
-  return isAbsolute(path) ? path : path.replaceAll('\\', '/');
+function isBrokenSymlink(path: string) {
+  try {
+    return lstatSync(path).isSymbolicLink() && !existsSync(path);
+  } catch {
+    return false;
+  }
 }
 
 export function addToGitignore(gitRoot: string, value: string) {
@@ -283,57 +281,20 @@ function removeFromGitignore(gitRoot: string, shouldRemove: (value: string) => b
   writeFileSync(gitignoreFile, next.endsWith('\n') ? next : `${next}\n`);
 }
 
-function addInitGitignoreEntries(gitRoot: string, branchesDir: string, templatesDir: string) {
-  addToGitignore(gitRoot, DEFAULT_SYMLINK);
+function addInitLocalExcludeEntries(gitRoot: string) {
   removeFromGitignore(gitRoot, isBctxGitignoreModeEntry);
-
-  if (isRepoLocalTemplatesFolder(gitRoot, templatesDir)) {
-    addToGitignore(gitRoot, `${CONFIG_DIR}/*`);
-    addRepoFolderExceptionToGitignore(gitRoot, templatesDir);
-  } else {
-    addToGitignore(gitRoot, CONFIG_DIR);
-  }
-
-  const branchesRelPath = getRepoRelativePath(gitRoot, branchesDir);
-  if (branchesRelPath && !branchesRelPath.startsWith(`${CONFIG_DIR}/`)) {
-    addToGitignore(gitRoot, `${branchesRelPath}/`);
-  }
+  gitInfoExcludeAdd(gitRoot, DEFAULT_SYMLINK);
+  gitInfoExcludeAdd(gitRoot, CONFIG_DIR);
 }
 
 function isBctxGitignoreModeEntry(value: string) {
-  return value === CONFIG_DIR || value === `${CONFIG_DIR}/*` || value.startsWith(`!${CONFIG_DIR}/`);
-}
-
-function isRepoLocalTemplatesFolder(gitRoot: string, templatesDir: string) {
-  return getRepoRelativePath(gitRoot, templatesDir)?.startsWith(`${CONFIG_DIR}/`) ?? false;
-}
-
-function addRepoFolderExceptionToGitignore(gitRoot: string, folder: string) {
-  const relPath = getRepoRelativePath(gitRoot, folder);
-  if (!relPath?.startsWith(`${CONFIG_DIR}/`)) {
-    return;
-  }
-
-  addToGitignore(gitRoot, `!${relPath}/`);
-  addToGitignore(gitRoot, `!${relPath}/**`);
-}
-
-function getRepoRelativePath(gitRoot: string, path: string) {
-  const relPath = relative(getComparablePath(gitRoot), getComparablePath(path));
-  if (
-    !relPath ||
-    relPath === '..' ||
-    relPath.startsWith(`..${pathSeparator}`) ||
-    isAbsolute(relPath)
-  ) {
-    return null;
-  }
-
-  return relPath.replaceAll(pathSeparator, '/');
-}
-
-function getComparablePath(path: string) {
-  return existsSync(path) ? realpathSync(path) : resolve(path);
+  return (
+    value === DEFAULT_SYMLINK ||
+    value === CONFIG_DIR ||
+    value === `${CONFIG_DIR}/*` ||
+    value === `${CONFIG_DIR}/` ||
+    value.startsWith(`!${CONFIG_DIR}/`)
+  );
 }
 
 export function syncCurrentBranch(

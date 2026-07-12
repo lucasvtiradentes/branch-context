@@ -57,7 +57,8 @@ type ParsedClaudeSession = {
   cwd: string | null;
   branch: string | null;
   model: string | null;
-  title: string | null;
+  initialMessage: string | null;
+  lastMessage: string | null;
   startedAt: string | null;
   updatedAt: string | null;
 };
@@ -68,7 +69,8 @@ type ParsedCodexSession = {
   branch: string | null;
   model: string | null;
   source: string | null;
-  title: string | null;
+  initialMessage: string | null;
+  lastMessage: string | null;
   startedAt: string | null;
   updatedAt: string | null;
 };
@@ -79,7 +81,8 @@ type ParsedPiSession = {
   branch: string | null;
   repoRoot: string | null;
   model: string | null;
-  title: string | null;
+  initialMessage: string | null;
+  lastMessage: string | null;
   startedAt: string | null;
   updatedAt: string | null;
 };
@@ -104,7 +107,6 @@ const normalizedPathCache = new Map<string, string>();
 export enum ClaudeSessionEventType {
   User = 'user',
   Assistant = 'assistant',
-  CustomTitle = 'custom-title',
 }
 
 export enum CodexSessionEventType {
@@ -212,9 +214,7 @@ export function getAgentSessions(
   const branchKey = sanitizeBranchName(branch);
   const agentsFilePath = getExistingAgentsFilePath(repoRoot);
   const cachedSessions = agentsFilePath
-    ? readAgentsFile(agentsFilePath).sessions.map((session) =>
-        storedSessionToAgentSession(session, branch),
-      )
+    ? readAgentsFile(agentsFilePath).map((session) => storedSessionToAgentSession(session, branch))
     : [];
   const scannedSessions = scanAgentSessions({ ...options, repoRoot, branch });
   const sessions = mergeSessions(cachedSessions, scannedSessions)
@@ -249,7 +249,7 @@ export function getCachedAgentSessions(
   const agentsFilePath = getExistingAgentsFilePath(repoRoot);
   const sessions = agentsFilePath
     ? readAgentsFile(agentsFilePath)
-        .sessions.map((session) => storedSessionToAgentSession(session, branch))
+        .map((session) => storedSessionToAgentSession(session, branch))
         .sort(compareSessions)
     : [];
 
@@ -286,10 +286,7 @@ export function syncAgentSessions(
     (session) => session.scope === AgentSessionScope.Branch && session.branch === result.branch,
   );
   const currentAgentsFile = readAgentsFile(agentsFilePath);
-  const nextAgentsFile = normalizeAgentsFile({
-    ...currentAgentsFile,
-    sessions: exactSessions,
-  });
+  const nextAgentsFile = normalizeAgentsFile(exactSessions);
   const written = !agentsFilesEqual(currentAgentsFile, nextAgentsFile);
   if (written) {
     writeAgentsFile(agentsFilePath, nextAgentsFile);
@@ -344,7 +341,7 @@ export function moveAgentSessionToBranch(options: {
   const toAgentsFilePath =
     options.toAgentsFilePath ?? getBranchAgentsFilePath(options.repoRoot, options.toBranch);
   const fromAgentsFile = readAgentsFile(fromAgentsFilePath);
-  const session = fromAgentsFile.sessions.find(
+  const session = fromAgentsFile.find(
     (candidate) =>
       candidate.provider === options.provider && candidate.sessionId === options.sessionId,
   );
@@ -370,24 +367,20 @@ export function moveAgentSessionToBranch(options: {
     return patchResult;
   }
 
-  const nextFromAgentsFile = normalizeAgentsFile({
-    ...fromAgentsFile,
-    sessions: fromAgentsFile.sessions.filter(
+  const nextFromAgentsFile = normalizeAgentsFile(
+    fromAgentsFile.filter(
       (candidate) =>
         candidate.provider !== options.provider || candidate.sessionId !== options.sessionId,
     ),
-  });
+  );
   const toAgentsFile = readAgentsFile(toAgentsFilePath);
-  const nextToAgentsFile = normalizeAgentsFile({
-    ...toAgentsFile,
-    sessions: [
-      ...toAgentsFile.sessions.filter(
-        (candidate) =>
-          candidate.provider !== options.provider || candidate.sessionId !== options.sessionId,
-      ),
-      session,
-    ],
-  });
+  const nextToAgentsFile = normalizeAgentsFile([
+    ...toAgentsFile.filter(
+      (candidate) =>
+        candidate.provider !== options.provider || candidate.sessionId !== options.sessionId,
+    ),
+    session,
+  ]);
 
   writeAgentsFile(fromAgentsFilePath, nextFromAgentsFile);
   writeAgentsFile(toAgentsFilePath, nextToAgentsFile);
@@ -433,7 +426,8 @@ export function scanClaudeSessions(options: AgentSessionScanOptions): AgentSessi
         scope: AgentSessionScope.Branch,
         path: file,
         model: session.model,
-        title: session.title,
+        initialMessage: session.initialMessage,
+        lastMessage: session.lastMessage,
         startedAt: session.startedAt,
         updatedAt: session.updatedAt,
         description: null,
@@ -493,7 +487,8 @@ function parseClaudeSessionFileUncached(path: string, maxBytes: number): ParsedC
     cwd: null,
     branch: null,
     model: null,
-    title: null,
+    initialMessage: null,
+    lastMessage: null,
     startedAt: null,
     updatedAt: getFileUpdatedAt(path),
   };
@@ -509,12 +504,12 @@ function parseClaudeSessionFileUncached(path: string, maxBytes: number): ParsedC
       parsed.cwd ??= asString(data.cwd);
       parsed.branch ??= asString(data.gitBranch);
       parsed.startedAt ??= asString(data.timestamp);
-      parsed.title ??= extractMessageTitle(data.message);
+      recordUserMessage(parsed, extractUserMessage(data.message));
+    } else if (data.type === 'last-prompt') {
+      recordUserMessage(parsed, cleanAgentMessage(asString(data.lastPrompt)), { lastOnly: true });
     } else if (data.type === ClaudeSessionEventType.Assistant) {
       const message = asRecord(data.message);
       parsed.model ??= asString(message?.model);
-    } else if (data.type === ClaudeSessionEventType.CustomTitle) {
-      parsed.title = asString(data.customTitle) ?? parsed.title;
     }
   }
 
@@ -537,12 +532,11 @@ function parseCodexSessionFileUncached(path: string, maxBytes: number): ParsedCo
     branch: null,
     model: null,
     source: null,
-    title: null,
+    initialMessage: null,
+    lastMessage: null,
     startedAt: null,
     updatedAt: getFileUpdatedAt(path),
   };
-  let responseItemTitle: string | null = null;
-
   for (const line of readJsonLines(path, maxBytes)) {
     const data = parseJsonRecord(line);
     if (!data) {
@@ -563,16 +557,14 @@ function parseCodexSessionFileUncached(path: string, maxBytes: number): ParsedCo
       data.type === CodexSessionEventType.EventMessage &&
       payload?.type === CodexPayloadType.UserMessage
     ) {
-      parsed.title ??= asString(payload.message);
+      recordUserMessage(parsed, cleanAgentMessage(asString(payload.message)));
     } else if (
       data.type === CodexSessionEventType.ResponseItem &&
       payload?.role === AgentMessageRole.User
     ) {
-      responseItemTitle ??= extractAgentContentTitle(payload.content);
+      recordUserMessage(parsed, extractAgentContentMessage(payload.content));
     }
   }
-
-  parsed.title ??= responseItemTitle;
 
   return parsed;
 }
@@ -593,7 +585,8 @@ function parsePiSessionFileUncached(path: string, maxBytes: number): ParsedPiSes
     branch: null,
     repoRoot: null,
     model: null,
-    title: null,
+    initialMessage: null,
+    lastMessage: null,
     startedAt: null,
     updatedAt: getFileUpdatedAt(path),
   };
@@ -613,7 +606,7 @@ function parsePiSessionFileUncached(path: string, maxBytes: number): ParsedPiSes
     } else if (data.type === PiSessionEventType.Message) {
       const message = asRecord(data.message);
       if (message?.role === AgentMessageRole.User) {
-        parsed.title ??= extractMessageTitle(message);
+        recordUserMessage(parsed, extractUserMessage(message));
       }
     } else if (
       data.type === PiSessionEventType.Custom &&
@@ -630,6 +623,21 @@ function parsePiSessionFileUncached(path: string, maxBytes: number): ParsedPiSes
 
 export function getClaudeProjectKey(repoRoot: string) {
   return repoRoot.replace(/[^a-zA-Z0-9]/g, '-');
+}
+
+function recordUserMessage(
+  parsed: { initialMessage: string | null; lastMessage: string | null },
+  message: string | null,
+  options?: { lastOnly?: boolean },
+) {
+  if (!message) {
+    return;
+  }
+
+  if (!options?.lastOnly) {
+    parsed.initialMessage ??= message;
+  }
+  parsed.lastMessage = message;
 }
 
 function codexSessionToAgent(
@@ -651,7 +659,8 @@ function codexSessionToAgent(
     scope: exactBranch ? AgentSessionScope.Branch : AgentSessionScope.Repo,
     path: file,
     model: session.model,
-    title: session.title,
+    initialMessage: session.initialMessage,
+    lastMessage: session.lastMessage,
     startedAt: session.startedAt,
     updatedAt: session.updatedAt,
     description: null,
@@ -678,7 +687,8 @@ function piSessionToAgent(
     scope: exactBranch ? AgentSessionScope.Branch : AgentSessionScope.Repo,
     path: file,
     model: session.model,
-    title: session.title,
+    initialMessage: session.initialMessage,
+    lastMessage: session.lastMessage,
     startedAt: session.startedAt,
     updatedAt: session.updatedAt,
     description: null,
@@ -747,16 +757,13 @@ function syncAgentSessionsForBranch(
 ): SyncAllAgentSessionsBranchResult {
   const { branch, branchKey, agentsFilePath, archived } = target;
   const currentAgentsFile = readAgentsFile(agentsFilePath);
-  const cachedSessions = currentAgentsFile.sessions.map((session) =>
+  const cachedSessions = currentAgentsFile.map((session) =>
     storedSessionToAgentSession(session, branch),
   );
   const sessions = mergeSessions(cachedSessions, scannedSessions)
     .filter((session) => session.scope === AgentSessionScope.Branch && session.branch === branch)
     .sort(compareSessions);
-  const nextAgentsFile = normalizeAgentsFile({
-    ...currentAgentsFile,
-    sessions,
-  });
+  const nextAgentsFile = normalizeAgentsFile(sessions);
   const written = !agentsFilesEqual(currentAgentsFile, nextAgentsFile);
 
   if (written) {
@@ -996,17 +1003,45 @@ function listJsonlFiles(dir: string, options: AgentSessionScanOptions) {
 
 function readJsonLines(path: string, maxBytes: number) {
   try {
+    const fileSize = statSync(path).size;
     const file = openSync(path, 'r');
     try {
-      const buffer = Buffer.alloc(maxBytes);
-      const bytesRead = readSync(file, buffer, 0, maxBytes, 0);
-      return buffer.toString('utf8', 0, bytesRead).split(/\r?\n/).filter(Boolean);
+      if (fileSize <= maxBytes) {
+        return readJsonLineChunk(file, 0, fileSize);
+      }
+
+      const headBytes = Math.floor(maxBytes / 2);
+      const tailOffset = fileSize - (maxBytes - headBytes);
+      return [
+        ...readJsonLineChunk(file, 0, headBytes, { dropLastPartialLine: true }),
+        ...readJsonLineChunk(file, tailOffset, fileSize - tailOffset, {
+          dropFirstPartialLine: true,
+        }),
+      ];
     } finally {
       closeSync(file);
     }
   } catch {
     return [];
   }
+}
+
+function readJsonLineChunk(
+  file: number,
+  offset: number,
+  bytes: number,
+  options?: { dropFirstPartialLine?: boolean; dropLastPartialLine?: boolean },
+) {
+  const buffer = Buffer.alloc(bytes);
+  const bytesRead = readSync(file, buffer, 0, bytes, offset);
+  const lines = buffer.toString('utf8', 0, bytesRead).split(/\r?\n/);
+  if (options?.dropFirstPartialLine) {
+    lines.shift();
+  }
+  if (options?.dropLastPartialLine) {
+    lines.pop();
+  }
+  return lines.filter(Boolean);
 }
 
 function getFileUpdatedAt(path: string) {
@@ -1044,17 +1079,17 @@ function normalizePath(path: string) {
   return normalized;
 }
 
-function extractMessageTitle(message: unknown) {
+function extractUserMessage(message: unknown) {
   const data = asRecord(message);
   if (!data) {
     return null;
   }
-  return extractAgentContentTitle(data.content);
+  return extractAgentContentMessage(data.content);
 }
 
-export function extractAgentContentTitle(content: unknown, maxLength = 120) {
+export function extractAgentContentMessage(content: unknown, maxLength = 120) {
   if (typeof content === 'string') {
-    return cleanAgentTitle(content, maxLength);
+    return cleanAgentMessage(content, maxLength);
   }
 
   if (!Array.isArray(content)) {
@@ -1066,15 +1101,15 @@ export function extractAgentContentTitle(content: unknown, maxLength = 120) {
     .filter(Boolean)
     .join(' ');
 
-  return cleanAgentTitle(text, maxLength);
+  return cleanAgentMessage(text, maxLength);
 }
 
-export function cleanAgentTitle(value: string | null, maxLength = 120) {
-  const title = value?.trim().replace(/\s+/g, ' ') ?? '';
-  if (!title || isInternalAgentUserMessage(title)) {
+export function cleanAgentMessage(value: string | null, maxLength = 120) {
+  const message = value?.trim().replace(/\s+/g, ' ') ?? '';
+  if (!message || isInternalAgentUserMessage(message)) {
     return null;
   }
-  return title.length > maxLength ? `${title.slice(0, maxLength - 3)}...` : title;
+  return message.length > maxLength ? `${message.slice(0, maxLength - 3)}...` : message;
 }
 
 export function isInternalAgentUserMessage(text: string) {

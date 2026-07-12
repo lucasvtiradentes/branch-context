@@ -1,36 +1,31 @@
 import {
-  CLI_NAME,
   HOOK_POST_CHECKOUT,
   HOOK_POST_COMMIT,
   HookType,
   HookUninstallResult,
   uninstallHook,
-  unsetGlobalHooksPath,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 
 const hookUninstallMessages = {
   [HookUninstallResult.Uninstalled]: (hookName: string) => `Hook removed: ${hookName}`,
   [HookUninstallResult.NotManaged]: (hookName: string) =>
-    `warning: ${hookName} hook exists but not managed by ${CLI_NAME}`,
+    `warning: ${hookName} hook exists but not managed by branch-context`,
   [HookUninstallResult.NotInstalled]: () => null,
 } as const satisfies Record<HookUninstallResult, (hookName: string) => string | null>;
 
-export function registerUninstallCommand(program: Program) {
-  program
-    .command('uninstall', 'Remove hook from current repo')
-    .option('--global', 'Unset global hooks path')
-    .action(({ options }) => cmdUninstall(options.global ? ['--global'] : []));
-}
+const metadata = defineCommand({
+  name: 'uninstall',
+  description: 'Remove hooks from current repo',
+});
 
-function cmdUninstall(args: string[]) {
-  if (args.includes('--global')) {
-    unsetGlobalHooksPath();
-    console.log('Global hooks path unset');
-    return 0;
-  }
+export const uninstallCommand = createCommandAdapters({
+  metadata,
+  handler,
+});
 
+function handler() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;

@@ -1,11 +1,5 @@
 export { initializeTreeItemDecorations } from './decorations';
-export { readDirectoryNodes } from './directory';
-export {
-  createContextNode,
-  createGroupNode,
-  createMessageNode,
-  createTemplateNode,
-} from './nodes';
+export { createContextNode, createGroupNode, createMessageNode } from './nodes';
 export { StateTreeProvider } from './provider';
 export {
   type BranchContextTreeNode,

@@ -5,12 +5,10 @@ import type {
   BranchContextStatus,
   BranchGitSummary,
 } from '@branch-context/core';
-import type { CliCompatibilityState } from '../cli/compatibility';
 
 export type BranchContextExtensionState = {
   workspaceRoot: string | null;
   initialized: boolean;
-  cliCompatibility: CliCompatibilityState;
   status: BranchContextStatus | null;
   currentBranch: string | null;
   currentContextDir: string | null;

@@ -1,18 +1,13 @@
-import { existsSync } from 'node:fs';
-import { isAbsolute, resolve } from 'node:path';
 import { stdin as input } from 'node:process';
 import readline from 'node:readline/promises';
 import {
   applyTemplateToCurrentBranch,
   BranchContextActionErrorReason,
-  CLI_NAME,
-  Config,
-  configExists,
   getCurrentBranch,
-  getTemplatesDir,
   listAvailableTemplates,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters, defineCommand } from 'unicommand';
+import { completeTemplatesCommand } from '../helpers/completion';
 import { requireGitRoot } from '../helpers/git-root';
 
 const CANCEL_TEMPLATE_SELECTION_INPUTS = new Set(['c', 'cancel']);
@@ -27,17 +22,18 @@ const templateErrorMessages = {
   [BranchContextActionErrorReason.InvalidPath]: (message: string) => `error: ${message}`,
 } as const satisfies Record<BranchContextActionErrorReason, (message: string) => string>;
 
-export function registerTemplateCommand(program: Program) {
-  program
-    .command('template apply', 'Apply template to current branch')
-    .argument('[name]', 'Template name')
-    .action(({ args }) => cmdTemplate(stringArgs(args.name)));
+const metadata = defineCommand({
+  name: 'template',
+  description: 'Apply template to current branch',
+  arguments: [{ synopsis: '[name]', description: 'Template name' }],
+  options: [{ name: 'list', description: 'List templates' }],
+  completion: completeTemplatesCommand(),
+});
 
-  program
-    .command('template source', 'Show or set the templates folder')
-    .argument('[path]', 'Templates folder path')
-    .action(({ args }) => cmdTemplateSource(stringArg(args.path)));
-}
+export const templateCommand = createCommandAdapters({
+  metadata,
+  handler,
+});
 
 async function selectTemplate(templates: string[]) {
   console.log('Templates:\n');
@@ -70,52 +66,8 @@ function stringArgs(value: unknown) {
   return value == null || value === '' ? [] : [String(value)];
 }
 
-function stringArg(value: unknown) {
-  return value == null || value === '' ? null : String(value);
-}
-
-function normalizeFolderArg(path: string) {
-  return path.trim();
-}
-
-function resolveFolderArg(gitRoot: string, path: string) {
-  return isAbsolute(path) ? path : resolve(gitRoot, path);
-}
-
-async function cmdTemplateSource(path: string | null) {
-  const gitRoot = requireGitRoot();
-  if (!gitRoot) {
-    return 1;
-  }
-
-  if (!configExists(gitRoot)) {
-    console.log(`error: ${CLI_NAME} not initialized (run '${CLI_NAME} init')`);
-    return 1;
-  }
-
-  if (!path) {
-    const config = Config.load(gitRoot);
-    console.log(`Templates folder: ${config.templatesFolder}`);
-    console.log(`Resolved: ${getTemplatesDir(gitRoot)}`);
-    return 0;
-  }
-
-  const templatesFolder = normalizeFolderArg(path);
-  const resolvedTemplatesFolder = resolveFolderArg(gitRoot, templatesFolder);
-  if (!existsSync(resolvedTemplatesFolder)) {
-    console.log(`error: templates folder does not exist: ${resolvedTemplatesFolder}`);
-    return 1;
-  }
-
-  const config = Config.load(gitRoot);
-  config.templatesFolder = templatesFolder;
-  config.save(gitRoot);
-  console.log(`Templates folder: ${templatesFolder}`);
-  console.log(`Resolved: ${getTemplatesDir(gitRoot)}`);
-  return 0;
-}
-
-async function cmdTemplate(args: string[]) {
+async function handler({ list, name }: { list?: unknown; name?: unknown }) {
+  const args = stringArgs(name);
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;
@@ -123,8 +75,14 @@ async function cmdTemplate(args: string[]) {
 
   const templatesResult = listAvailableTemplates(gitRoot);
   if (!templatesResult.ok) {
-    console.log(`error: ${CLI_NAME} not initialized (run '${CLI_NAME} init')`);
+    console.log("error: not initialized (run 'init')");
     return 1;
+  }
+
+  const templates = templatesResult.templates;
+  if (list) {
+    console.log(templates.join('\n'));
+    return 0;
   }
 
   if (!getCurrentBranch(gitRoot)) {
@@ -132,7 +90,6 @@ async function cmdTemplate(args: string[]) {
     return 1;
   }
 
-  const templates = templatesResult.templates;
   if (templates.length === 0) {
     console.log('error: no templates found');
     return 1;
@@ -141,7 +98,7 @@ async function cmdTemplate(args: string[]) {
   let template = args[0];
   if (!template) {
     if (!input.isTTY) {
-      console.log(`usage: ${CLI_NAME} template apply <name>`);
+      console.log('usage: template <name>');
       console.log(`available: ${templates.join(', ')}`);
       return 1;
     }

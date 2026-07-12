@@ -1,6 +1,7 @@
 {
   "name": "branch-context-monorepo",
   "private": true,
+  "type": "module",
   "version": "0.0.0",
   "packageManager": "pnpm@10.33.0",
   "keywords": [
@@ -20,16 +21,18 @@
     "postinstall": "turbo run build --filter='./packages/*'",
     "build": "turbo run build",
     "build:no-cache": "turbo run build --force",
-    "postbuild": "tsx scripts/update-docs/run.ts",
+    "postbuild": "pnpm gen:docs",
     "changeset": "changeset",
     "changeset:version": "changeset version",
     "release": "changeset publish",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "check": "biome check .",
+    "check:docs": "pnpm gen:docs && git diff --exit-code README.md apps/cli/README.md",
     "check:fix": "biome check --write .",
+    "gen:docs": "tsx scripts/update-docs/run.ts",
     "knip": "knip",
-    "update-docs": "tsx scripts/update-docs/run.ts"
+    "update-docs": "pnpm gen:docs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",
@@ -41,6 +44,7 @@
     "markdown-helper": "^0.0.0",
     "tsx": "^4.21.0",
     "turbo": "^2.9.6",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "unicommand": "^0.0.4"
   }
 }

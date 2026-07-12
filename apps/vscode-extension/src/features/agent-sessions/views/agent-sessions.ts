@@ -1,17 +1,5 @@
-import { closeSync, existsSync, openSync, readSync, statSync } from 'node:fs';
-import {
-  AgentMessageRole,
-  type AgentSession,
-  AgentSessionProvider,
-  asRecord,
-  asString,
-  CodexPayloadType,
-  CodexSessionEventType,
-  extractAgentContentTitle,
-  isInternalAgentUserMessage,
-  PiSessionEventType,
-  parseJsonRecord,
-} from '@branch-context/core';
+import { statSync } from 'node:fs';
+import { type AgentSession, AgentSessionProvider } from '@branch-context/core';
 import * as vscode from 'vscode';
 import { formatBytes } from '../../../shared/format/bytes';
 import { markdownTooltipLine } from '../../../shared/format/markdown';
@@ -35,10 +23,6 @@ export enum AgentSessionsGroupBy {
   Size = 'size',
 }
 
-enum LegacyAgentSessionsGroupBy {
-  Recent = 'recent',
-}
-
 enum AgentSessionTextMode {
   Initial = 'initial',
   Last = 'last',
@@ -49,14 +33,6 @@ const agentSessionTextModeValues = Object.values(AgentSessionTextMode);
 const agentSessionsGroupByWorkspaceKey = 'agentSessions.groupBy';
 const agentSessionTextModeWorkspaceKey = 'agentSessions.textMode';
 const agentSessionsCollapsedGroupsWorkspaceKey = 'agentSessions.collapsedGroups';
-const SESSION_SCAN_CHUNK_BYTES = 64 * 1024;
-
-type SavedAgentSessionsGroupBy = AgentSessionsGroupBy | LegacyAgentSessionsGroupBy;
-
-enum AgentSessionViewEventType {
-  LastPrompt = 'last-prompt',
-  User = 'user',
-}
 
 enum ProviderIconLabel {
   Claude = 'CC',
@@ -96,19 +72,7 @@ const providerIconColors = {
 
 type AgentSessionViewItem = {
   session: AgentSession;
-  details: AgentSessionDetails;
   sizeBytes: number;
-};
-
-type AgentSessionDetails = {
-  initialMessage: string | null;
-  lastMessage: string | null;
-};
-
-type UserMessageExtraction = {
-  text: string;
-  fallback?: boolean;
-  lastOnly?: boolean;
 };
 
 let agentSessionsGroupBy: AgentSessionsGroupBy = AgentSessionsGroupBy.Flat;
@@ -119,7 +83,7 @@ let lastAgentSessionsRenderLogKey: string | null = null;
 export function initializeAgentSessionsViewState(context: vscode.ExtensionContext): void {
   const savedGroupBy = context.workspaceState.get<unknown>(agentSessionsGroupByWorkspaceKey);
   if (isAgentSessionsGroupBy(savedGroupBy)) {
-    agentSessionsGroupBy = normalizeAgentSessionsGroupBy(savedGroupBy);
+    agentSessionsGroupBy = savedGroupBy;
   }
 
   const savedTextMode = context.workspaceState.get<unknown>(agentSessionTextModeWorkspaceKey);
@@ -256,6 +220,7 @@ function createGroupNode(
       sessions.map((session) =>
         createAgentSessionNode(session, {
           showIcon: showSessionIcons,
+          movable: true,
         }),
       ),
   };
@@ -309,7 +274,6 @@ export function createSessionViewItem(session: AgentSession): AgentSessionViewIt
   const path = session.path ?? null;
   return {
     session,
-    details: readSessionDetails(path, session.provider),
     sizeBytes: getSessionSize(path),
   };
 }
@@ -335,6 +299,7 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
         pinnedItems.map((item) =>
           createAgentSessionNode(item, {
             pinned: true,
+            movable: true,
           }),
         ),
     },
@@ -344,7 +309,7 @@ function groupAgentSessions(items: AgentSessionViewItem[]) {
 
 function groupUnpinnedAgentSessions(items: AgentSessionViewItem[]) {
   if (agentSessionsGroupBy === AgentSessionsGroupBy.Flat) {
-    return items.map((item) => createAgentSessionNode(item));
+    return items.map((item) => createAgentSessionNode(item, { movable: true }));
   }
 
   if (agentSessionsGroupBy === AgentSessionsGroupBy.Date) {
@@ -491,7 +456,7 @@ function parseCollapsedGroups(value: unknown): Partial<Record<AgentSessionsGroup
       continue;
     }
 
-    result[normalizeAgentSessionsGroupBy(groupBy)] = new Set(
+    result[groupBy] = new Set(
       collapsedGroups.filter((groupId): groupId is string => typeof groupId === 'string'),
     );
   }
@@ -533,16 +498,14 @@ function getSessionDisplayText(item: AgentSessionViewItem) {
 
   if (agentSessionTextMode === AgentSessionTextMode.Last) {
     return firstText(
-      item.details.lastMessage,
-      item.details.initialMessage,
-      item.session.title,
+      item.session.lastMessage,
+      item.session.initialMessage,
       isAgentSessionActive(item.session) ? 'Starting session' : null,
     );
   }
 
   return firstText(
-    item.details.initialMessage,
-    item.session.title,
+    item.session.initialMessage,
     isAgentSessionActive(item.session) ? 'Starting session' : null,
     item.session.sessionId.slice(0, 8),
   );
@@ -564,141 +527,6 @@ function firstText(...values: Array<string | null | undefined>) {
   return values.find((value) => value?.trim())?.trim() ?? 'Untitled session';
 }
 
-function readSessionDetails(
-  path: string | null,
-  provider: AgentSession['provider'],
-): AgentSessionDetails {
-  const details: AgentSessionDetails = {
-    initialMessage: null,
-    lastMessage: null,
-  };
-  let fallbackInitialMessage: string | null = null;
-  let fallbackLastMessage: string | null = null;
-
-  if (!path || !existsSync(path)) {
-    return details;
-  }
-
-  try {
-    scanSessionLines(path, (line) => {
-      const data = parseJsonRecord(line);
-      if (!data) {
-        return;
-      }
-
-      const userMessage = extractUserMessage(data, provider);
-      if (!userMessage) {
-        return;
-      }
-
-      if (userMessage.lastOnly) {
-        if (userMessage.fallback) {
-          fallbackLastMessage = userMessage.text;
-        } else {
-          details.lastMessage = userMessage.text;
-        }
-      } else if (userMessage.fallback) {
-        fallbackInitialMessage ??= userMessage.text;
-        fallbackLastMessage = userMessage.text;
-      } else {
-        details.initialMessage ??= userMessage.text;
-        details.lastMessage = userMessage.text;
-      }
-    });
-  } catch {}
-
-  details.initialMessage ??= fallbackInitialMessage;
-  details.lastMessage ??= fallbackLastMessage;
-
-  return details;
-}
-
-function scanSessionLines(path: string, onLine: (line: string) => void) {
-  const fd = openSync(path, 'r');
-  const buffer = Buffer.alloc(SESSION_SCAN_CHUNK_BYTES);
-  let pending = '';
-
-  try {
-    while (true) {
-      const bytesRead = readSync(fd, buffer, 0, buffer.length, null);
-      if (bytesRead === 0) {
-        break;
-      }
-
-      pending += buffer.subarray(0, bytesRead).toString('utf8');
-      const lines = pending.split(/\r?\n/);
-      pending = lines.pop() ?? '';
-
-      for (const line of lines) {
-        onLine(line);
-      }
-    }
-
-    if (pending) {
-      onLine(pending);
-    }
-  } finally {
-    closeSync(fd);
-  }
-}
-
-function extractUserMessage(
-  data: Record<string, unknown>,
-  provider: AgentSession['provider'],
-): UserMessageExtraction | null {
-  if (provider === AgentSessionProvider.Pi) {
-    const message = asRecord(data.message);
-    if (data.type !== PiSessionEventType.Message || message?.role !== AgentMessageRole.User) {
-      return null;
-    }
-
-    return toUserMessage(extractAgentContentTitle(message.content, 160));
-  }
-
-  if (data.type === AgentSessionViewEventType.LastPrompt) {
-    return toUserMessage(asString(data.lastPrompt), { lastOnly: true });
-  }
-
-  if (data.type === AgentSessionViewEventType.User) {
-    return toUserMessage(extractAgentContentTitle(asRecord(data.message)?.content, 160));
-  }
-
-  const payload = asRecord(data.payload);
-  if (
-    data.type === CodexSessionEventType.EventMessage &&
-    payload &&
-    payload?.type === CodexPayloadType.UserMessage
-  ) {
-    return toUserMessage(asString(payload.message));
-  }
-
-  if (
-    data.type === CodexSessionEventType.ResponseItem &&
-    payload &&
-    payload.role === AgentMessageRole.User
-  ) {
-    return toUserMessage(extractAgentContentTitle(payload.content, 160), { fallback: true });
-  }
-
-  const message = asRecord(data.message);
-  if (data.type === 'message' && message?.role === AgentMessageRole.User) {
-    return toUserMessage(extractAgentContentTitle(message.content, 160));
-  }
-
-  return null;
-}
-
-function toUserMessage(
-  text: string | null,
-  options?: Pick<UserMessageExtraction, 'fallback' | 'lastOnly'>,
-): UserMessageExtraction | null {
-  if (!text || isInternalAgentUserMessage(text)) {
-    return null;
-  }
-
-  return { text, ...options };
-}
-
 function getSessionSize(path: string | null) {
   if (!path) {
     return 0;
@@ -711,12 +539,8 @@ function getSessionSize(path: string | null) {
   }
 }
 
-function isAgentSessionsGroupBy(value: unknown): value is SavedAgentSessionsGroupBy {
-  return isStringValue([...agentSessionsGroupByValues, LegacyAgentSessionsGroupBy.Recent], value);
-}
-
-function normalizeAgentSessionsGroupBy(value: SavedAgentSessionsGroupBy): AgentSessionsGroupBy {
-  return value === LegacyAgentSessionsGroupBy.Recent ? AgentSessionsGroupBy.Date : value;
+function isAgentSessionsGroupBy(value: unknown): value is AgentSessionsGroupBy {
+  return isStringValue(agentSessionsGroupByValues, value);
 }
 
 function isAgentSessionTextMode(value: unknown): value is AgentSessionTextMode {

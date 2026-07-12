@@ -38,12 +38,15 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+      unicommand:
+        specifier: ^0.0.4
+        version: 0.0.4
 
   apps/cli:
     dependencies:
-      '@caporal/core':
-        specifier: ^2.0.7
-        version: 2.0.7
+      unicommand:
+        specifier: ^0.0.4
+        version: 0.0.4
     devDependencies:
       '@branch-context/core':
         specifier: workspace:*
@@ -82,8 +85,6 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
 
-  packages/pi: {}
-
   packages/core:
     dependencies:
       zod:
@@ -99,6 +100,8 @@ importers:
       vitest:
         specifier: ^4.1.0
         version: 4.1.5(@types/node@22.19.17)(vite@8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/pi: {}
 
 packages:
 
@@ -2931,6 +2934,10 @@ packages:
     resolution: {integrity: sha512-xXnp4kTyor2Zq+J1FfPI6Eq3ew5h6Vl0F/8d9XU5zZQf1tX9s2Su1/3PiMmUANFULpmksxkClamIZcaUqryHsQ==}
     engines: {node: '>=20.18.1'}
 
+  unicommand@0.0.4:
+    resolution: {integrity: sha512-DJZVnIMp/ZR22kLH/lcG6NLdYF40c/wU3Ls7LR9kbv0Cbx3okba31b8Gp/7BHJFG2iZ4mZJFmoBRxlzVlfQRNQ==}
+    engines: {node: '>=22', pnpm: '>=10'}
+
   unicorn-magic@0.1.0:
     resolution: {integrity: sha512-lRfVq8fE8gz6QMBuDM6a+LO3IAzTi05H6gCVaUpir2E1Rwpo4ZUog45KpNXKC/Mn3Yb9UDuHumeFTo9iV/D9FQ==}
     engines: {node: '>=18'}
@@ -3125,6 +3132,9 @@ packages:
 
   zod@4.4.1:
     resolution: {integrity: sha512-a6ENMBBGZBsnlSebQ/eKCguSBeGKSf4O7BPnqVPmYGtpBYI7VSqoVqw+QcB7kPRjbqPwhYTpFbVj/RqNz/CT0Q==}
+
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
 snapshots:
 
@@ -5951,6 +5961,13 @@ snapshots:
 
   undici@7.25.0: {}
 
+  unicommand@0.0.4:
+    dependencies:
+      '@caporal/core': 2.0.7
+      zod: 4.4.3
+    transitivePeerDependencies:
+      - supports-color
+
   unicorn-magic@0.1.0: {}
 
   unicorn-magic@0.3.0: {}
@@ -6096,3 +6113,5 @@ snapshots:
   zod@3.25.76: {}
 
   zod@4.4.1: {}
+
+  zod@4.4.3: {}

@@ -1,6 +1,5 @@
 import {
   archiveBranch,
-  CLI_NAME,
   collectBranchInfo,
   configExists,
   getCurrentBranch,
@@ -9,26 +8,30 @@ import {
   listArchivedBranches,
   sanitizeBranchName,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { printTable } from '../helpers/branches';
 import { requireGitRoot } from '../helpers/git-root';
 import { green, red, yellow } from '../ui/color';
 import { multiSelect } from '../ui/prompt';
 
-export function registerPruneCommand(program: Program) {
-  program
-    .command('prune', 'Archive orphan contexts and delete branches')
-    .action(() => cmdPrune([]));
-}
+const metadata = defineCommand({
+  name: 'prune',
+  description: 'Archive orphan contexts and delete branches',
+});
 
-async function cmdPrune(_args: string[]) {
+export const pruneCommand = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+async function handler() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;
   }
 
   if (!configExists(gitRoot)) {
-    console.log(`error: not initialized. Run '${CLI_NAME} init' first`);
+    console.log("error: not initialized. Run 'init' first");
     return 1;
   }
 
@@ -124,6 +127,6 @@ async function cmdPrune(_args: string[]) {
     }
   }
 
-  console.log(`\nDone. Use '${CLI_NAME} status' to see current contexts.`);
+  console.log("\nDone. Use 'status' to see current contexts.");
   return 0;
 }

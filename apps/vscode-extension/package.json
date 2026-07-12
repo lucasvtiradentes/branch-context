@@ -61,11 +61,6 @@
     "views": {
       "branch-context": [
         {
-          "id": "branch-context.currentContext",
-          "name": "Branch Context",
-          "icon": "resources/icon.svg"
-        },
-        {
           "id": "branch-context.agentSessions",
           "name": "Branch AI Sessions",
           "icon": "resources/icon.svg"
@@ -81,27 +76,22 @@
           "icon": "resources/icon.svg"
         },
         {
-          "id": "branch-context.templates",
-          "name": "Templates",
+          "id": "branch-context.config",
+          "name": "Config",
           "icon": "resources/icon.svg"
         }
       ]
     },
     "commands": [
       {
-        "command": "branch-context.openCurrentContext",
-        "title": "Branch Context: Open Current Context",
-        "icon": "$(go-to-file)"
-      },
-      {
         "command": "branch-context.sync",
         "title": "Branch Context: Sync",
         "icon": "$(sync)"
       },
       {
-        "command": "branch-context.status",
-        "title": "Branch Context: Status",
-        "icon": "$(pulse)"
+        "command": "branch-context.checkoutBranch",
+        "title": "Branch Context: Checkout Branch",
+        "icon": "$(git-branch)"
       },
       {
         "command": "branch-context.setBase",
@@ -114,14 +104,29 @@
         "icon": "$(symbol-namespace)"
       },
       {
+        "command": "branch-context.toggleSound",
+        "title": "Branch Context: Toggle Sound",
+        "icon": "$(megaphone)"
+      },
+      {
+        "command": "branch-context.toggleCommitDescription",
+        "title": "Branch Context: Toggle Commit Description",
+        "icon": "$(comment)"
+      },
+      {
         "command": "branch-context.openConfig",
         "title": "Branch Context: Open Config",
         "icon": "$(settings-gear)"
       },
       {
-        "command": "branch-context.openCurrentContextFolder",
-        "title": "Branch Context: Open Current Context Folder",
+        "command": "branch-context.openGlobalStorage",
+        "title": "Branch Context: Open Global Storage",
         "icon": "$(folder-opened)"
+      },
+      {
+        "command": "branch-context.backup",
+        "title": "Branch Context: Backup",
+        "icon": "$(cloud-upload)"
       },
       {
         "command": "branch-context.reviewDiff",
@@ -249,91 +254,15 @@
         "icon": "$(trash)"
       },
       {
-        "command": "branch-context.updateCli",
-        "title": "Branch Context: Update CLI",
-        "icon": "$(terminal)"
-      },
-      {
-        "command": "branch-context.updateExtension",
-        "title": "Branch Context: Update Extension",
-        "icon": "$(extensions)"
-      },
-      {
         "command": "branch-context.showLogs",
         "title": "Branch Context: Show Logs",
         "icon": "$(output)"
-      },
-      {
-        "command": "branch-context.syncAllAgentSessions",
-        "title": "Branch Context: Sync All Branch AI Sessions",
-        "icon": "$(sync)"
-      },
-      {
-        "command": "branch-context.internal.syncAgents",
-        "title": "Branch Context: Sync Agents",
-        "icon": "$(sync)"
-      },
-      {
-        "command": "workbench.view.extension.branch-context",
-        "title": "Branch Context: Focus Branch Context View"
-      },
-      {
-        "command": "branch-context.currentContext.focus",
-        "title": "Branch Context: Focus Branch Context"
-      },
-      {
-        "command": "branch-context.agentSessions.focus",
-        "title": "Branch Context: Focus Branch AI Sessions"
-      },
-      {
-        "command": "branch-context.gitChanges.focus",
-        "title": "Branch Context: Focus Branch Git Changes"
-      },
-      {
-        "command": "branch-context.contexts.focus",
-        "title": "Branch Context: Focus Other Branches"
-      },
-      {
-        "command": "branch-context.templates.focus",
-        "title": "Branch Context: Focus Templates"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "workbench.view.extension.branch-context",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.currentContext.focus",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.agentSessions.focus",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.gitChanges.focus",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.contexts.focus",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.templates.focus",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.openCurrentContext",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.sync",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.status",
+          "command": "branch-context.checkoutBranch",
           "when": "false"
         },
         {
@@ -345,11 +274,7 @@
           "when": "false"
         },
         {
-          "command": "branch-context.openConfig",
-          "when": "false"
-        },
-        {
-          "command": "branch-context.openCurrentContextFolder",
+          "command": "branch-context.openGlobalStorage",
           "when": "false"
         },
         {
@@ -390,6 +315,10 @@
         },
         {
           "command": "branch-context.resumeAgentSession",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.showActiveAgentSession",
           "when": "false"
         },
         {
@@ -449,31 +378,15 @@
           "when": "false"
         },
         {
-          "command": "branch-context.internal.syncAgents",
+          "command": "branch-context.toggleSound",
+          "when": "false"
+        },
+        {
+          "command": "branch-context.toggleCommitDescription",
           "when": "false"
         }
       ],
       "view/title": [
-        {
-          "command": "branch-context.sync",
-          "when": "view == branch-context.currentContext && branch-context.initialized",
-          "group": "navigation@1"
-        },
-        {
-          "command": "branch-context.setBase",
-          "when": "view == branch-context.currentContext && branch-context.initialized",
-          "group": "navigation@3"
-        },
-        {
-          "command": "branch-context.applyTemplate",
-          "when": "view == branch-context.currentContext && branch-context.initialized",
-          "group": "navigation@4"
-        },
-        {
-          "command": "branch-context.openCurrentContextFolder",
-          "when": "view == branch-context.currentContext && branch-context.initialized",
-          "group": "navigation@5"
-        },
         {
           "command": "branch-context.reviewDiff",
           "when": "view == branch-context.gitChanges && branch-context.initialized",
@@ -515,9 +428,24 @@
           "group": "navigation@2"
         },
         {
-          "command": "branch-context.openConfig",
-          "when": "view == branch-context.templates && branch-context.initialized",
+          "command": "branch-context.openGlobalStorage",
+          "when": "view == branch-context.config && branch-context.initialized && branch-context.mode == global",
           "group": "navigation@1"
+        },
+        {
+          "command": "branch-context.backup",
+          "when": "view == branch-context.config && branch-context.initialized",
+          "group": "navigation@2"
+        },
+        {
+          "command": "branch-context.sync",
+          "when": "view == branch-context.config && branch-context.initialized",
+          "group": "navigation@3"
+        },
+        {
+          "command": "branch-context.openConfig",
+          "when": "view == branch-context.config && branch-context.initialized",
+          "group": "navigation@4"
         }
       ],
       "view/item/context": [
@@ -578,7 +506,7 @@
         },
         {
           "command": "branch-context.moveAgentSessionToBranch",
-          "when": "view == branch-context.contexts && viewItem =~ /movable/",
+          "when": "(view == branch-context.agentSessions || view == branch-context.contexts) && viewItem =~ /movable/",
           "group": "navigation@1"
         },
         {

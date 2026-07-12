@@ -1,22 +1,33 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   addToGitignore,
-  BRANCHES_DIR,
   CONFIG_DIR,
-  CONFIG_FILE,
   CONTEXT_FILE_NAME,
-  Config,
   DEFAULT_SYMLINK,
   DEFAULT_TEMPLATE,
   gitAdd,
   gitCheckout,
   gitCommit,
-  TEMPLATES_DIR,
 } from '@branch-context/core';
-import { describe, expect, it } from 'vitest';
-import { runCli } from '../src/index';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { runCli } from '../src/cli';
 import { captureConsole, createGitRepo, createTempDir, expectOk, git } from './helpers';
+
+const PROGRAM_NAME_ENV = 'BRANCH_CONTEXT_PROG_NAME';
+const originalProgramName = process.env[PROGRAM_NAME_ENV];
+
+beforeAll(() => {
+  process.env[PROGRAM_NAME_ENV] = 'node';
+});
+
+afterAll(() => {
+  if (originalProgramName === undefined) {
+    delete process.env[PROGRAM_NAME_ENV];
+    return;
+  }
+  process.env[PROGRAM_NAME_ENV] = originalProgramName;
+});
 
 describe('init command', () => {
   it('creates gitignore file when adding entry', () => {
@@ -76,102 +87,14 @@ describe('init command', () => {
     }
   });
 
-  it('init gitignores local machine state but leaves templates trackable', async () => {
+  it('init excludes local machine state without changing gitignore', async () => {
     const repo = createGitRepo();
     process.chdir(repo);
     await runCli(['init']);
-    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
-    expect(gitignore).toContain(`${DEFAULT_SYMLINK}\n`);
-    expect(gitignore).toContain(`${CONFIG_DIR}/*\n`);
-    expect(gitignore).toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/\n`);
-    expect(gitignore).toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/**\n`);
-    expect(gitignore).not.toContain(`${CONFIG_DIR}/${CONFIG_FILE}`);
-    expect(gitignore).not.toContain(`${CONFIG_DIR}/${BRANCHES_DIR}/`);
-  });
-
-  it('init gitignores custom branch folders inside the repo', async () => {
-    const repo = createGitRepo();
-    const branchesParentFolder = join(repo, 'repo-contexts');
-    mkdirSync(branchesParentFolder);
-    process.chdir(repo);
-
-    await runCli(['init', '--branches-parent-folder', branchesParentFolder]);
-
-    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
-    expect(gitignore).toContain(`repo-contexts/${BRANCHES_DIR}/\n`);
-    expect(gitignore).not.toContain(`${CONFIG_DIR}/${BRANCHES_DIR}/`);
-  });
-
-  it('init does not gitignore custom branch folders outside the repo', async () => {
-    const repo = createGitRepo();
-    const branchesParentFolder = createTempDir();
-    process.chdir(repo);
-
-    await runCli(['init', '--branches-parent-folder', branchesParentFolder]);
-
-    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
-    expect(gitignore).not.toContain(`${branchesParentFolder}/`);
-    expect(gitignore).not.toContain(`${CONFIG_DIR}/${BRANCHES_DIR}/`);
-  });
-
-  it(`init keeps custom templates folders inside ${CONFIG_DIR} trackable`, async () => {
-    const repo = createGitRepo();
-    const templatesFolder = join(repo, CONFIG_DIR, 'team-templates');
-    mkdirSync(templatesFolder, { recursive: true });
-    process.chdir(repo);
-
-    await runCli(['init', '--templates-folder', templatesFolder]);
-
-    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
-    expect(gitignore).toContain(`${CONFIG_DIR}/*\n`);
-    expect(gitignore).toContain(`!${CONFIG_DIR}/team-templates/\n`);
-    expect(gitignore).toContain(`!${CONFIG_DIR}/team-templates/**\n`);
-  });
-
-  it('init ignores config dir when configured templates are external', async () => {
-    const repo = createGitRepo();
-    const templatesFolder = createTempDir();
-    process.chdir(repo);
-
-    await runCli(['init', '--templates-folder', templatesFolder]);
-
-    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
-    expect(gitignore).toContain(`${CONFIG_DIR}\n`);
-    expect(gitignore).not.toContain(`${CONFIG_DIR}/*\n`);
-    expect(gitignore).not.toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/\n`);
-    expect(gitignore).not.toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/**\n`);
-  });
-
-  it('init replaces local template gitignore mode when templates move external', async () => {
-    const repo = createGitRepo();
-    const templatesFolder = createTempDir();
-    process.chdir(repo);
-
-    await runCli(['init']);
-    await runCli(['init', '--templates-folder', templatesFolder]);
-
-    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
-    expect(gitignore).toContain(`${CONFIG_DIR}\n`);
-    expect(gitignore).not.toContain(`${CONFIG_DIR}/*\n`);
-    expect(gitignore).not.toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/\n`);
-    expect(gitignore).not.toContain(`!${CONFIG_DIR}/${TEMPLATES_DIR}/**\n`);
-  });
-
-  it('init replaces external template gitignore mode when templates move local', async () => {
-    const repo = createGitRepo();
-    const externalTemplatesFolder = createTempDir();
-    const localTemplatesFolder = join(repo, CONFIG_DIR, 'team-templates');
-    mkdirSync(localTemplatesFolder, { recursive: true });
-    process.chdir(repo);
-
-    await runCli(['init', '--templates-folder', externalTemplatesFolder]);
-    await runCli(['init', '--templates-folder', localTemplatesFolder]);
-
-    const gitignore = readFileSync(join(repo, '.gitignore'), 'utf8');
-    expect(gitignore).not.toContain(`${CONFIG_DIR}\n`);
-    expect(gitignore).toContain(`${CONFIG_DIR}/*\n`);
-    expect(gitignore).toContain(`!${CONFIG_DIR}/team-templates/\n`);
-    expect(gitignore).toContain(`!${CONFIG_DIR}/team-templates/**\n`);
+    const exclude = readFileSync(join(repo, '.git', 'info', 'exclude'), 'utf8');
+    expect(exclude).toContain(`${DEFAULT_SYMLINK}\n`);
+    expect(exclude).toContain(`${CONFIG_DIR}\n`);
+    expect(existsSync(join(repo, '.gitignore'))).toBe(false);
   });
 
   it('init syncs current branch through core service', async () => {
@@ -215,54 +138,16 @@ describe('init command', () => {
     expect(capture.output).toContain('warning: base branch not found: origin/main');
   });
 
-  it('init can store branch contexts in a custom folder', async () => {
+  it('template applies by name', async () => {
     const repo = createGitRepo();
-    const branchesParentFolder = createTempDir();
-    const branchesFolder = join(branchesParentFolder, BRANCHES_DIR);
-    process.chdir(repo);
-
-    const result = await runCli(['init', '--branches-parent-folder', branchesParentFolder]);
-
-    expect(result).toBe(0);
-    const config = Config.load(repo);
-    expect(config.branchesFolder).toBe(branchesFolder);
-    expect(existsSync(join(branchesFolder, 'main', CONTEXT_FILE_NAME))).toBe(true);
-    expect(existsSync(join(repo, DEFAULT_SYMLINK, CONTEXT_FILE_NAME))).toBe(true);
-  });
-
-  it('init rejects missing custom branch folders', async () => {
-    const repo = createGitRepo();
-    process.chdir(repo);
-    const capture = captureConsole();
-
-    const result = await runCli(['init', '--branches-parent-folder', join(repo, 'contexts')]);
-
-    expect(result).toBe(1);
-    expect(capture.output).toContain('error: branches parent folder does not exist');
-  });
-
-  it('init can use a custom templates folder', async () => {
-    const repo = createGitRepo();
-    const templatesPath = createTempDir();
-    process.chdir(repo);
-
-    const result = await runCli(['init', '--templates-folder', templatesPath]);
-
-    expect(result).toBe(0);
-    const config = Config.load(repo);
-    expect(config.templatesFolder).toBe(templatesPath);
-    expect(existsSync(join(templatesPath, DEFAULT_TEMPLATE, CONTEXT_FILE_NAME))).toBe(true);
-  });
-
-  it('template source updates the templates folder', async () => {
-    const repo = createGitRepo();
-    const templatesPath = createTempDir();
     process.chdir(repo);
     await runCli(['init']);
+    await runCli(['base', 'main']);
+    const capture = captureConsole();
 
-    const result = await runCli(['template', 'source', templatesPath]);
+    const result = await runCli(['template', DEFAULT_TEMPLATE]);
 
     expect(result).toBe(0);
-    expect(Config.load(repo).templatesFolder).toBe(templatesPath);
+    expect(capture.output).toContain(`Applied template '${DEFAULT_TEMPLATE}' to 'main'`);
   });
 });

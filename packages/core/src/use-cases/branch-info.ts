@@ -1,4 +1,5 @@
 import { listBranches, sanitizeBranchName } from '../core/sync';
+import { getBranchMeta } from '../data/meta';
 import { gitListBranches, gitListRemoteBranches } from '../git';
 
 const DETACHED_HEAD_BRANCH_NAME = 'HEAD';
@@ -35,7 +36,11 @@ export function collectBranchInfo(gitRoot: string) {
   const allNames = new Map<string, BranchInfo>();
 
   for (const ctx of contextDirs) {
-    const original = sanitizedToLocal.get(ctx) ?? sanitizedToRemote.get(ctx) ?? ctx;
+    const original =
+      sanitizedToLocal.get(ctx) ??
+      sanitizedToRemote.get(ctx) ??
+      getBranchMeta(gitRoot, ctx)?.branch ??
+      ctx;
     allNames.set(original, {
       context: true,
       local: Array.from(localToSanitized.values()).includes(ctx),

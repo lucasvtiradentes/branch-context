@@ -6,17 +6,16 @@ export { CONTEXT_FILE_NAME } from '@branch-context/core';
 const APP_ID = 'branch-context';
 const APP_LOG_FILENAME = 'extension.log';
 export const APP_NAME = 'Branch Context';
-export const IS_DEV_EXTENSION = APP_ID.endsWith('-dev');
-export const STATUS_BAR_PRIORITY = 10;
-
 export const commandIds = {
-  openCurrentContext: `${APP_ID}.openCurrentContext`,
   sync: `${APP_ID}.sync`,
-  status: `${APP_ID}.status`,
   setBase: `${APP_ID}.setBase`,
   applyTemplate: `${APP_ID}.applyTemplate`,
+  toggleSound: `${APP_ID}.toggleSound`,
+  toggleCommitDescription: `${APP_ID}.toggleCommitDescription`,
   openConfig: `${APP_ID}.openConfig`,
-  openCurrentContextFolder: `${APP_ID}.openCurrentContextFolder`,
+  backup: `${APP_ID}.backup`,
+  checkoutBranch: `${APP_ID}.checkoutBranch`,
+  openGlobalStorage: `${APP_ID}.openGlobalStorage`,
   reviewDiff: `${APP_ID}.reviewDiff`,
   openCommitDiff: `${APP_ID}.internal.openCommitDiff`,
   copyCommitHash: `${APP_ID}.copyCommitHash`,
@@ -43,25 +42,20 @@ export const commandIds = {
   archiveContext: `${APP_ID}.archiveContext`,
   restoreContext: `${APP_ID}.restoreContext`,
   deleteContext: `${APP_ID}.deleteContext`,
-  updateCli: `${APP_ID}.updateCli`,
-  updateExtension: `${APP_ID}.updateExtension`,
   showLogs: `${APP_ID}.showLogs`,
-  syncAllAgentSessions: `${APP_ID}.syncAllAgentSessions`,
   syncAgents: `${APP_ID}.internal.syncAgents`,
-  showStatusBarActions: `${APP_ID}.internal.showStatusBarActions`,
-  showDetails: `${APP_ID}.internal.showDetails`,
 } as const;
 
 export const viewIds = {
-  currentContext: `${APP_ID}.currentContext`,
   agentSessions: `${APP_ID}.agentSessions`,
   gitChanges: `${APP_ID}.gitChanges`,
   contexts: `${APP_ID}.contexts`,
-  templates: `${APP_ID}.templates`,
+  config: `${APP_ID}.config`,
 } as const;
 
 export const contextKeys = {
   initialized: `${APP_ID}.initialized`,
+  mode: `${APP_ID}.mode`,
   gitChangesMode: `${APP_ID}.gitChangesMode`,
   otherBranchesMode: `${APP_ID}.otherBranchesMode`,
 } as const;

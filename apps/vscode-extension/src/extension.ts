@@ -7,7 +7,6 @@ import { logger } from './shared/logger';
 import { registerCommands } from './vscode/commands/register';
 import { initializeGitDiffProvider } from './vscode/git-diff';
 import { branchContextState } from './vscode/state';
-import { initializeStatusBar } from './vscode/status-bar';
 import { initializeTreeViews } from './vscode/views';
 
 function initializeCore(context: vscode.ExtensionContext): void {
@@ -20,7 +19,6 @@ function initializeCore(context: vscode.ExtensionContext): void {
 function initializeUi(context: vscode.ExtensionContext): void {
   initializeGitDiffProvider(context);
   initializeContextFileUx(context);
-  initializeStatusBar(context);
   initializeTreeViews(context);
   registerCommands(context);
 }

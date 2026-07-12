@@ -4,7 +4,7 @@ import { updateConfig } from './update-config';
 import { updateFooter } from './update-footer';
 import { updateHeader } from './update-header';
 
-type UpdateFn = { name: string; fn: () => void };
+type UpdateFn = { name: string; fn: () => void | Promise<void> };
 
 const updates: UpdateFn[] = [
   { name: 'header', fn: updateHeader },
@@ -13,12 +13,12 @@ const updates: UpdateFn[] = [
   { name: 'footer', fn: updateFooter },
 ];
 
-export function runUpdateDocs(): void {
+export async function runUpdateDocs(): Promise<void> {
   const errors: { name: string; error: string }[] = [];
 
   for (const update of updates) {
     try {
-      update.fn();
+      await update.fn();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       errors.push({ name: update.name, error: message });
@@ -35,5 +35,8 @@ export function runUpdateDocs(): void {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  runUpdateDocs();
+  runUpdateDocs().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  });
 }

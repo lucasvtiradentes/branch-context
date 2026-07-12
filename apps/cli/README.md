@@ -39,18 +39,19 @@ This creates `.bctx/` and installs the post-checkout / post-commit hooks. `_bran
 
 <!-- <DYNFIELD:COMMANDS> -->
 ```sh
-bctx init             # set up .bctx/ and Git hooks
-bctx sync             # refresh commit/file summaries
-bctx status           # check setup health and list branch contexts
-bctx base             # get/set base branch
-bctx template [name]  # apply a template (e.g. fix)
-bctx prune            # archive contexts of deleted branches
-bctx agents status    # show indexed AI session pointers for the branch
-bctx uninstall        # remove .bctx/ and hooks
+# other commands
+bctx backup
+bctx base [branch]
+bctx global <path>
+bctx init
+bctx prune
+bctx status
+bctx sync
+bctx template [name] [--list]
+bctx uninstall
 ```
 <!-- </DYNFIELD:COMMANDS> -->
 
-`bctx agents status` indexes local Codex, Claude Code, and Pi sessions for the current branch.
 
 For branch-scoped Pi sessions, install the Pi package from GitHub:
 
@@ -69,9 +70,7 @@ Default `.bctx/config.json`:
 {
   "default_base_branch": "origin/main",
   "sound": true,
-  "commit_description": false,
-  "branches_folder": ".bctx/branches",
-  "templates_folder": ".bctx/templates"
+  "commit_description": false
 }
 ```
 <!-- </DYNFIELD:CONFIG_JSON> -->

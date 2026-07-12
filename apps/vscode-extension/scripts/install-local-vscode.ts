@@ -23,10 +23,13 @@ type PackageJson = {
 
 const APP_ID = 'branch-context';
 const DEV_APP_ID = `${APP_ID}-dev`;
+const CLI_COMMAND_NAME = 'bctx';
+const DEV_CLI_COMMAND_NAME = 'bctxd';
+const DEV_CLI_INSTALL_SCRIPT = `${DEV_CLI_COMMAND_NAME}:install`;
 const REPO_ROOT_PLACEHOLDER = '__BCTX_REPO_ROOT__';
 const PACKAGE_SCOPE_PLACEHOLDER = '__BCTX_PACKAGE_SCOPE__';
-const STATUS_BAR_TEXT = 'return `$' + '{getStatusIcon(status)} bctx`;';
-const DEV_STATUS_BAR_TEXT = 'return `$' + '{getStatusIcon(status)} bctxd`;';
+const statusBarText = (commandName: string) =>
+  `return \`\${getStatusIcon(status)} ${commandName}\`;`;
 const EXTENSION_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_ROOT = path.resolve(EXTENSION_DIR, '../..');
 const DIST_DIR = path.join(EXTENSION_DIR, 'dist-dev');
@@ -329,8 +332,8 @@ function patchDevContent(content: string) {
     .join(`"${PACKAGE_SCOPE_PLACEHOLDER}"`)
     .split(APP_ID)
     .join(DEV_APP_ID)
-    .split(STATUS_BAR_TEXT)
-    .join(DEV_STATUS_BAR_TEXT)
+    .split(statusBarText(CLI_COMMAND_NAME))
+    .join(statusBarText(DEV_CLI_COMMAND_NAME))
     .split(REPO_ROOT_PLACEHOLDER)
     .join(REPO_ROOT)
     .split(`"${PACKAGE_SCOPE_PLACEHOLDER}"`)
@@ -342,7 +345,7 @@ function patchDevContent(content: string) {
 function installDevCli() {
   const result = spawnSync(
     'pnpm',
-    ['--dir', REPO_ROOT, '--filter', 'branch-context', 'bctxd:install'],
+    ['--dir', REPO_ROOT, '--filter', 'branch-context', DEV_CLI_INSTALL_SCRIPT],
     {
       encoding: 'utf8',
       stdio: 'inherit',
@@ -351,7 +354,7 @@ function installDevCli() {
   );
 
   if (result.status !== 0) {
-    throw new Error('failed to install bctxd dev CLI');
+    throw new Error(`failed to install ${DEV_CLI_COMMAND_NAME} dev CLI`);
   }
 }
 

@@ -16,8 +16,8 @@ import {
   sep as pathSeparator,
   relative,
 } from 'node:path';
-import { CLI_NAME, GIT_DIR, HOOK_MARKER, HookType } from '../constants';
-import { gitConfigUnset, gitCurrentBranch, gitHooksPath, gitInfoExcludeAdd, gitRoot } from '../git';
+import { DEFAULT_HOOK_COMMAND_NAME, GIT_DIR, HOOK_MARKER, HookType } from '../constants';
+import { gitCurrentBranch, gitHooksPath, gitInfoExcludeAdd, gitRoot } from '../git';
 import { loadHookTemplateResource } from '../resources';
 
 export type PromptYesNo = (question: string) => Promise<boolean>;
@@ -31,6 +31,7 @@ export enum HookInstallResult {
   HookExists = 'hook_exists',
   Appended = 'appended',
   Updated = 'updated',
+  CommandNotFound = 'command_not_found',
 }
 
 export enum HookUninstallResult {
@@ -55,6 +56,10 @@ export function resetConfirmationState() {
 }
 
 function findOnPath(name: string) {
+  if (isAbsolute(name) && existsSync(name)) {
+    return name;
+  }
+
   for (const dir of (process.env.PATH ?? '').split(delimiter)) {
     const candidate = join(dir, name);
     if (existsSync(candidate)) {
@@ -65,12 +70,17 @@ function findOnPath(name: string) {
 }
 
 export function getBranchctxPath(commandName?: string | null) {
-  const progName = commandName ?? process.env.BCTX_PROG_NAME ?? CLI_NAME;
-  return findOnPath(progName) ?? progName;
+  const progName = commandName ?? DEFAULT_HOOK_COMMAND_NAME;
+  return findOnPath(progName);
 }
 
 export function getCallback(hookType: HookType, options: InstallHookOptions = {}) {
   const branchctxPath = getBranchctxPath(options.commandName);
+  if (!branchctxPath) {
+    throw new Error(
+      `Command not found in PATH: ${options.commandName ?? DEFAULT_HOOK_COMMAND_NAME}`,
+    );
+  }
   return `"${branchctxPath}" ${hookCallbacks[hookType]}`;
 }
 
@@ -182,6 +192,10 @@ export async function installHook(
   ask?: PromptYesNo,
   options: InstallHookOptions = {},
 ): Promise<HookInstallResult> {
+  if (!getBranchctxPath(options.commandName)) {
+    return HookInstallResult.CommandNotFound;
+  }
+
   const prompt = ask ?? noPrompt;
   const customHooksDir = getCustomHooksDir(gitRootPath);
   const managedHookPath = getExistingManagedHookPath(gitRootPath, hookType);
@@ -371,10 +385,6 @@ function isHuskyShimHook(gitRootPath: string, hookPath: string) {
 
 export function getCurrentBranch(path?: string) {
   return gitCurrentBranch(path ?? process.cwd());
-}
-
-export function unsetGlobalHooksPath() {
-  return gitConfigUnset('core.hooksPath', 'global');
 }
 
 export function hookBasename(hookPath: string) {

@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { DEFAULT_SYMLINK, SESSIONS_FILE_NAME } from '../constants';
 import { getBranchDir } from '../core/sync';
-import { migrateBranchConfigFile } from '../migrations/2026-06-20-move-branch-config-files';
+import { ensureBranchConfigDir } from './branch-config';
 import { getBranchesDir } from './config';
 
 export enum AgentSessionProvider {
@@ -25,7 +25,8 @@ export type AgentSession = {
   scope: AgentSessionScope;
   path: string | null;
   model: string | null;
-  title: string | null;
+  initialMessage: string | null;
+  lastMessage: string | null;
   startedAt: string | null;
   updatedAt: string | null;
   description: string | null;
@@ -34,10 +35,7 @@ export type AgentSession = {
 
 export type StoredAgentSession = Omit<AgentSession, 'branch' | 'scope'>;
 
-export type AgentsFile = {
-  version: 1;
-  sessions: StoredAgentSession[];
-};
+export type AgentsFile = StoredAgentSession[];
 
 export type AgentSessionInput = Omit<AgentSession, 'scope' | 'description' | 'pinnedAt'> & {
   scope?: AgentSessionScope;
@@ -46,14 +44,11 @@ export type AgentSessionInput = Omit<AgentSession, 'scope' | 'description' | 'pi
 };
 
 export function createEmptyAgentsFile(): AgentsFile {
-  return {
-    version: 1,
-    sessions: [],
-  };
+  return [];
 }
 
 export function getBranchAgentsFilePathByDir(branchDir: string) {
-  return migrateBranchConfigFile(branchDir, SESSIONS_FILE_NAME);
+  return join(ensureBranchConfigDir(branchDir), SESSIONS_FILE_NAME);
 }
 
 export function getCurrentAgentsFilePath(workspace: string) {
@@ -101,16 +96,16 @@ export function writeAgentsFile(path: string, data: AgentsFile): void {
 export function upsertAgentSession(path: string, session: AgentSessionInput): AgentsFile {
   const data = readAgentsFile(path);
   const nextSession = createStoredAgentSession(session);
-  const existingIndex = data.sessions.findIndex(
+  const existingIndex = data.findIndex(
     (existing) =>
       existing.provider === nextSession.provider && existing.sessionId === nextSession.sessionId,
   );
 
   if (existingIndex === -1) {
-    data.sessions.push(nextSession);
+    data.push(nextSession);
   } else {
-    data.sessions[existingIndex] = {
-      ...data.sessions[existingIndex],
+    data[existingIndex] = {
+      ...data[existingIndex],
       ...nextSession,
     };
   }
@@ -127,22 +122,19 @@ export function updateAgentSessionMetadata(
   patch: Partial<Pick<StoredAgentSession, 'description' | 'pinnedAt'>>,
 ): AgentsFile {
   const data = readAgentsFile(path);
-  data.sessions = data.sessions.map((session) =>
+  const patched = data.map((session) =>
     session.provider === provider && session.sessionId === sessionId
       ? { ...session, ...patch }
       : session,
   );
 
-  const normalized = normalizeAgentsFile(data);
+  const normalized = normalizeAgentsFile(patched);
   writeAgentsFile(path, normalized);
   return normalized;
 }
 
 export function normalizeAgentsFile(data: AgentsFile): AgentsFile {
-  return {
-    version: 1,
-    sessions: normalizeStoredAgentSessions(data.sessions),
-  };
+  return normalizeStoredAgentSessions(data);
 }
 
 function normalizeStoredAgentSessions(sessions: StoredAgentSession[]) {
@@ -167,7 +159,8 @@ function stripStoredAgentSession(session: StoredAgentSession): StoredAgentSessio
     sessionId: session.sessionId,
     path: session.path,
     model: session.model,
-    title: session.title,
+    initialMessage: session.initialMessage,
+    lastMessage: session.lastMessage,
     startedAt: session.startedAt,
     updatedAt: session.updatedAt,
     description: session.description,
@@ -196,23 +189,12 @@ function compareSessionParts(
   return left.sessionId.localeCompare(right.sessionId);
 }
 
-function isAgentsFileLike(value: unknown): value is {
-  version: 1;
-  sessions: unknown[];
-} {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const data = value as Partial<AgentsFile>;
-  return data.version === 1 && Array.isArray(data.sessions);
+function isAgentsFileLike(value: unknown): value is unknown[] {
+  return Array.isArray(value);
 }
 
-function parseAgentsFile(data: { version: 1; sessions: unknown[] }): AgentsFile {
-  return {
-    version: 1,
-    sessions: data.sessions.flatMap(parseStoredAgentSession),
-  };
+function parseAgentsFile(data: unknown[]): AgentsFile {
+  return data.flatMap(parseStoredAgentSession);
 }
 
 function createStoredAgentSession(input: AgentSessionInput | AgentSession): StoredAgentSession {
@@ -221,7 +203,8 @@ function createStoredAgentSession(input: AgentSessionInput | AgentSession): Stor
     sessionId: input.sessionId,
     path: input.path,
     model: input.model,
-    title: input.title,
+    initialMessage: input.initialMessage,
+    lastMessage: input.lastMessage,
     startedAt: input.startedAt,
     updatedAt: input.updatedAt,
     description: input.description ?? null,
@@ -241,7 +224,8 @@ function parseStoredAgentSession(value: unknown): StoredAgentSession[] {
       typeof session.sessionId === 'string' &&
       isNullableString(session.path) &&
       isNullableString(session.model) &&
-      isNullableString(session.title) &&
+      isNullableString(session.initialMessage) &&
+      isNullableString(session.lastMessage) &&
       isNullableString(session.startedAt) &&
       isNullableString(session.updatedAt) &&
       isNullableString(session.description) &&
@@ -257,7 +241,8 @@ function parseStoredAgentSession(value: unknown): StoredAgentSession[] {
       sessionId: session.sessionId,
       path: session.path,
       model: session.model,
-      title: session.title,
+      initialMessage: session.initialMessage,
+      lastMessage: session.lastMessage,
       startedAt: session.startedAt,
       updatedAt: session.updatedAt,
       description: session.description,
@@ -277,7 +262,8 @@ function isStoredAgentSession(value: unknown): value is StoredAgentSession {
     typeof session.sessionId === 'string' &&
     isNullableString(session.path) &&
     isNullableString(session.model) &&
-    isNullableString(session.title) &&
+    isNullableString(session.initialMessage) &&
+    isNullableString(session.lastMessage) &&
     isNullableString(session.startedAt) &&
     isNullableString(session.updatedAt) &&
     isNullableString(session.description) &&

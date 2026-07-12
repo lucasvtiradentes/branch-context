@@ -1,34 +1,41 @@
-import { CLI_NAME, syncBranchAfterCheckout } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { syncBranchAfterCheckout } from '@branch-context/core';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { requireGitRoot } from '../helpers/git-root';
 
-export function registerOnCheckoutCommand(program: Program) {
-  program
-    .command('on-checkout', 'Run post-checkout hook callback', { visible: false })
-    .argument('<old-branch>', 'Old branch')
-    .argument('<new-branch>', 'New branch')
-    .action(({ args }) => cmdOnCheckout([String(args.oldBranch), String(args.newBranch)]));
-}
+const metadata = defineCommand({
+  name: 'on-checkout',
+  description: 'Run post-checkout hook callback',
+  config: { visible: false },
+  arguments: [
+    { synopsis: '<old-branch>', description: 'Old branch' },
+    { synopsis: '<new-branch>', description: 'New branch' },
+  ],
+});
 
-function cmdOnCheckout(args: string[]) {
-  if (args.length < 2) {
-    console.log(`usage: ${CLI_NAME} on-checkout <old_branch> <new_branch>`);
+export const onCheckoutCommand = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+function handler({ oldBranch, newBranch }: { oldBranch?: unknown; newBranch?: unknown }) {
+  if (oldBranch === undefined || newBranch === undefined) {
+    console.log('usage: on-checkout <old_branch> <new_branch>');
     return 1;
   }
 
-  const oldBranch = args[0] ?? '';
-  const newBranch = args[1] ?? '';
+  const oldBranchName = String(oldBranch);
+  const newBranchName = String(newBranch);
   const gitRoot = requireGitRoot({ silent: true });
   if (!gitRoot) {
     return 1;
   }
 
-  const result = syncBranchAfterCheckout(gitRoot, newBranch);
+  const result = syncBranchAfterCheckout(gitRoot, newBranchName);
   if (result.skipped) {
-    console.log(`Branch: ${oldBranch} -> ${newBranch}`);
+    console.log(`Branch: ${oldBranchName} -> ${newBranchName}`);
     return 0;
   }
 
-  console.log(`Branch: ${oldBranch} -> ${newBranch} (${result.status})`);
+  console.log(`Branch: ${oldBranchName} -> ${newBranchName} (${result.status})`);
   return 0;
 }

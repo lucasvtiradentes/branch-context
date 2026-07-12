@@ -1,7 +1,6 @@
 import {
   BranchContextStatusIssueLevel,
   BranchContextSymlinkState,
-  CLI_NAME,
   DEFAULT_SYMLINK,
   DEFAULT_TEMPLATE,
   getStatus,
@@ -9,7 +8,7 @@ import {
   HOOK_POST_COMMIT,
   TEMPLATES_DIR,
 } from '@branch-context/core';
-import type { Program } from '@caporal/core';
+import { createCommandAdapters, defineCommand } from 'unicommand';
 import { printTable } from '../helpers/branches';
 import { requireGitRoot } from '../helpers/git-root';
 import { green, red, yellow } from '../ui/color';
@@ -18,11 +17,17 @@ const STATUS_OK = green('[ok]');
 const STATUS_ERROR = red('[!!]');
 const STATUS_WARN = yellow('[--]');
 
-export function registerStatusCommand(program: Program) {
-  program.command('status', 'Show status, health, and branches').action(() => cmdStatus([]));
-}
+const metadata = defineCommand({
+  name: 'status',
+  description: 'Show status, health, and branches',
+});
 
-function cmdStatus(_args: string[]) {
+export const statusCommand = createCommandAdapters({
+  metadata,
+  handler,
+});
+
+function handler() {
   const gitRoot = requireGitRoot();
   if (!gitRoot) {
     return 1;
@@ -31,11 +36,18 @@ function cmdStatus(_args: string[]) {
   const status = getStatus(gitRoot);
 
   if (!status.initialized) {
-    console.log(`error: ${CLI_NAME} not initialized`);
-    console.log(`run: ${CLI_NAME} init`);
+    console.log('error: not initialized');
+    console.log('run: init');
     return 1;
   }
 
+  console.log(`Mode:        ${status.mode}`);
+  if (status.globalPath) {
+    console.log(`Storage:     ${status.globalPath}`);
+  }
+  console.log(`Repo store:  ${status.repoStorageDir}`);
+  console.log(`Templates:   ${status.templatesDir}`);
+  console.log(`Branches:    ${status.branchesDir}`);
   console.log(`Branch:      ${status.currentBranch}`);
   console.log(`Base:        ${status.baseBranch}`);
 
@@ -85,11 +97,14 @@ function cmdStatus(_args: string[]) {
       break;
   }
 
-  const orphans = Array.from(status.contexts.entries()).filter(
-    ([, info]) => info.context && !info.local,
-  );
-  if (orphans.length > 0) {
-    console.log(`  ${STATUS_WARN} ${orphans.length} orphan contexts`);
+  const orphanBranches = Array.from(status.contexts.entries())
+    .filter(([, info]) => info.context && !info.local)
+    .map(([branch]) => branch);
+  if (orphanBranches.length > 0) {
+    const orphanLabel = orphanBranches.length === 1 ? 'orphan context' : 'orphan contexts';
+    console.log(
+      `  ${STATUS_WARN} ${orphanBranches.length} ${orphanLabel}: ${orphanBranches.join(', ')}`,
+    );
   } else {
     console.log(`  ${STATUS_OK} no orphan contexts`);
   }
