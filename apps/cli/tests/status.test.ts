@@ -18,7 +18,7 @@ import {
   TEMPLATES_DIR,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { runCli } from '../dist/cli.js';
+import { runCli } from '../src/cli';
 import { captureConsole, createGitRepo, initBctxWorkspace } from './helpers';
 
 describe('status command', () => {

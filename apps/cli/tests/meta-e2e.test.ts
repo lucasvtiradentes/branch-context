@@ -18,7 +18,7 @@ import {
   syncBranch,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { runCli } from '../dist/cli.js';
+import { runCli } from '../src/cli';
 import { createGitRepo, createTempDir, expectOk, initBctxWorkspace } from './helpers';
 
 function initMetaRepo() {

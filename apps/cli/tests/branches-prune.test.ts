@@ -7,7 +7,7 @@ import {
   syncBranch,
 } from '@branch-context/core';
 import { describe, expect, it } from 'vitest';
-import { runCli } from '../dist/cli.js';
+import { runCli } from '../src/cli';
 import { pruneCommand } from '../src/commands/prune';
 import { setMultiSelectOverride } from '../src/ui/prompt';
 import {

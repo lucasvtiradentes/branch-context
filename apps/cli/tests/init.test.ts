@@ -11,7 +11,7 @@ import {
   gitCommit,
 } from '@branch-context/core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { runCli } from '../dist/cli.js';
+import { runCli } from '../src/cli';
 import { captureConsole, createGitRepo, createTempDir, expectOk, git } from './helpers';
 
 const PROGRAM_NAME_ENV = 'BRANCH_CONTEXT_PROG_NAME';

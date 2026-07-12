@@ -20,7 +20,6 @@
     "bctxd:uninstall": "tsx scripts/uninstall-dev-version.ts",
     "resources": "tsx --conditions=development scripts/copy-core-resources.ts",
     "start": "node dist/cli.js",
-    "pretest": "pnpm build",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

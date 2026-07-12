@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runCli } from '../dist/cli.js';
+import { runCli } from '../src/cli';
 import { captureConsole } from './helpers';
 
 describe('cli dispatch', () => {
