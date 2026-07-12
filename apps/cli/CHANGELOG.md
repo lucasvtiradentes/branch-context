@@ -1,5 +1,17 @@
 # branch-context
 
+## 0.3.0
+
+### Minor Changes
+
+- 522bbca: Replace stored session titles with initial and last user messages across Claude Code, Codex, and Pi sessions.
+- 553fb01: Add global storage and backup commands, infer local/global mode from machine config, simplify branch context config to derived storage paths, and store branch sessions as a top-level JSON array.
+
+### Patch Changes
+
+- 774a364: Restore interactive keyboard multi-select with viewport scrolling for prune branch and context selection.
+- a50deb4: Publish CLI command modules alongside the entrypoint so installed packages can discover and run every command.
+
 ## 0.2.1
 
 ### Patch Changes
