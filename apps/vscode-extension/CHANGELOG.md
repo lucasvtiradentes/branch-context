@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- 8c9d918: Replace the current context and status bar UI with a Config view that shows mode, branch, base, template, CLI info, and issues, plus actions for sync, backup, config, branch checkout, template apply, and opening global storage.
+- 522bbca: Replace stored session titles with initial and last user messages across Claude Code, Codex, and Pi sessions.
+
+### Patch Changes
+
+- df7132b: Refine the Config view with local/global mode in the view description, a global storage action, and toggles for sound and commit descriptions.
+
 ## 0.3.2
 
 ### Patch Changes
