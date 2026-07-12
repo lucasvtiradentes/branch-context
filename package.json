@@ -45,6 +45,6 @@
     "tsx": "^4.21.0",
     "turbo": "^2.9.6",
     "typescript": "^6.0.3",
-    "unicommand": "^0.0.3"
+    "unicommand": "^0.0.4"
   }
 }

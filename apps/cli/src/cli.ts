@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { createPackageCommandCliRunner } from 'unicommand';
+import { type CommandModule, createPackageCommandCliRunner } from 'unicommand';
 
 const cli = createPackageCommandCliRunner({
+  importCommandModule: (file) => import(file) as Promise<CommandModule>,
   importMetaUrl: import.meta.url,
 });
 

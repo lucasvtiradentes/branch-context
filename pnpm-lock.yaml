@@ -39,14 +39,14 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       unicommand:
-        specifier: ^0.0.3
-        version: 0.0.3
+        specifier: ^0.0.4
+        version: 0.0.4
 
   apps/cli:
     dependencies:
       unicommand:
-        specifier: ^0.0.3
-        version: 0.0.3
+        specifier: ^0.0.4
+        version: 0.0.4
     devDependencies:
       '@branch-context/core':
         specifier: workspace:*
@@ -2934,8 +2934,8 @@ packages:
     resolution: {integrity: sha512-xXnp4kTyor2Zq+J1FfPI6Eq3ew5h6Vl0F/8d9XU5zZQf1tX9s2Su1/3PiMmUANFULpmksxkClamIZcaUqryHsQ==}
     engines: {node: '>=20.18.1'}
 
-  unicommand@0.0.3:
-    resolution: {integrity: sha512-yQS0RNrIIfozs5tPPHckNqooRXMT9a0UKd/c+cPIXdpLfzcb4LsQcjo21qBziMMGd0SjZ2j2cku2tviLckHlPQ==}
+  unicommand@0.0.4:
+    resolution: {integrity: sha512-DJZVnIMp/ZR22kLH/lcG6NLdYF40c/wU3Ls7LR9kbv0Cbx3okba31b8Gp/7BHJFG2iZ4mZJFmoBRxlzVlfQRNQ==}
     engines: {node: '>=22', pnpm: '>=10'}
 
   unicorn-magic@0.1.0:
@@ -5961,7 +5961,7 @@ snapshots:
 
   undici@7.25.0: {}
 
-  unicommand@0.0.3:
+  unicommand@0.0.4:
     dependencies:
       '@caporal/core': 2.0.7
       zod: 4.4.3
