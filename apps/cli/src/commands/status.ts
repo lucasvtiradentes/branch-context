@@ -97,11 +97,14 @@ function handler() {
       break;
   }
 
-  const orphans = Array.from(status.contexts.entries()).filter(
-    ([, info]) => info.context && !info.local,
-  );
-  if (orphans.length > 0) {
-    console.log(`  ${STATUS_WARN} ${orphans.length} orphan contexts`);
+  const orphanBranches = Array.from(status.contexts.entries())
+    .filter(([, info]) => info.context && !info.local)
+    .map(([branch]) => branch);
+  if (orphanBranches.length > 0) {
+    const orphanLabel = orphanBranches.length === 1 ? 'orphan context' : 'orphan contexts';
+    console.log(
+      `  ${STATUS_WARN} ${orphanBranches.length} ${orphanLabel}: ${orphanBranches.join(', ')}`,
+    );
   } else {
     console.log(`  ${STATUS_OK} no orphan contexts`);
   }
